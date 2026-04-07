@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
@@ -95,6 +96,9 @@ struct ProviderSettingsTab: View {
 
 struct GeneralSettingsTab: View {
     @AppStorage("pollInterval") private var pollInterval: Double = 60
+    @AppStorage("notificationsEnabled") private var notificationsEnabled: Bool = true
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var loginError: String?
 
     var body: some View {
         Form {
@@ -110,6 +114,25 @@ struct GeneralSettingsTab: View {
                 }
             }
 
+            Section("Notifications") {
+                Toggle("Notify on status changes", isOn: $notificationsEnabled)
+                Text("Get alerts when deployments fail or complete.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Startup") {
+                Toggle("Launch at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { newValue in
+                        toggleLaunchAtLogin(enabled: newValue)
+                    }
+                if let loginError {
+                    Text(loginError)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+            }
+
             Section("About") {
                 Text("ShapeBar — Deployment Monitor")
                     .font(.headline)
@@ -119,5 +142,20 @@ struct GeneralSettingsTab: View {
             }
         }
         .padding()
+    }
+
+    private func toggleLaunchAtLogin(enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+            loginError = nil
+        } catch {
+            loginError = error.localizedDescription
+            // Revert toggle
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+        }
     }
 }

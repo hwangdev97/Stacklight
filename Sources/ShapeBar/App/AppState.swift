@@ -10,6 +10,7 @@ final class AppState: ObservableObject {
     var onDeploymentsChanged: (() -> Void)?
 
     private let pollingManager = PollingManager()
+    private let notificationManager = NotificationManager()
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -26,9 +27,16 @@ final class AppState: ObservableObject {
     }
 
     func startPolling() {
-        pollingManager.onUpdate = { [weak self] deployments in
-            self?.deployments = deployments
-            self?.lastRefresh = Date()
+        // Read poll interval from settings
+        let interval = UserDefaults.standard.double(forKey: "pollInterval")
+        pollingManager.pollInterval = interval > 0 ? interval : 60
+
+        pollingManager.onUpdate = { [weak self] newDeployments in
+            guard let self else { return }
+            let oldDeployments = self.deployments
+            self.deployments = newDeployments
+            self.lastRefresh = Date()
+            self.notificationManager.checkForChanges(old: oldDeployments, new: newDeployments)
         }
         pollingManager.onError = { [weak self] providerID, error in
             self?.errors[providerID] = error.localizedDescription
