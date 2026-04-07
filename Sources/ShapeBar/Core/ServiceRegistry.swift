@@ -24,6 +24,8 @@ final class ServiceRegistry {
         register(CloudflareProvider())
         register(GitHubActionsProvider())
         register(NetlifyProvider())
+        register(RailwayProvider())
+        register(FlyioProvider())
         register(XcodeCloudProvider())
         register(TestFlightProvider())
     }
