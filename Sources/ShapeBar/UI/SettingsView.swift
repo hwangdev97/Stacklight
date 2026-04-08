@@ -5,7 +5,7 @@ import ServiceManagement
 // MARK: - Sidebar Item
 
 private enum SettingsItem: Hashable {
-    case provider(String) // provider id
+    case provider(String)
     case general
 }
 
@@ -20,7 +20,7 @@ struct SettingsView: View {
             List(selection: $selection) {
                 Section("Services") {
                     ForEach(ServiceRegistry.shared.providers, id: \.id) { provider in
-                        Label(provider.displayName, systemImage: provider.iconSymbol)
+                        sidebarRow(provider: provider)
                             .tag(SettingsItem.provider(provider.id))
                     }
                 }
@@ -30,25 +30,45 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 220)
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
         } detail: {
-            switch selection {
-            case .provider(let id):
-                if let provider = ServiceRegistry.shared.provider(withID: id) {
-                    ProviderSettingsTab(provider: provider)
-                        .id(id)
+            ScrollView {
+                Group {
+                    switch selection {
+                    case .provider(let id):
+                        if let provider = ServiceRegistry.shared.provider(withID: id) {
+                            ProviderSettingsDetail(provider: provider)
+                                .id(id)
+                        }
+                    case .general:
+                        GeneralSettingsDetail()
+                    }
                 }
-            case .general:
-                GeneralSettingsTab()
+                .frame(maxWidth: .infinity, alignment: .top)
             }
         }
-        .frame(width: 580, height: 380)
+        .frame(width: 660, height: 500)
+    }
+
+    @ViewBuilder
+    private func sidebarRow(provider: DeploymentProvider) -> some View {
+        HStack {
+            Label(provider.displayName, systemImage: provider.iconSymbol)
+            Spacer()
+            if provider.isConfigured {
+                if appState.errors[provider.id] != nil {
+                    Circle().fill(.red).frame(width: 8, height: 8)
+                } else {
+                    Circle().fill(.green).frame(width: 8, height: 8)
+                }
+            }
+        }
     }
 }
 
-// MARK: - Provider Settings
+// MARK: - Provider Detail (System Settings style)
 
-struct ProviderSettingsTab: View {
+struct ProviderSettingsDetail: View {
     let provider: DeploymentProvider
     @State private var fieldValues: [String: String] = [:]
     @State private var saved = false
@@ -62,107 +82,141 @@ struct ProviderSettingsTab: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack {
+        VStack(spacing: 0) {
+            // Header — like System Settings
+            VStack(spacing: 8) {
                 Image(systemName: provider.iconSymbol)
-                    .font(.title2)
+                    .font(.system(size: 40))
                     .foregroundStyle(.secondary)
+                    .frame(width: 56, height: 56)
+                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
                 Text(provider.displayName)
-                    .font(.title3.weight(.semibold))
-                Spacer()
+                    .font(.title2.weight(.semibold))
+
                 if let docsURL = provider.docsURL {
                     Button {
                         NSWorkspace.shared.open(docsURL)
                     } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "arrow.up.right.square")
-                            Text("Get credentials")
+                        HStack(spacing: 2) {
+                            Text("How to get credentials")
+                            Image(systemName: "arrow.up.right")
                         }
                         .font(.caption)
                     }
                     .buttonStyle(.link)
                 }
             }
-            .padding(.bottom, 16)
+            .padding(.top, 24)
+            .padding(.bottom, 20)
 
-            // Fields
-            Grid(alignment: .trailing, verticalSpacing: 10) {
-                ForEach(provider.settingsFields()) { field in
-                    GridRow {
-                        Text(field.label)
-                            .foregroundStyle(.secondary)
-                            .gridColumnAlignment(.trailing)
+            // Error banner
+            if let error = appState.errors[provider.id] {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                    Text(error)
+                        .font(.caption)
+                        .lineLimit(2)
+                    Spacer()
+                }
+                .padding(10)
+                .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+            }
 
-                        VStack(alignment: .leading, spacing: 3) {
+            // Credential fields — grouped card style
+            VStack(spacing: 0) {
+                ForEach(Array(provider.settingsFields().enumerated()), id: \.element.id) { index, field in
+                    if index > 0 {
+                        Divider().padding(.leading, 16)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(field.label)
+                                .frame(width: 100, alignment: .leading)
+                                .foregroundStyle(.primary)
                             if field.isSecret {
                                 SecureField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                    .textFieldStyle(.roundedBorder)
+                                    .textFieldStyle(.plain)
                             } else {
                                 TextField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                    .textFieldStyle(.roundedBorder)
+                                    .textFieldStyle(.plain)
                             }
-                            if let hint = field.hint {
-                                Text(hint)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+
+                        if let hint = field.hint {
+                            Text(hint)
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 8)
                         }
                     }
                 }
             }
+            .background(.background, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(.quaternary, lineWidth: 0.5)
+            )
+            .padding(.horizontal, 20)
 
-            Spacer()
-
-            // Buttons
-            HStack {
+            // Actions
+            HStack(spacing: 12) {
                 Button("Save") {
                     saveFields()
                     saved = true
                     appState.restartPolling()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        saved = false
-                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { saved = false }
                 }
                 .keyboardShortcut(.defaultAction)
 
                 if saved {
-                    Text("Saved!")
-                        .foregroundColor(.green)
-                        .transition(.opacity)
+                    Label("Saved", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                        .transition(.opacity.combined(with: .scale))
                 }
 
                 Spacer()
 
+                if let testResult {
+                    Group {
+                        switch testResult {
+                        case .success(let count):
+                            Label("\(count) deployments", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        case .failure(let msg):
+                            Label(String(msg.prefix(40)), systemImage: "xmark.circle.fill")
+                                .foregroundStyle(.red)
+                                .help(msg)
+                        }
+                    }
+                    .font(.caption)
+                    .transition(.opacity)
+                }
+
                 Button {
                     testConnection()
                 } label: {
-                    HStack(spacing: 4) {
-                        if testing {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                        Text("Test")
+                    if testing {
+                        ProgressView().controlSize(.small).frame(width: 40)
+                    } else {
+                        Text("Test").frame(width: 40)
                     }
                 }
                 .disabled(testing)
-
-                if let testResult {
-                    switch testResult {
-                    case .success(let count):
-                        Label("\(count) deployments", systemImage: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                            .font(.caption)
-                    case .failure(let msg):
-                        Label(msg, systemImage: "xmark.circle.fill")
-                            .foregroundColor(.red)
-                            .font(.caption)
-                            .lineLimit(1)
-                    }
-                }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .animation(.easeInOut(duration: 0.2), value: saved)
+
+            Spacer(minLength: 20)
         }
-        .padding(20)
         .onAppear { loadFields() }
     }
 
@@ -184,7 +238,6 @@ struct ProviderSettingsTab: View {
     }
 
     private func testConnection() {
-        // Save first so the provider picks up current values
         saveFields()
         testing = true
         testResult = nil
@@ -217,49 +270,68 @@ struct ProviderSettingsTab: View {
     }
 }
 
-// MARK: - General Settings
+// MARK: - General Settings Detail (System Settings style)
 
-struct GeneralSettingsTab: View {
+struct GeneralSettingsDetail: View {
     @AppStorage("pollInterval") private var pollInterval: Double = 60
     @AppStorage("notificationsEnabled") private var notificationsEnabled: Bool = true
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginError: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
+        VStack(spacing: 0) {
+            // Header
+            VStack(spacing: 8) {
                 Image(systemName: "gear")
-                    .font(.title2)
+                    .font(.system(size: 40))
                     .foregroundStyle(.secondary)
+                    .frame(width: 56, height: 56)
+                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
                 Text("General")
-                    .font(.title3.weight(.semibold))
+                    .font(.title2.weight(.semibold))
+
+                Text("Manage polling, notifications, and startup behavior.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
-            .padding(.bottom, 16)
+            .padding(.top, 24)
+            .padding(.bottom, 20)
 
-            Form {
-                Section("Polling") {
-                    HStack {
-                        Text("Refresh every")
-                        Slider(value: $pollInterval, in: 30...300, step: 30)
-                            .frame(maxWidth: 180)
-                        Text("\(Int(pollInterval))s")
-                            .monospacedDigit()
-                            .frame(width: 36, alignment: .trailing)
+            // Polling section
+            settingsCard {
+                HStack {
+                    Label("Refresh interval", systemImage: "arrow.clockwise")
+                    Spacer()
+                    Slider(value: $pollInterval, in: 30...300, step: 30)
+                        .frame(width: 120)
+                    Text("\(Int(pollInterval))s")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(width: 36, alignment: .trailing)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            // Notifications section
+            settingsCard {
+                Toggle(isOn: $notificationsEnabled) {
+                    Label("Notify on status changes", systemImage: "bell.badge")
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+
+            // Startup section
+            settingsCard {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle(isOn: $launchAtLogin) {
+                        Label("Launch at login", systemImage: "play.circle")
                     }
-                }
-
-                Section("Notifications") {
-                    Toggle("Notify on status changes", isOn: $notificationsEnabled)
-                    Text("Get alerts when deployments fail or complete.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Section("Startup") {
-                    Toggle("Launch at login", isOn: $launchAtLogin)
-                        .onChange(of: launchAtLogin) { newValue in
-                            toggleLaunchAtLogin(enabled: newValue)
-                        }
+                    .onChange(of: launchAtLogin) { newValue in
+                        toggleLaunchAtLogin(enabled: newValue)
+                    }
                     if let loginError {
                         Text(loginError)
                             .font(.caption)
@@ -267,15 +339,44 @@ struct GeneralSettingsTab: View {
                     }
                 }
             }
-            .formStyle(.grouped)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
 
-            Spacer()
+            // About section
+            settingsCard {
+                VStack(spacing: 0) {
+                    row(label: "App", value: "ShapeBar")
+                    Divider().padding(.leading, 16)
+                    row(label: "Version", value: "1.0.0")
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
 
-            Text("ShapeBar — Deployment Monitor")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Spacer(minLength: 20)
         }
-        .padding(20)
+    }
+
+    @ViewBuilder
+    private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(.vertical, 10)
+            .padding(.horizontal, 16)
+            .background(.background, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(.quaternary, lineWidth: 0.5)
+            )
+    }
+
+    private func row(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(value)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
     }
 
     private func toggleLaunchAtLogin(enabled: Bool) {

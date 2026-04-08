@@ -8,6 +8,7 @@ final class AppState: ObservableObject {
     @Published var lastRefresh: Date?
 
     var onDeploymentsChanged: (() -> Void)?
+    var openSettingsWindow: (() -> Void)?
 
     private let pollingManager = PollingManager()
     private let notificationManager = NotificationManager()

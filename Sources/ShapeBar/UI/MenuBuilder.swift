@@ -37,8 +37,10 @@ enum MenuBuilder {
 
                 // Error for this provider
                 if let error = errors[provider.id] {
-                    let errorItem = NSMenuItem(title: "  ⚠ \(error)", action: nil, keyEquivalent: "")
+                    let msg = error.count > 60 ? String(error.prefix(58)) + "…" : error
+                    let errorItem = NSMenuItem(title: "  ⚠ \(msg)", action: nil, keyEquivalent: "")
                     errorItem.isEnabled = false
+                    errorItem.toolTip = error // full message on hover
                     menu.addItem(errorItem)
                 }
 
@@ -127,17 +129,19 @@ enum MenuBuilder {
         )
         result.append(emoji)
 
-        // Project name (bold)
+        // Project name (bold, max 24 chars)
+        let projectName = String(deployment.projectName.prefix(24))
         let name = NSAttributedString(
-            string: deployment.projectName,
+            string: projectName,
             attributes: [.font: NSFont.boldSystemFont(ofSize: 13)]
         )
         result.append(name)
 
-        // Branch
+        // Branch (max 28 chars)
         if let branch = deployment.branch {
+            let truncated = branch.count > 28 ? String(branch.prefix(26)) + "…" : branch
             let branchStr = NSAttributedString(
-                string: "  \(branch)",
+                string: "  \(truncated)",
                 attributes: [
                     .font: NSFont.systemFont(ofSize: 11),
                     .foregroundColor: NSColor.secondaryLabelColor
