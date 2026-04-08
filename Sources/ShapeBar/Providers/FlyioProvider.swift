@@ -4,6 +4,7 @@ final class FlyioProvider: DeploymentProvider {
     let id = "flyio"
     let displayName = "Fly.io"
     let iconSymbol = "paperplane.fill"
+    let docsURL = URL(string: "https://fly.io/docs/flyctl/tokens-create/")
 
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "flyio.token"), !token.isEmpty else { return false }

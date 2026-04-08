@@ -3,7 +3,8 @@ import Foundation
 final class VercelProvider: DeploymentProvider {
     let id = "vercel"
     let displayName = "Vercel"
-    let iconSymbol = "globe"
+    let iconSymbol = "triangleshape.fill"
+    let docsURL = URL(string: "https://vercel.com/account/tokens")
 
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "vercel.token") else { return false }
@@ -23,7 +24,17 @@ final class VercelProvider: DeploymentProvider {
         var request = URLRequest(url: components.url!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, httpResponse) = try await URLSession.shared.data(for: request)
+
+        if let http = httpResponse as? HTTPURLResponse, http.statusCode != 200 {
+            if let err = try? JSONDecoder().decode(VercelErrorResponse.self, from: data) {
+                throw NSError(domain: "Vercel", code: http.statusCode,
+                              userInfo: [NSLocalizedDescriptionKey: err.error.message])
+            }
+            throw NSError(domain: "Vercel", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])
+        }
+
         let response = try JSONDecoder().decode(VercelResponse.self, from: data)
         return response.deployments.map { $0.toDeployment() }
     }
@@ -37,6 +48,13 @@ final class VercelProvider: DeploymentProvider {
 }
 
 // MARK: - API Response Models
+
+private struct VercelErrorResponse: Decodable {
+    let error: ErrorDetail
+    struct ErrorDetail: Decodable {
+        let message: String
+    }
+}
 
 private struct VercelResponse: Decodable {
     let deployments: [VercelDeployment]

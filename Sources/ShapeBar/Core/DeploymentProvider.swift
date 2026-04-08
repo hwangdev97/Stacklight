@@ -18,4 +18,11 @@ protocol DeploymentProvider: AnyObject {
 
     /// Declarative list of settings fields this provider needs
     func settingsFields() -> [SettingsField]
+
+    /// URL to the documentation page for obtaining credentials
+    var docsURL: URL? { get }
+}
+
+extension DeploymentProvider {
+    var docsURL: URL? { nil }
 }

@@ -4,6 +4,7 @@ final class CloudflareProvider: DeploymentProvider {
     let id = "cloudflare"
     let displayName = "Cloudflare Pages"
     let iconSymbol = "cloud.fill"
+    let docsURL = URL(string: "https://dash.cloudflare.com/profile/api-tokens")
 
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
@@ -19,11 +20,15 @@ final class CloudflareProvider: DeploymentProvider {
             return []
         }
 
-        let projectNames = UserDefaults.standard.string(forKey: "cloudflare.projectNames")?
+        var projectNames = UserDefaults.standard.string(forKey: "cloudflare.projectNames")?
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty } ?? []
 
+        // If no project names specified, auto-discover all Pages projects
+        if projectNames.isEmpty {
+            projectNames = try await fetchProjectNames(token: token, accountId: accountId)
+        }
         guard !projectNames.isEmpty else { return [] }
 
         var allDeployments: [Deployment] = []
@@ -39,9 +44,22 @@ final class CloudflareProvider: DeploymentProvider {
     func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "cloudflare.token", label: "API Token", isSecret: true, placeholder: "Cloudflare API token"),
-            SettingsField(key: "cloudflare.accountId", label: "Account ID", placeholder: "Your Cloudflare account ID"),
-            SettingsField(key: "cloudflare.projectNames", label: "Project Names", placeholder: "Comma-separated: my-site, docs")
+            SettingsField(key: "cloudflare.accountId", label: "Account ID", placeholder: "32-character hex string", hint: "Found in your dashboard URL: dash.cloudflare.com/<account-id>"),
+            SettingsField(key: "cloudflare.projectNames", label: "Project Names", placeholder: "Comma-separated: my-site, docs",
+                          hint: "Leave empty to auto-discover all Pages projects")
         ]
+    }
+
+    private func fetchProjectNames(token: String, accountId: String) async throws -> [String] {
+        let urlString = "https://api.cloudflare.com/client/v4/accounts/\(accountId)/pages/projects"
+        guard let url = URL(string: urlString) else { return [] }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(CFProjectsResponse.self, from: data)
+        return response.result.map(\.name)
     }
 
     private func fetchProjectDeployments(token: String, accountId: String, projectName: String) async throws -> [Deployment] {
@@ -58,6 +76,13 @@ final class CloudflareProvider: DeploymentProvider {
 }
 
 // MARK: - API Response Models
+
+private struct CFProjectsResponse: Decodable {
+    let result: [CFProject]
+    struct CFProject: Decodable {
+        let name: String
+    }
+}
 
 private struct CFResponse: Decodable {
     let result: [CFDeployment]

@@ -4,6 +4,7 @@ final class NetlifyProvider: DeploymentProvider {
     let id = "netlify"
     let displayName = "Netlify"
     let iconSymbol = "network"
+    let docsURL = URL(string: "https://app.netlify.com/user/applications#personal-access-tokens")
 
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "netlify.token"), !token.isEmpty else { return false }

@@ -5,6 +5,7 @@ final class XcodeCloudProvider: DeploymentProvider {
     let id = "xcodeCloud"
     let displayName = "Xcode Cloud"
     let iconSymbol = "hammer.fill"
+    let docsURL = URL(string: "https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api")
 
     var isConfigured: Bool {
         guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
@@ -16,61 +17,78 @@ final class XcodeCloudProvider: DeploymentProvider {
     }
 
     func fetchDeployments() async throws -> [Deployment] {
-        guard let provider = makeProvider() else { return [] }
+        let provider = try makeProvider()
 
-        let request = APIEndpoint
-            .v1
-            .ciBuildRuns
-            .get(parameters: .init(
-                sort: [.minusNumber],
-                limit: 10
-            ))
+        let productsRequest = APIEndpoint.v1.ciProducts.get(parameters: .init(limit: 25))
+        let productsResponse = try await provider.request(productsRequest)
 
-        let response = try await provider.request(request)
-        return response.data.compactMap { run in
-            guard let attrs = run.attributes else { return nil }
+        var deployments: [Deployment] = []
+        for product in productsResponse.data {
+            let runsRequest = APIEndpoint.v1.ciProducts.id(product.id).buildRuns
+                .get(parameters: .init(
+                    sort: [.minusnumber],
+                    limit: 5
+                ))
+            let runsResponse = try await provider.request(runsRequest)
 
-            return Deployment(
-                id: run.id,
-                providerID: "xcodeCloud",
-                projectName: attrs.sourceCommit?.commitSha.map { String($0.prefix(7)) } ?? "Build",
-                status: mapStatus(
-                    progress: attrs.executionProgress,
-                    completion: attrs.completionStatus
-                ),
-                url: nil,
-                createdAt: attrs.createdDate ?? Date(),
-                commitMessage: attrs.sourceCommit?.message,
-                branch: nil
-            )
+            let productName = product.attributes?.name ?? "Build"
+            let mapped = runsResponse.data.compactMap { run -> Deployment? in
+                guard let attrs = run.attributes else { return nil }
+                return Deployment(
+                    id: run.id,
+                    providerID: "xcodeCloud",
+                    projectName: productName,
+                    status: mapStatus(
+                        progress: attrs.executionProgress,
+                        completion: attrs.completionStatus
+                    ),
+                    url: nil,
+                    createdAt: attrs.createdDate ?? Date(),
+                    commitMessage: attrs.sourceCommit?.message,
+                    branch: nil
+                )
+            }
+            deployments.append(contentsOf: mapped)
         }
+        return deployments
     }
 
     func settingsFields() -> [SettingsField] {
         [
-            SettingsField(key: "asc.issuerID", label: "Issuer ID", isSecret: true, placeholder: "App Store Connect Issuer ID"),
-            SettingsField(key: "asc.privateKeyID", label: "Key ID", isSecret: true, placeholder: "Private Key ID"),
-            SettingsField(key: "asc.privateKey", label: "Private Key (.p8)", isSecret: true, placeholder: "Paste contents of AuthKey_XXXX.p8")
+            SettingsField(key: "asc.issuerID", label: "Issuer ID", isSecret: true, placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                          hint: "Users and Access → Integrations → App Store Connect API → Issuer ID (top of page)"),
+            SettingsField(key: "asc.privateKeyID", label: "Key ID", isSecret: true, placeholder: "e.g. ABC1234DEF",
+                          hint: "Same page → Keys table → Key ID column"),
+            SettingsField(key: "asc.privateKey", label: "Private Key (.p8)", isSecret: true, placeholder: "-----BEGIN PRIVATE KEY-----...",
+                          hint: "Download the .p8 file when creating the key (one-time only), then paste its contents here")
         ]
     }
 
-    private func makeProvider() -> APIProvider? {
+    private func makeProvider() throws -> APIProvider {
         guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
               let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let key = KeychainManager.read(key: "asc.privateKey") else {
-            return nil
+              let rawKey = KeychainManager.read(key: "asc.privateKey") else {
+            throw NSError(domain: "XcodeCloud", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Missing API credentials — configure in Settings"])
         }
-        let config = APIConfiguration(
+        // SDK expects raw Base64 key content without PEM header/footer
+        let strippedKey = rawKey
+            .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+            .trimmingCharacters(in: .whitespaces)
+
+        let config = try APIConfiguration(
             issuerID: issuerID,
             privateKeyID: keyID,
-            privateKey: key
+            privateKey: strippedKey
         )
         return APIProvider(configuration: config)
     }
 
     private func mapStatus(
-        progress: CiBuildRun.Attributes.ExecutionProgress?,
-        completion: CiBuildRun.Attributes.CompletionStatus?
+        progress: CiExecutionProgress?,
+        completion: CiCompletionStatus?
     ) -> Deployment.Status {
         if let progress {
             switch progress {

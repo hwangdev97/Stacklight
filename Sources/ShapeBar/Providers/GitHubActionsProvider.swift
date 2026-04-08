@@ -4,6 +4,7 @@ final class GitHubActionsProvider: DeploymentProvider {
     let id = "githubActions"
     let displayName = "GitHub Actions"
     let iconSymbol = "gear.badge.checkmark"
+    let docsURL = URL(string: "https://github.com/settings/tokens")
 
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "github.token"), !token.isEmpty else { return false }

@@ -5,7 +5,9 @@ final class ServiceRegistry {
 
     private(set) var providers: [DeploymentProvider] = []
 
-    private init() {}
+    private init() {
+        registerBuiltInProviders()
+    }
 
     func register(_ provider: DeploymentProvider) {
         providers.append(provider)
@@ -20,6 +22,7 @@ final class ServiceRegistry {
     }
 
     func registerBuiltInProviders() {
+        guard providers.isEmpty else { return }
         register(VercelProvider())
         register(CloudflareProvider())
         register(GitHubActionsProvider())

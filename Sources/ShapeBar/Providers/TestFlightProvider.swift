@@ -5,9 +5,9 @@ final class TestFlightProvider: DeploymentProvider {
     let id = "testFlight"
     let displayName = "TestFlight"
     let iconSymbol = "airplane"
+    let docsURL = URL(string: "https://appstoreconnect.apple.com/apps")
 
     var isConfigured: Bool {
-        // Shares credentials with Xcode Cloud
         guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
               let keyID = KeychainManager.read(key: "asc.privateKeyID"),
               let key = KeychainManager.read(key: "asc.privateKey"),
@@ -18,17 +18,18 @@ final class TestFlightProvider: DeploymentProvider {
     }
 
     func fetchDeployments() async throws -> [Deployment] {
-        guard let provider = makeProvider(),
-              let appId = UserDefaults.standard.string(forKey: "testflight.appId") else {
+        guard let appId = UserDefaults.standard.string(forKey: "testflight.appId"), !appId.isEmpty else {
             return []
         }
+
+        let provider = try makeProvider()
 
         let request = APIEndpoint
             .v1
             .builds
             .get(parameters: .init(
                 filterApp: [appId],
-                sort: [.minusUploadedDate],
+                sort: [.minusuploadedDate],
                 limit: 10
             ))
 
@@ -37,12 +38,11 @@ final class TestFlightProvider: DeploymentProvider {
             guard let attrs = build.attributes else { return nil }
 
             let version = attrs.version ?? "?"
-            let cfBundleVersion = attrs.cfBundleVersion ?? "?"
 
             return Deployment(
                 id: build.id,
                 providerID: "testFlight",
-                projectName: "\(version) (\(cfBundleVersion))",
+                projectName: "v\(version)",
                 status: mapStatus(attrs.processingState, betaState: attrs.buildAudienceType),
                 url: nil,
                 createdAt: attrs.uploadedDate ?? Date(),
@@ -54,26 +54,33 @@ final class TestFlightProvider: DeploymentProvider {
 
     func settingsFields() -> [SettingsField] {
         [
-            // ASC credentials are shared with Xcode Cloud - show a note
-            SettingsField(key: "testflight.appId", label: "App ID", placeholder: "App Store Connect App ID (numeric)")
+            SettingsField(key: "testflight.appId", label: "App ID", placeholder: "App Store Connect App ID (numeric)",
+                          hint: "API credentials are shared with Xcode Cloud — configure them in the Xcode Cloud tab first")
         ]
     }
 
-    private func makeProvider() -> APIProvider? {
+    private func makeProvider() throws -> APIProvider {
         guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
               let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let key = KeychainManager.read(key: "asc.privateKey") else {
-            return nil
+              let rawKey = KeychainManager.read(key: "asc.privateKey") else {
+            throw NSError(domain: "TestFlight", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Missing API credentials — configure in Xcode Cloud tab"])
         }
-        let config = APIConfiguration(
+        let strippedKey = rawKey
+            .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+            .trimmingCharacters(in: .whitespaces)
+
+        let config = try APIConfiguration(
             issuerID: issuerID,
             privateKeyID: keyID,
-            privateKey: key
+            privateKey: strippedKey
         )
         return APIProvider(configuration: config)
     }
 
-    private func mapStatus(_ processingState: Build.Attributes.ProcessingState?, betaState: Build.Attributes.BuildAudienceType?) -> Deployment.Status {
+    private func mapStatus(_ processingState: Build.Attributes.ProcessingState?, betaState: BuildAudienceType?) -> Deployment.Status {
         if let processingState {
             switch processingState {
             case .processing:

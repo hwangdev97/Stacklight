@@ -12,16 +12,19 @@ enum KeychainManager {
 
     static func save(key: String, value: String) throws {
         let data = Data(value.utf8)
-        let query: [String: Any] = [
+
+        // Delete existing item first (query without value data)
+        let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data
+            kSecAttrAccount as String: key
         ]
-        // Remove existing item first
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(deleteQuery as CFDictionary)
 
-        let status = SecItemAdd(query as CFDictionary, nil)
+        // Add new item
+        var addQuery = deleteQuery
+        addQuery[kSecValueData as String] = data
+        let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {
             throw KeychainError.saveFailed(status)
         }

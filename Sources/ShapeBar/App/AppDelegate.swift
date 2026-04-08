@@ -2,14 +2,12 @@ import AppKit
 import SwiftUI
 import UserNotifications
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     let appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Register built-in providers
-        ServiceRegistry.shared.registerBuiltInProviders()
-
         // Request notification permission
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         UNUserNotificationCenter.current().delegate = self
@@ -85,9 +83,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.refresh()
     }
 
+    var settingsWindow: NSWindow?
+
     @objc func openSettings(_ sender: NSMenuItem) {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        if let window = settingsWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let settingsView = SettingsView()
+            .environmentObject(appState)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 360),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "ShapeBar Settings"
+        window.contentView = NSHostingView(rootView: settingsView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        settingsWindow = window
     }
 
     @objc func quitApp(_ sender: NSMenuItem) {
