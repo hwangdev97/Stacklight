@@ -335,12 +335,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = fun.hwang.shapebar.test;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShapeBar.app/Contents/MacOS/ShapeBar";
@@ -351,12 +357,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = fun.hwang.shapebar.test;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShapeBar.app/Contents/MacOS/ShapeBar";
@@ -374,6 +386,7 @@
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/ShapeBar/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShapeBar;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -516,6 +529,7 @@
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/ShapeBar/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShapeBar;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
