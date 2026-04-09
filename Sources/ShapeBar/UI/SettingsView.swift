@@ -95,16 +95,13 @@ struct ProviderSettingsDetail: View {
                     .font(.title2.weight(.semibold))
 
                 if let docsURL = provider.docsURL {
-                    Button {
-                        NSWorkspace.shared.open(docsURL)
-                    } label: {
+                    Link(destination: docsURL) {
                         HStack(spacing: 2) {
                             Text("How to get credentials")
                             Image(systemName: "arrow.up.right")
                         }
                         .font(.caption)
                     }
-                    .buttonStyle(.link)
                 }
             }
             .padding(.top, 24)
@@ -129,31 +126,35 @@ struct ProviderSettingsDetail: View {
             // Credential fields — grouped card style
             VStack(spacing: 0) {
                 ForEach(Array(provider.settingsFields().enumerated()), id: \.element.id) { index, field in
-                    if index > 0 {
-                        Divider().padding(.leading, 16)
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(field.label)
-                                .frame(width: 100, alignment: .leading)
-                                .foregroundStyle(.primary)
-                            if field.isSecret {
-                                SecureField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                    .textFieldStyle(.plain)
-                            } else {
-                                TextField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                    .textFieldStyle(.plain)
-                            }
+                    if field.isMultiValue {
+                        // Multi-value: rendered separately below
+                    } else {
+                        if index > 0 && !provider.settingsFields()[index - 1].isMultiValue {
+                            Divider().padding(.leading, 16)
                         }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(field.label)
+                                    .frame(width: 100, alignment: .leading)
+                                    .foregroundStyle(.primary)
+                                if field.isSecret {
+                                    SecureField("", text: binding(for: field), prompt: Text(field.placeholder))
+                                        .textFieldStyle(.plain)
+                                } else {
+                                    TextField("", text: binding(for: field), prompt: Text(field.placeholder))
+                                        .textFieldStyle(.plain)
+                                }
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
 
-                        if let hint = field.hint {
-                            Text(hint)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 8)
+                            if let hint = field.hint {
+                                Text(hint)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 8)
+                            }
                         }
                     }
                 }
@@ -164,6 +165,13 @@ struct ProviderSettingsDetail: View {
                     .strokeBorder(.quaternary, lineWidth: 0.5)
             )
             .padding(.horizontal, 20)
+
+            // Multi-value fields — tag list with add/remove
+            ForEach(provider.settingsFields().filter { $0.isMultiValue }, id: \.id) { field in
+                MultiValueFieldView(field: field, rawValue: binding(for: field))
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+            }
 
             // Actions
             HStack(spacing: 12) {
@@ -391,5 +399,104 @@ struct GeneralSettingsDetail: View {
             loginError = error.localizedDescription
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
+    }
+}
+
+// MARK: - Multi-Value Field (add / remove tags)
+
+struct MultiValueFieldView: View {
+    let field: SettingsField
+    @Binding var rawValue: String
+    @State private var newItem: String = ""
+
+    private var items: [String] {
+        rawValue
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(field.label)
+                .font(.subheadline.weight(.medium))
+
+            if let hint = field.hint {
+                Text(hint)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            // Existing items
+            if !items.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                        if index > 0 {
+                            Divider().padding(.leading, 12)
+                        }
+                        HStack {
+                            Text(item)
+                                .font(.body.monospaced())
+                            Spacer()
+                            Button {
+                                removeItem(item)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                    }
+                }
+                .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(.quaternary, lineWidth: 0.5)
+                )
+            }
+
+            // Add new item
+            HStack(spacing: 8) {
+                TextField("", text: $newItem, prompt: Text(field.placeholder))
+                    .textFieldStyle(.plain)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.quaternary, lineWidth: 0.5)
+                    )
+                    .onSubmit { addItem() }
+
+                Button {
+                    addItem()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                }
+                .buttonStyle(.plain)
+                .disabled(newItem.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+    }
+
+    private func addItem() {
+        let trimmed = newItem.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        guard !items.contains(trimmed) else { newItem = ""; return }
+
+        var current = items
+        current.append(trimmed)
+        rawValue = current.joined(separator: ", ")
+        newItem = ""
+    }
+
+    private func removeItem(_ item: String) {
+        var current = items
+        current.removeAll { $0 == item }
+        rawValue = current.joined(separator: ", ")
     }
 }

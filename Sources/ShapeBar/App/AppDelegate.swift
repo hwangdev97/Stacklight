@@ -8,9 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Request notification permission
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
-        UNUserNotificationCenter.current().delegate = self
+        // Request notification permission (guard against missing bundle)
+        if Bundle.main.bundleIdentifier != nil {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+            UNUserNotificationCenter.current().delegate = self
+        }
 
         // Create the status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -67,14 +69,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openSettings(_ sender: NSMenuItem) {
-        // Try to find existing window first (SwiftUI Window scene creates it lazily)
+        NSApp.activate(ignoringOtherApps: true)
+
         if let window = NSApp.windows.first(where: { $0.title == "ShapeBar Settings" }) {
             window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
         } else if let openWindow = appState.openSettingsWindow {
-            // Use captured SwiftUI openWindow action
             openWindow()
+            // The window is created asynchronously; bring it front on next run loop
+            DispatchQueue.main.async {
+                if let window = NSApp.windows.first(where: { $0.title == "ShapeBar Settings" }) {
+                    window.makeKeyAndOrderFront(nil)
+                    window.orderFrontRegardless()
+                }
+            }
         }
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc func quitApp(_ sender: NSMenuItem) {

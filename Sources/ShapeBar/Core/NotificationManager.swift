@@ -61,6 +61,7 @@ final class NotificationManager {
     }
 
     private func sendNotification(title: String, body: String, deployment: Deployment) {
+        guard Bundle.main.bundleIdentifier != nil else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body

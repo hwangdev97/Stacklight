@@ -26,6 +26,7 @@ final class ServiceRegistry {
         register(VercelProvider())
         register(CloudflareProvider())
         register(GitHubActionsProvider())
+        register(GitHubPRProvider())
         register(NetlifyProvider())
         register(RailwayProvider())
         register(FlyioProvider())
