@@ -1,0 +1,18 @@
+# Build
+.build/
+DerivedData/
+Build/
+
+# Xcode user data
+*.xcuserdata
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# SwiftPM
+.swiftpm/
+
+# OS
+.DS_Store
+
+# Claude
+.claude/
