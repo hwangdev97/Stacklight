@@ -16,7 +16,7 @@
 		7CCF4E98BAC76BAE9B7A25A7 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C66FE661E8D60E70513577E1 /* AppState.swift */; };
 		9014DA9AD336BDC3D9D26449 /* NetlifyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBF4B24997CDD3F422ED76E /* NetlifyProvider.swift */; };
 		997E74DB545F803BE430DD9C /* GitHubPRProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 727EA95BF441E34B0FEFFC26 /* GitHubPRProvider.swift */; };
-		A009FE7C7D14F2CCEDECEEAA /* ShapeBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F48A2B9A0E04F41E65F2F7A /* ShapeBarApp.swift */; };
+		A009FE7C7D14F2CCEDECEEAA /* StackLightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F48A2B9A0E04F41E65F2F7A /* StackLightApp.swift */; };
 		A1A6DAECEE46B9D0EDA59403 /* FlyioProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42673293FAE703C07EDB1FAB /* FlyioProvider.swift */; };
 		A9AEE332B2F26ECB69677E75 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DE31FC9A86454A0ED345B72 /* KeychainManager.swift */; };
 		AFFCE570A10AFC9984E7EFCE /* SettingsField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6584ACCC14F56683E6E71BB1 /* SettingsField.swift */; };
@@ -41,7 +41,7 @@
 			containerPortal = C479044F4BADE0B6E72F0113 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 55D433BC2ADDD05525C6E6DB;
-			remoteInfo = ShapeBar;
+			remoteInfo = StackLight;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -50,7 +50,7 @@
 		271F641AC4072AED3EE3B264 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		2F37CD9E774B8352DFE00EBF /* VercelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VercelProvider.swift; sourceTree = "<group>"; };
 		2FBF4B24997CDD3F422ED76E /* NetlifyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetlifyProvider.swift; sourceTree = "<group>"; };
-		3F48A2B9A0E04F41E65F2F7A /* ShapeBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeBarApp.swift; sourceTree = "<group>"; };
+		3F48A2B9A0E04F41E65F2F7A /* StackLightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackLightApp.swift; sourceTree = "<group>"; };
 		42673293FAE703C07EDB1FAB /* FlyioProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyioProvider.swift; sourceTree = "<group>"; };
 		452BE7061114414077BE3169 /* Deployment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deployment.swift; sourceTree = "<group>"; };
 		4AB5D853D86C4E969C3E923A /* PollingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollingManager.swift; sourceTree = "<group>"; };
@@ -60,7 +60,7 @@
 		6DA6827DD2509C8DAB0D9784 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		72793B4C8CF7AF418088FCA7 /* CloudflareProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareProvider.swift; sourceTree = "<group>"; };
 		727EA95BF441E34B0FEFFC26 /* GitHubPRProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubPRProvider.swift; sourceTree = "<group>"; };
-		73E696F8A832B61A4EFDECD0 /* ShapeBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShapeBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		73E696F8A832B61A4EFDECD0 /* StackLight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StackLight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7DE31FC9A86454A0ED345B72 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		8CF7157CD9605E0709702A0A /* MenuBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBuilder.swift; sourceTree = "<group>"; };
 		9603D7AC1B236EA7F1A8A7F5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -68,7 +68,7 @@
 		A28B2FDA1D4F20083DA9343A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AD465A0CA802CFD218868B0E /* ProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTests.swift; sourceTree = "<group>"; };
 		B0756E4313F95A5586B7EF88 /* XcodeCloudAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeCloudAPITests.swift; sourceTree = "<group>"; };
-		B5B397EFD1DA774B44508697 /* ShapeBarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShapeBarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5B397EFD1DA774B44508697 /* StackLightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StackLightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BD4D3A3EDDC1258DD610C9C2 /* DeploymentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeploymentProvider.swift; sourceTree = "<group>"; };
 		C36CA4AB5E36E0A497470297 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		C66FE661E8D60E70513577E1 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -103,7 +103,7 @@
 			path = Providers;
 			sourceTree = "<group>";
 		};
-		5CBEDB048C6D09ED9C92BB08 /* ShapeBar */ = {
+		5CBEDB048C6D09ED9C92BB08 /* StackLight */ = {
 			isa = PBXGroup;
 			children = (
 				9FDD686ECD07EAB97F6F29F9 /* App */,
@@ -113,7 +113,7 @@
 				4BAEEC900ED0FD18E808E228 /* Providers */,
 				658962781C4A60650FD97900 /* UI */,
 			);
-			path = ShapeBar;
+			path = StackLight;
 			sourceTree = "<group>";
 		};
 		658962781C4A60650FD97900 /* UI */ = {
@@ -128,7 +128,7 @@
 		91ADAECF3FFFE8821EF6673A /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				5CBEDB048C6D09ED9C92BB08 /* ShapeBar */,
+				5CBEDB048C6D09ED9C92BB08 /* StackLight */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -136,8 +136,8 @@
 		996147F439B7B3AC6AF4D956 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				73E696F8A832B61A4EFDECD0 /* ShapeBar.app */,
-				B5B397EFD1DA774B44508697 /* ShapeBarTests.xctest */,
+				73E696F8A832B61A4EFDECD0 /* StackLight.app */,
+				B5B397EFD1DA774B44508697 /* StackLightTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -147,18 +147,18 @@
 			children = (
 				A28B2FDA1D4F20083DA9343A /* AppDelegate.swift */,
 				C66FE661E8D60E70513577E1 /* AppState.swift */,
-				3F48A2B9A0E04F41E65F2F7A /* ShapeBarApp.swift */,
+				3F48A2B9A0E04F41E65F2F7A /* StackLightApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
-		B483BE9A3B945E620D48ECB8 /* ShapeBarTests */ = {
+		B483BE9A3B945E620D48ECB8 /* StackLightTests */ = {
 			isa = PBXGroup;
 			children = (
 				AD465A0CA802CFD218868B0E /* ProviderTests.swift */,
 				B0756E4313F95A5586B7EF88 /* XcodeCloudAPITests.swift */,
 			);
-			path = ShapeBarTests;
+			path = StackLightTests;
 			sourceTree = "<group>";
 		};
 		C8883F849A14478954CDF596 /* Core */ = {
@@ -187,7 +187,7 @@
 		DB27FB9F18105C0D6BD67FF0 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				B483BE9A3B945E620D48ECB8 /* ShapeBarTests */,
+				B483BE9A3B945E620D48ECB8 /* StackLightTests */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -195,9 +195,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		55D433BC2ADDD05525C6E6DB /* ShapeBar */ = {
+		55D433BC2ADDD05525C6E6DB /* StackLight */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CD5FA1CE743581123F02CF29 /* Build configuration list for PBXNativeTarget "ShapeBar" */;
+			buildConfigurationList = CD5FA1CE743581123F02CF29 /* Build configuration list for PBXNativeTarget "StackLight" */;
 			buildPhases = (
 				51D6A714F39ACCB4FD73A8D0 /* Sources */,
 				CF85970FB821D42CB51E3539 /* Resources */,
@@ -207,17 +207,17 @@
 			);
 			dependencies = (
 			);
-			name = ShapeBar;
+			name = StackLight;
 			packageProductDependencies = (
 				83CC991582E90C877DE1917B /* AppStoreConnect-Swift-SDK */,
 			);
-			productName = ShapeBar;
-			productReference = 73E696F8A832B61A4EFDECD0 /* ShapeBar.app */;
+			productName = StackLight;
+			productReference = 73E696F8A832B61A4EFDECD0 /* StackLight.app */;
 			productType = "com.apple.product-type.application";
 		};
-		DB5946AFF85DC4ADA4A90B3C /* ShapeBarTests */ = {
+		DB5946AFF85DC4ADA4A90B3C /* StackLightTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2B79E1252965168C4A956CB2 /* Build configuration list for PBXNativeTarget "ShapeBarTests" */;
+			buildConfigurationList = 2B79E1252965168C4A956CB2 /* Build configuration list for PBXNativeTarget "StackLightTests" */;
 			buildPhases = (
 				8D7FABD2BD16CF8A40F7F379 /* Sources */,
 			);
@@ -226,11 +226,11 @@
 			dependencies = (
 				55A11739DF39097F136DBE47 /* PBXTargetDependency */,
 			);
-			name = ShapeBarTests;
+			name = StackLightTests;
 			packageProductDependencies = (
 			);
-			productName = ShapeBarTests;
-			productReference = B5B397EFD1DA774B44508697 /* ShapeBarTests.xctest */;
+			productName = StackLightTests;
+			productReference = B5B397EFD1DA774B44508697 /* StackLightTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -248,7 +248,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F9CCA49BAA5FEB01F71B9108 /* Build configuration list for PBXProject "ShapeBar" */;
+			buildConfigurationList = F9CCA49BAA5FEB01F71B9108 /* Build configuration list for PBXProject "StackLight" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -265,8 +265,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				55D433BC2ADDD05525C6E6DB /* ShapeBar */,
-				DB5946AFF85DC4ADA4A90B3C /* ShapeBarTests */,
+				55D433BC2ADDD05525C6E6DB /* StackLight */,
+				DB5946AFF85DC4ADA4A90B3C /* StackLightTests */,
 			);
 		};
 /* End PBXProject section */
@@ -305,7 +305,7 @@
 				726641161D6C391DF9BC1A30 /* ServiceRegistry.swift in Sources */,
 				AFFCE570A10AFC9984E7EFCE /* SettingsField.swift in Sources */,
 				CD2D9FBA0689C833AFCCBD70 /* SettingsView.swift in Sources */,
-				A009FE7C7D14F2CCEDECEEAA /* ShapeBarApp.swift in Sources */,
+				A009FE7C7D14F2CCEDECEEAA /* StackLightApp.swift in Sources */,
 				D33625FDF1E31581759CD142 /* TestFlightProvider.swift in Sources */,
 				E82DD5A7AF39B8A92DEACED4 /* VercelProvider.swift in Sources */,
 				684A0AF730929E48E6D1C7F0 /* XcodeCloudProvider.swift in Sources */,
@@ -326,7 +326,7 @@
 /* Begin PBXTargetDependency section */
 		55A11739DF39097F136DBE47 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 55D433BC2ADDD05525C6E6DB /* ShapeBar */;
+			target = 55D433BC2ADDD05525C6E6DB /* StackLight */;
 			targetProxy = 37831E9B3B1791660789E15A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -349,7 +349,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShapeBar.app/Contents/MacOS/ShapeBar";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/StackLight.app/Contents/MacOS/StackLight";
 			};
 			name = Release;
 		};
@@ -370,7 +370,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShapeBar.app/Contents/MacOS/ShapeBar";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/StackLight.app/Contents/MacOS/StackLight";
 			};
 			name = Debug;
 		};
@@ -378,14 +378,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Sources/ShapeBar/ShapeBar.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Sources/StackLight/StackLight.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/ShapeBar/Info.plist;
+				INFOPLIST_FILE = Sources/StackLight/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -520,14 +520,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Sources/ShapeBar/ShapeBar.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Sources/StackLight/StackLight.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/ShapeBar/Info.plist;
+				INFOPLIST_FILE = Sources/StackLight/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -542,7 +542,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2B79E1252965168C4A956CB2 /* Build configuration list for PBXNativeTarget "ShapeBarTests" */ = {
+		2B79E1252965168C4A956CB2 /* Build configuration list for PBXNativeTarget "StackLightTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2AB10752F8F1B87AA647BCF4 /* Debug */,
@@ -551,7 +551,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		CD5FA1CE743581123F02CF29 /* Build configuration list for PBXNativeTarget "ShapeBar" */ = {
+		CD5FA1CE743581123F02CF29 /* Build configuration list for PBXNativeTarget "StackLight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5D5146504F483E5C4BFF32D4 /* Debug */,
@@ -560,7 +560,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		F9CCA49BAA5FEB01F71B9108 /* Build configuration list for PBXProject "ShapeBar" */ = {
+		F9CCA49BAA5FEB01F71B9108 /* Build configuration list for PBXProject "StackLight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8AC86974767333770E84A514 /* Debug */,

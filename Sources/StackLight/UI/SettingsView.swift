@@ -353,7 +353,7 @@ struct GeneralSettingsDetail: View {
             // About section
             settingsCard {
                 VStack(spacing: 0) {
-                    row(label: "App", value: "ShapeBar")
+                    row(label: "App", value: "StackLight")
                     Divider().padding(.leading, 16)
                     row(label: "Version", value: "1.0.0")
                 }

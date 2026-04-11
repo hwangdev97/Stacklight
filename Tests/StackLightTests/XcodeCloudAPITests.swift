@@ -1,5 +1,5 @@
 import XCTest
-@testable import ShapeBar
+@testable import StackLight
 import AppStoreConnect_Swift_SDK
 
 /// Live integration tests for Xcode Cloud API.

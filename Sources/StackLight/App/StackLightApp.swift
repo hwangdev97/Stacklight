@@ -1,11 +1,11 @@
 import SwiftUI
 
 @main
-struct ShapeBarApp: App {
+struct StackLightApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        Window("ShapeBar Settings", id: "settings") {
+        Window("StackLight Settings", id: "settings") {
             SettingsViewContainer()
                 .environmentObject(appDelegate.appState)
         }

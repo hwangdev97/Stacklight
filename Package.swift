@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "ShapeBar",
+    name: "StackLight",
     platforms: [.macOS(.v13)],
     dependencies: [
         .package(url: "https://github.com/AvdLee/appstoreconnect-swift-sdk.git",
@@ -10,15 +10,15 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "ShapeBar",
+            name: "StackLight",
             dependencies: [
                 .product(name: "AppStoreConnect-Swift-SDK", package: "appstoreconnect-swift-sdk")
             ],
-            path: "Sources/ShapeBar"
+            path: "Sources/StackLight"
         ),
         .testTarget(
-            name: "ShapeBarTests",
-            dependencies: ["ShapeBar"]
+            name: "StackLightTests",
+            dependencies: ["StackLight"]
         )
     ]
 )

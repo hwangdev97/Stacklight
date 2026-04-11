@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "triangleshape.fill",
-                                   accessibilityDescription: "ShapeBar")
+                                   accessibilityDescription: "StackLight")
         }
 
         // Build initial menu
@@ -50,12 +50,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let hasFailedDeploy = appState.deployments.contains { $0.status == .failed }
 
         if hasErrors || hasFailedDeploy {
-            var image = NSImage(systemSymbolName: "triangleshape.fill", accessibilityDescription: "ShapeBar")
+            var image = NSImage(systemSymbolName: "triangleshape.fill", accessibilityDescription: "StackLight")
             let config = NSImage.SymbolConfiguration(paletteColors: [.systemRed])
             image = image?.withSymbolConfiguration(config)
             statusItem.button?.image = image
         } else {
-            statusItem.button?.image = NSImage(systemSymbolName: "triangleshape.fill", accessibilityDescription: "ShapeBar")
+            statusItem.button?.image = NSImage(systemSymbolName: "triangleshape.fill", accessibilityDescription: "StackLight")
         }
     }
 
@@ -71,14 +71,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openSettings(_ sender: NSMenuItem) {
         NSApp.activate(ignoringOtherApps: true)
 
-        if let window = NSApp.windows.first(where: { $0.title == "ShapeBar Settings" }) {
+        if let window = NSApp.windows.first(where: { $0.title == "StackLight Settings" }) {
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
         } else if let openWindow = appState.openSettingsWindow {
             openWindow()
             // The window is created asynchronously; bring it front on next run loop
             DispatchQueue.main.async {
-                if let window = NSApp.windows.first(where: { $0.title == "ShapeBar Settings" }) {
+                if let window = NSApp.windows.first(where: { $0.title == "StackLight Settings" }) {
                     window.makeKeyAndOrderFront(nil)
                     window.orderFrontRegardless()
                 }

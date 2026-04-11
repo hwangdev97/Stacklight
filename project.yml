@@ -1,4 +1,4 @@
-name: ShapeBar
+name: StackLight
 options:
   xcodeVersion: "26.0"
   deploymentTarget:
@@ -12,19 +12,19 @@ packages:
     majorVersion: 4.0.0
 
 targets:
-  ShapeBar:
+  StackLight:
     type: application
     platform: macOS
     sources:
-      - path: Sources/ShapeBar
+      - path: Sources/StackLight
         excludes:
           - "Info.plist"
-          - "ShapeBar.entitlements"
+          - "StackLight.entitlements"
     info:
-      path: Sources/ShapeBar/Info.plist
+      path: Sources/StackLight/Info.plist
       properties:
         CFBundleIdentifier: com.shapebar.app
-        CFBundleName: ShapeBar
+        CFBundleName: StackLight
         CFBundleIconName: AppIcon
         CFBundleIconFile: AppIcon
         ITSAppUsesNonExemptEncryption: false
@@ -37,7 +37,7 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
-        CODE_SIGN_ENTITLEMENTS: Sources/ShapeBar/ShapeBar.entitlements
+        CODE_SIGN_ENTITLEMENTS: Sources/StackLight/StackLight.entitlements
         ENABLE_APP_SANDBOX: true
         GENERATE_INFOPLIST_FILE: false
         SWIFT_VERSION: "5.9"
@@ -45,13 +45,13 @@ targets:
     dependencies:
       - package: AppStoreConnect-Swift-SDK
 
-  ShapeBarTests:
+  StackLightTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: Tests/ShapeBarTests
+      - path: Tests/StackLightTests
     dependencies:
-      - target: ShapeBar
+      - target: StackLight
     settings:
       base:
         SWIFT_VERSION: "5.9"

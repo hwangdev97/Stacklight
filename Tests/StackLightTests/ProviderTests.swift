@@ -1,5 +1,5 @@
 import XCTest
-@testable import ShapeBar
+@testable import StackLight
 
 final class ProviderTests: XCTestCase {
     func testServiceRegistryRegistersBuiltInProviders() {

@@ -80,7 +80,7 @@ enum MenuBuilder {
         settingsItem.target = target
         menu.addItem(settingsItem)
 
-        let quitItem = NSMenuItem(title: "Quit ShapeBar", action: #selector(AppDelegate.quitApp(_:)), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit StackLight", action: #selector(AppDelegate.quitApp(_:)), keyEquivalent: "q")
         quitItem.target = target
         menu.addItem(quitItem)
 
