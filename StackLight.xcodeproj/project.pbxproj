@@ -345,7 +345,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.shapebar.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.tests;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -366,7 +366,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.shapebar.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.tests;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -386,12 +386,14 @@
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLight/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StackLight;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.shapebar;
+				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -528,12 +530,14 @@
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLight/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StackLight;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.shapebar;
+				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
