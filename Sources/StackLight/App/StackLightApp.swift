@@ -11,6 +11,13 @@ struct StackLightApp: App {
         }
         .defaultSize(width: 660, height: 500)
         .windowResizability(.contentSize)
+
+        Window("Send Feedback", id: "feedback") {
+            FeedbackWindowContent()
+                .environmentObject(appDelegate.appState)
+        }
+        .defaultSize(width: 560, height: 520)
+        .windowResizability(.contentSize)
     }
 }
 

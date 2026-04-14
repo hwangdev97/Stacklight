@@ -86,6 +86,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @objc func openFeedback(_ sender: NSMenuItem) {
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let window = NSApp.windows.first(where: { $0.title == "Send Feedback" }) {
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+        } else if let openWindow = appState.openFeedbackWindow {
+            openWindow()
+            DispatchQueue.main.async {
+                if let window = NSApp.windows.first(where: { $0.title == "Send Feedback" }) {
+                    window.makeKeyAndOrderFront(nil)
+                    window.orderFrontRegardless()
+                }
+            }
+        }
+    }
+
     @objc func quitApp(_ sender: NSMenuItem) {
         NSApp.terminate(nil)
     }

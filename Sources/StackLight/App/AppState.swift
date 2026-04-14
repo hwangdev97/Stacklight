@@ -9,6 +9,7 @@ final class AppState: ObservableObject {
 
     var onDeploymentsChanged: (() -> Void)?
     var openSettingsWindow: (() -> Void)?
+    var openFeedbackWindow: (() -> Void)?
 
     private let pollingManager = PollingManager()
     private let notificationManager = NotificationManager()
