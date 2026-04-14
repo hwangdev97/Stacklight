@@ -7,6 +7,7 @@ import ServiceManagement
 private enum SettingsItem: Hashable {
     case provider(String)
     case general
+    case feedback
 }
 
 // MARK: - Root Settings View
@@ -27,6 +28,8 @@ struct SettingsView: View {
                 Section {
                     Label("General", systemImage: "gear")
                         .tag(SettingsItem.general)
+                    Label("Send Feedback", systemImage: "bubble.left.and.bubble.right")
+                        .tag(SettingsItem.feedback)
                 }
             }
             .listStyle(.sidebar)
@@ -42,6 +45,10 @@ struct SettingsView: View {
                         }
                     case .general:
                         GeneralSettingsDetail()
+                    case .feedback:
+                        FeedbackView(onOpenGitHubSettings: {
+                            selection = .provider("githubPRs")
+                        })
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .top)

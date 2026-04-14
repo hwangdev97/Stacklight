@@ -80,6 +80,10 @@ enum MenuBuilder {
         settingsItem.target = target
         menu.addItem(settingsItem)
 
+        let feedbackItem = NSMenuItem(title: "Send Feedback…", action: #selector(AppDelegate.openFeedback(_:)), keyEquivalent: "")
+        feedbackItem.target = target
+        menu.addItem(feedbackItem)
+
         let quitItem = NSMenuItem(title: "Quit StackLight", action: #selector(AppDelegate.quitApp(_:)), keyEquivalent: "q")
         quitItem.target = target
         menu.addItem(quitItem)
