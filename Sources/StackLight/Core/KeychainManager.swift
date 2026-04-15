@@ -8,7 +8,7 @@ enum KeychainError: Error {
 }
 
 enum KeychainManager {
-    private static let service = "com.shapebar.app"
+    private static let service = "app.yellowplus.StackLight"
 
     static func save(key: String, value: String) throws {
         let data = Data(value.utf8)
