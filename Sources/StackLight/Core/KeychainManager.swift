@@ -8,7 +8,7 @@ enum KeychainError: Error {
 }
 
 enum KeychainManager {
-    private static let service = "com.shapebar.app"
+    private static let service = "app.yellowplus.StackLight"
 
     static func save(key: String, value: String) throws {
         let data = Data(value.utf8)
@@ -17,13 +17,16 @@ enum KeychainManager {
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key
+            kSecAttrAccount as String: key,
+            kSecUseDataProtectionKeychain as String: true
         ]
         SecItemDelete(deleteQuery as CFDictionary)
 
-        // Add new item
+        // Add new item. Data Protection Keychain + AfterFirstUnlock gives us
+        // per-app scoped storage with no ACL prompts on read.
         var addQuery = deleteQuery
         addQuery[kSecValueData as String] = data
+        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {
             throw KeychainError.saveFailed(status)
@@ -36,7 +39,8 @@ enum KeychainManager {
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
             kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnData as String: true
+            kSecReturnData as String: true,
+            kSecUseDataProtectionKeychain as String: true
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -50,7 +54,8 @@ enum KeychainManager {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key
+            kSecAttrAccount as String: key,
+            kSecUseDataProtectionKeychain as String: true
         ]
         SecItemDelete(query as CFDictionary)
     }

@@ -15,13 +15,12 @@ final class TestFlightProvider: DeploymentProvider {
     }
 
     var isConfigured: Bool {
-        guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
-              let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let key = KeychainManager.read(key: "asc.privateKey"),
-              let appId = UserDefaults.standard.string(forKey: "testflight.appId") else {
+        guard ASCCredentialStore.current() != nil,
+              let appId = UserDefaults.standard.string(forKey: "testflight.appId"),
+              !appId.isEmpty else {
             return false
         }
-        return !issuerID.isEmpty && !keyID.isEmpty && !key.isEmpty && !appId.isEmpty
+        return true
     }
 
     func fetchDeployments() async throws -> [Deployment] {
@@ -67,22 +66,14 @@ final class TestFlightProvider: DeploymentProvider {
     }
 
     private func makeProvider() throws -> APIProvider {
-        guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
-              let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let rawKey = KeychainManager.read(key: "asc.privateKey") else {
+        guard let credentials = ASCCredentialStore.current() else {
             throw NSError(domain: "TestFlight", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "Missing API credentials — configure in Xcode Cloud tab"])
         }
-        let strippedKey = rawKey
-            .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-            .trimmingCharacters(in: .whitespaces)
-
         let config = try APIConfiguration(
-            issuerID: issuerID,
-            privateKeyID: keyID,
-            privateKey: strippedKey
+            issuerID: credentials.issuerID,
+            privateKeyID: credentials.keyID,
+            privateKey: credentials.privateKey
         )
         return APIProvider(configuration: config)
     }

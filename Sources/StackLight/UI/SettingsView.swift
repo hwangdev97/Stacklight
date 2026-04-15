@@ -282,6 +282,7 @@ struct ProviderSettingsDetail: View {
                 UserDefaults.standard.set(value, forKey: field.key)
             }
         }
+        ASCCredentialStore.invalidate()
     }
 }
 

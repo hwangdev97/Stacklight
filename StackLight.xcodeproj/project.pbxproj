@@ -18,6 +18,7 @@
 		997E74DB545F803BE430DD9C /* GitHubPRProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 727EA95BF441E34B0FEFFC26 /* GitHubPRProvider.swift */; };
 		A009FE7C7D14F2CCEDECEEAA /* StackLightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F48A2B9A0E04F41E65F2F7A /* StackLightApp.swift */; };
 		A1A6DAECEE46B9D0EDA59403 /* FlyioProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42673293FAE703C07EDB1FAB /* FlyioProvider.swift */; };
+		A5CC000000000000000C0002 /* ASCCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CC000000000000000C0001 /* ASCCredentialStore.swift */; };
 		A9AEE332B2F26ECB69677E75 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DE31FC9A86454A0ED345B72 /* KeychainManager.swift */; };
 		AFFCE570A10AFC9984E7EFCE /* SettingsField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6584ACCC14F56683E6E71BB1 /* SettingsField.swift */; };
 		B00BA478F3D848F0B174A0D7 /* Deployment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452BE7061114414077BE3169 /* Deployment.swift */; };
@@ -66,6 +67,7 @@
 		9603D7AC1B236EA7F1A8A7F5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		99FAE2F3B5FFF342DFAD6126 /* XcodeCloudProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeCloudProvider.swift; sourceTree = "<group>"; };
 		A28B2FDA1D4F20083DA9343A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A5CC000000000000000C0001 /* ASCCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASCCredentialStore.swift; sourceTree = "<group>"; };
 		AD465A0CA802CFD218868B0E /* ProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTests.swift; sourceTree = "<group>"; };
 		B0756E4313F95A5586B7EF88 /* XcodeCloudAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeCloudAPITests.swift; sourceTree = "<group>"; };
 		B5B397EFD1DA774B44508697 /* StackLightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StackLightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,6 +166,7 @@
 		C8883F849A14478954CDF596 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				A5CC000000000000000C0001 /* ASCCredentialStore.swift */,
 				452BE7061114414077BE3169 /* Deployment.swift */,
 				BD4D3A3EDDC1258DD610C9C2 /* DeploymentProvider.swift */,
 				7DE31FC9A86454A0ED345B72 /* KeychainManager.swift */,
@@ -288,6 +291,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5CC000000000000000C0002 /* ASCCredentialStore.swift in Sources */,
 				F7DC298E81376E7F5C9EB9FE /* AppDelegate.swift in Sources */,
 				7CCF4E98BAC76BAE9B7A25A7 /* AppState.swift in Sources */,
 				FE8679EF2C80D212EBF13C51 /* CloudflareProvider.swift in Sources */,

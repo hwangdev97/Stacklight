@@ -12,12 +12,7 @@ final class XcodeCloudProvider: DeploymentProvider {
     let dashboardURL = URL(string: "https://appstoreconnect.apple.com/apps")
 
     var isConfigured: Bool {
-        guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
-              let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let key = KeychainManager.read(key: "asc.privateKey") else {
-            return false
-        }
-        return !issuerID.isEmpty && !keyID.isEmpty && !key.isEmpty
+        ASCCredentialStore.current() != nil
     }
 
     func fetchDeployments() async throws -> [Deployment] {
@@ -69,23 +64,14 @@ final class XcodeCloudProvider: DeploymentProvider {
     }
 
     private func makeProvider() throws -> APIProvider {
-        guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
-              let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let rawKey = KeychainManager.read(key: "asc.privateKey") else {
+        guard let credentials = ASCCredentialStore.current() else {
             throw NSError(domain: "XcodeCloud", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "Missing API credentials — configure in Settings"])
         }
-        // SDK expects raw Base64 key content without PEM header/footer
-        let strippedKey = rawKey
-            .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-            .trimmingCharacters(in: .whitespaces)
-
         let config = try APIConfiguration(
-            issuerID: issuerID,
-            privateKeyID: keyID,
-            privateKey: strippedKey
+            issuerID: credentials.issuerID,
+            privateKeyID: credentials.keyID,
+            privateKey: credentials.privateKey
         )
         return APIProvider(configuration: config)
     }
