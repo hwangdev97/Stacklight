@@ -209,6 +209,7 @@ struct ProviderSettingsView: View {
                 UserDefaults.standard.set(value, forKey: field.key)
             }
         }
+        ASCCredentialStore.invalidate()
     }
 
     private func saveAndRestart() {
