@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StackLight Provider Configuration",
+  "description": "Authoritative field list for every StackLight provider. Mirrors settingsFields() in Sources/StackLight/Providers/*.swift. Fields marked secret live in macOS Keychain; non-secret fields live in UserDefaults.",
+  "providers": {
+    "vercel": {
+      "displayName": "Vercel",
+      "docs": "https://vercel.com/account/tokens",
+      "fields": [
+        { "key": "vercel.token",  "label": "API Token", "secret": true,  "required": true,  "placeholder": "Bearer token from Vercel dashboard" },
+        { "key": "vercel.teamId", "label": "Team ID",   "secret": false, "required": false, "placeholder": "Optional, for team deployments" }
+      ],
+      "testEndpoint": "https://api.vercel.com/v2/user",
+      "testAuth": "Bearer ${vercel.token}"
+    },
+    "cloudflare": {
+      "displayName": "Cloudflare Pages",
+      "docs": "https://dash.cloudflare.com/profile/api-tokens",
+      "fields": [
+        { "key": "cloudflare.token",        "label": "API Token",     "secret": true,  "required": true,  "placeholder": "Cloudflare API token" },
+        { "key": "cloudflare.accountId",    "label": "Account ID",    "secret": false, "required": true,  "placeholder": "32-character hex string", "hint": "Found in dashboard URL: dash.cloudflare.com/<account-id>" },
+        { "key": "cloudflare.projectNames", "label": "Project Names", "secret": false, "required": false, "placeholder": "Comma-separated: my-site, docs", "hint": "Leave empty to auto-discover all Pages projects" }
+      ],
+      "testEndpoint": "https://api.cloudflare.com/client/v4/accounts/${cloudflare.accountId}/pages/projects",
+      "testAuth": "Bearer ${cloudflare.token}"
+    },
+    "githubActions": {
+      "displayName": "GitHub Actions",
+      "docs": "https://github.com/settings/tokens",
+      "fields": [
+        { "key": "github.token", "label": "Personal Access Token", "secret": true,  "required": true, "placeholder": "ghp_... (needs repo scope)" },
+        { "key": "github.repos", "label": "Repositories",          "secret": false, "required": true, "placeholder": "owner/repo, owner/repo2" }
+      ],
+      "testEndpoint": "https://api.github.com/user",
+      "testAuth": "Bearer ${github.token}",
+      "credentialSharedWith": ["githubPR"]
+    },
+    "githubPR": {
+      "displayName": "GitHub Pull Requests",
+      "docs": "https://github.com/settings/tokens",
+      "fields": [
+        { "key": "github.token",    "label": "Personal Access Token", "secret": true,  "required": true, "placeholder": "ghp_... (needs repo scope)" },
+        { "key": "github.pr.repos", "label": "Repositories",          "secret": false, "required": true, "multiValue": true, "placeholder": "owner/repo", "hint": "Add repos to watch for open PRs" }
+      ],
+      "testEndpoint": "https://api.github.com/user",
+      "testAuth": "Bearer ${github.token}",
+      "credentialSharedWith": ["githubActions"]
+    },
+    "netlify": {
+      "displayName": "Netlify",
+      "docs": "https://app.netlify.com/user/applications#personal-access-tokens",
+      "fields": [
+        { "key": "netlify.token",   "label": "Personal Access Token", "secret": true,  "required": true, "placeholder": "PAT from Netlify dashboard" },
+        { "key": "netlify.siteIds", "label": "Site IDs",              "secret": false, "required": true, "placeholder": "Comma-separated site IDs or names" }
+      ],
+      "testEndpoint": "https://api.netlify.com/api/v1/sites",
+      "testAuth": "Bearer ${netlify.token}"
+    },
+    "railway": {
+      "displayName": "Railway",
+      "docs": "https://railway.app/account/tokens",
+      "fields": [
+        { "key": "railway.token",     "label": "API Token", "secret": true,  "required": true, "placeholder": "Railway API token" },
+        { "key": "railway.projectId", "label": "Project ID","secret": false, "required": true, "placeholder": "Railway project ID" }
+      ],
+      "testEndpoint": "https://backboard.railway.app/graphql/v2",
+      "testAuth": "Bearer ${railway.token}",
+      "testMethod": "POST",
+      "testBody": "{\"query\":\"{ me { id } }\"}"
+    },
+    "flyio": {
+      "displayName": "Fly.io",
+      "docs": "https://fly.io/docs/flyctl/tokens-create/",
+      "fields": [
+        { "key": "flyio.token", "label": "API Token", "secret": true,  "required": true, "placeholder": "Fly.io API token (fly tokens create)" },
+        { "key": "flyio.apps",  "label": "App Names", "secret": false, "required": true, "placeholder": "Comma-separated: my-app, my-api" }
+      ],
+      "testEndpoint": "https://api.machines.dev/v1/apps",
+      "testAuth": "Bearer ${flyio.token}"
+    },
+    "xcodeCloud": {
+      "displayName": "Xcode Cloud",
+      "docs": "https://appstoreconnect.apple.com/access/integrations/api",
+      "fields": [
+        { "key": "asc.issuerID",     "label": "Issuer ID",       "secret": true, "required": true, "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "hint": "Users and Access → Integrations → App Store Connect API → Issuer ID" },
+        { "key": "asc.privateKeyID", "label": "Key ID",          "secret": true, "required": true, "placeholder": "e.g. ABC1234DEF",                         "hint": "Same page → Keys table → Key ID column" },
+        { "key": "asc.privateKey",   "label": "Private Key (.p8)","secret": true, "required": true, "placeholder": "-----BEGIN PRIVATE KEY-----...",          "hint": "Download the .p8 file when creating the key (one-time only), then paste its contents here" }
+      ],
+      "credentialSharedWith": ["testFlight"]
+    },
+    "testFlight": {
+      "displayName": "TestFlight",
+      "docs": "https://appstoreconnect.apple.com",
+      "fields": [
+        { "key": "testflight.appId", "label": "App ID", "secret": false, "required": true, "placeholder": "App Store Connect App ID (numeric)", "hint": "API credentials are shared with Xcode Cloud — configure them in the Xcode Cloud tab first" }
+      ],
+      "credentialSharedWith": ["xcodeCloud"],
+      "requires": ["asc.issuerID", "asc.privateKeyID", "asc.privateKey"]
+    }
+  }
+}
