@@ -4,6 +4,7 @@ final class GitHubActionsProvider: DeploymentProvider {
     let id = "githubActions"
     let displayName = "GitHub Actions"
     let iconSymbol = "gear.badge.checkmark"
+    let iconAsset: String? = "github"
     let docsURL = URL(string: "https://github.com/settings/tokens")
 
     var isConfigured: Bool {
