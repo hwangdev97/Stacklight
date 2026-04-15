@@ -6,6 +6,7 @@ final class AppState: ObservableObject {
     @Published var deployments: [Deployment] = []
     @Published var errors: [String: String] = [:]
     @Published var lastRefresh: Date?
+    @Published var isRefreshing: Bool = false
 
     private let pollingManager = PollingManager()
     private let notificationManager = NotificationManager()
@@ -19,16 +20,19 @@ final class AppState: ObservableObject {
             let old = self.deployments
             self.deployments = newDeployments
             self.lastRefresh = Date()
+            self.isRefreshing = false
             self.notificationManager.checkForChanges(old: old, new: newDeployments)
         }
         pollingManager.onError = { [weak self] providerID, error in
             self?.errors[providerID] = error.localizedDescription
+            self?.isRefreshing = false
         }
         pollingManager.start()
     }
 
     func refresh() {
         errors.removeAll()
+        isRefreshing = true
         pollingManager.refresh()
     }
 

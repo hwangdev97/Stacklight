@@ -10,6 +10,7 @@ struct ProviderSettingsView: View {
     @State private var testing = false
     @State private var testResult: TestResult?
     @State private var showDeleteConfirm = false
+    @FocusState private var focusedKey: String?
 
     /// When true, Save dismisses back to caller (used from AddIntegrationView).
     var dismissOnSave: Bool = false
@@ -19,32 +20,41 @@ struct ProviderSettingsView: View {
         case failure(String)
     }
 
-    var body: some View {
-        Form {
-            headerSection
+    private var theme: ProviderTheme { ProviderTheme.forProviderID(provider.id) }
 
-            if let error = appState.errors[provider.id] {
-                Section {
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text(error).font(.caption)
+    // MARK: Body
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            DesignTokens.Palette.background.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.md) {
+                    heroBanner
+
+                    if let error = appState.errors[provider.id] {
+                        errorRow(error)
+                    }
+
+                    credentialCard
+
+                    multiValueCards
+
+                    actionCard
+
+                    if provider.isConfigured {
+                        deleteCard
                     }
                 }
-            }
-
-            credentialSections
-
-            multiValueSections
-
-            actionSection
-
-            if provider.isConfigured {
-                deleteSection
+                .padding(.horizontal, DesignTokens.Spacing.lg)
+                .padding(.bottom, DesignTokens.Spacing.xxl)
             }
         }
         .navigationTitle(provider.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .preferredColorScheme(.dark)
+        .tint(.white)
         .onAppear(perform: loadFields)
         .confirmationDialog(
             "Delete \(provider.displayName) integration?",
@@ -58,19 +68,17 @@ struct ProviderSettingsView: View {
         }
     }
 
-    // MARK: - Sections
+    // MARK: Hero banner
 
-    private var headerSection: some View {
-        Section {
-            VStack(spacing: 10) {
-                Image(systemName: provider.iconSymbol)
-                    .font(.system(size: 32))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 56, height: 56)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    private var heroBanner: some View {
+        ZStack {
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                GlassIconChip(systemImage: provider.iconSymbol,
+                              tint: theme.accent, size: 58)
 
                 Text(provider.displayName)
-                    .font(.headline)
+                    .font(DesignTokens.Typography.sectionTitle)
+                    .foregroundStyle(.white)
 
                 if let docsURL = provider.docsURL {
                     Link(destination: docsURL) {
@@ -78,106 +86,194 @@ struct ProviderSettingsView: View {
                             Text("How to get credentials")
                             Image(systemName: "arrow.up.right")
                         }
-                        .font(.caption)
+                        .font(DesignTokens.Typography.chipLabel)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .liquidGlassChip()
                     }
                 }
             }
+            .padding(.vertical, DesignTokens.Spacing.xl)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .listRowBackground(Color.clear)
         }
+        .background(
+            GlowBackground(
+                theme: theme,
+                shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.lg,
+                                        style: .continuous),
+                intensity: 1.0)
+        )
     }
 
+    // MARK: Error row
+
+    private func errorRow(_ error: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(DesignTokens.Palette.failure)
+            Text(error)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(.white.opacity(0.9))
+            Spacer()
+        }
+        .padding(DesignTokens.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                             style: .continuous)
+                .fill(DesignTokens.Palette.failure.opacity(0.18))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                             style: .continuous)
+                .stroke(DesignTokens.Palette.failure.opacity(0.35), lineWidth: 1)
+        )
+    }
+
+    // MARK: Credential card
+
     @ViewBuilder
-    private var credentialSections: some View {
+    private var credentialCard: some View {
         let singleFields = provider.settingsFields().filter { !$0.isMultiValue }
         if !singleFields.isEmpty {
-            Section("Credentials") {
-                ForEach(singleFields) { field in
-                    VStack(alignment: .leading, spacing: 4) {
-                        if field.isSecret {
-                            SecureField(field.placeholder, text: binding(for: field))
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                        } else {
-                            TextField(field.placeholder, text: binding(for: field))
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                        }
-                        Text(field.label)
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                        if let hint = field.hint {
-                            Text(hint)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
+            SettingsCard(title: "Credentials") {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
+                    ForEach(singleFields) { field in
+                        credentialField(field)
                     }
-                    .padding(.vertical, 2)
                 }
             }
         }
     }
 
     @ViewBuilder
-    private var multiValueSections: some View {
+    private func credentialField(_ field: SettingsField) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(field.label)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(.white.opacity(0.70))
+
+            GlassTextField(
+                placeholder: field.placeholder,
+                text: binding(for: field),
+                isSecret: field.isSecret,
+                accent: theme.accent,
+                isFocused: focusedKey == field.key
+            )
+            .focused($focusedKey, equals: field.key)
+
+            if let hint = field.hint {
+                Text(hint)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+    }
+
+    // MARK: Multi-value cards
+
+    @ViewBuilder
+    private var multiValueCards: some View {
         ForEach(provider.settingsFields().filter(\.isMultiValue)) { field in
-            MultiValueFieldSection(field: field, rawValue: binding(for: field))
+            SettingsCard(title: field.label, footer: field.hint) {
+                MultiValueFieldSection(field: field,
+                                        rawValue: binding(for: field),
+                                        accent: theme.accent)
+            }
         }
     }
 
-    private var actionSection: some View {
-        Section {
-            Button {
-                saveAndRestart()
-            } label: {
-                HStack {
-                    Label("Save", systemImage: "checkmark")
-                    Spacer()
-                    if saved {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                    }
-                }
-            }
+    // MARK: Actions card
 
-            Button {
-                Task { await testConnection() }
-            } label: {
-                HStack {
-                    Label("Test Connection", systemImage: "network")
-                    Spacer()
-                    if testing {
-                        ProgressView()
-                    } else if let result = testResult {
-                        switch result {
-                        case .success(let count):
-                            Label("\(count)", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                                .labelStyle(.titleAndIcon)
-                                .font(.caption)
-                        case .failure(let msg):
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.red)
-                                .help(msg)
-                        }
-                    }
+    private var actionCard: some View {
+        SettingsCard(title: nil) {
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                Button(action: saveAndRestart) {
+                    actionRow(icon: "checkmark",
+                              title: "Save",
+                              trailing: saved ? AnyView(
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(DesignTokens.Palette.success))
+                                              : nil)
                 }
+                .buttonStyle(.plain)
+
+                Divider().overlay(DesignTokens.Palette.hairline)
+
+                Button {
+                    Task { await testConnection() }
+                } label: {
+                    actionRow(
+                        icon: "network",
+                        title: "Test Connection",
+                        trailing: testTrailing)
+                }
+                .buttonStyle(.plain)
+                .disabled(testing)
             }
-            .disabled(testing)
         }
     }
 
-    private var deleteSection: some View {
-        Section {
+    @ViewBuilder
+    private var testTrailing: AnyView? {
+        if testing {
+            return AnyView(ProgressView().tint(.white))
+        }
+        switch testResult {
+        case .success(let count):
+            return AnyView(
+                HStack(spacing: 4) {
+                    Text("\(count)")
+                    Image(systemName: "checkmark.circle.fill")
+                }
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Palette.success))
+        case .failure:
+            return AnyView(
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(DesignTokens.Palette.failure))
+        case nil:
+            return nil
+        }
+    }
+
+    private func actionRow(icon: String, title: String, trailing: AnyView?) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(theme.accent)
+                .frame(width: 22)
+            Text(title)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(.white)
+            Spacer()
+            if let trailing { trailing }
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: Delete card
+
+    private var deleteCard: some View {
+        SettingsCard(title: nil) {
             Button(role: .destructive) {
                 showDeleteConfirm = true
             } label: {
-                Label("Delete Integration", systemImage: "trash")
+                HStack {
+                    Image(systemName: "trash")
+                        .foregroundStyle(DesignTokens.Palette.failure)
+                        .frame(width: 22)
+                    Text("Delete Integration")
+                        .foregroundStyle(DesignTokens.Palette.failure)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                    Spacer()
+                }
+                .padding(.vertical, 4)
             }
+            .buttonStyle(.plain)
         }
     }
 
-    // MARK: - Bindings & Persistence
+    // MARK: Bindings & Persistence
 
     private func binding(for field: SettingsField) -> Binding<String> {
         Binding(
@@ -252,12 +348,91 @@ struct ProviderSettingsView: View {
     }
 }
 
+// MARK: - SettingsCard (reusable glass container)
+
+struct SettingsCard<Content: View>: View {
+    let title: String?
+    var footer: String? = nil
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            if let title {
+                Text(title.uppercased())
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .tracking(0.5)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .padding(.horizontal, 6)
+            }
+
+            content()
+                .padding(DesignTokens.Spacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.md,
+                                     style: .continuous)
+                        .fill(DesignTokens.Palette.surface.opacity(0.65))
+                )
+                .liquidGlass(in: RoundedRectangle(
+                    cornerRadius: DesignTokens.Radius.md,
+                    style: .continuous))
+
+            if let footer {
+                Text(footer)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .padding(.horizontal, 6)
+            }
+        }
+    }
+}
+
+// MARK: - GlassTextField
+
+struct GlassTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    var isSecret: Bool = false
+    var accent: Color = .white
+    var isFocused: Bool = false
+
+    var body: some View {
+        Group {
+            if isSecret {
+                SecureField(placeholder, text: $text)
+            } else {
+                TextField(placeholder, text: $text)
+            }
+        }
+        .textInputAutocapitalization(.never)
+        .autocorrectionDisabled()
+        .font(.system(size: 15, weight: .medium, design: .rounded))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                             style: .continuous)
+                .fill(Color.white.opacity(isFocused ? 0.10 : 0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                             style: .continuous)
+                .stroke(isFocused ? accent.opacity(0.70) : Color.white.opacity(0.10),
+                        lineWidth: isFocused ? 1.5 : 1)
+        )
+        .animation(.easeOut(duration: 0.2), value: isFocused)
+    }
+}
+
 // MARK: - Multi-value Field
 
 private struct MultiValueFieldSection: View {
     let field: SettingsField
     @Binding var rawValue: String
+    var accent: Color
     @State private var newItem: String = ""
+    @FocusState private var inputFocused: Bool
 
     private var items: [String] {
         rawValue
@@ -267,42 +442,70 @@ private struct MultiValueFieldSection: View {
     }
 
     var body: some View {
-        Section {
-            ForEach(items, id: \.self) { item in
-                HStack {
-                    Text(item)
-                        .font(.body.monospaced())
-                        .lineLimit(1)
-                    Spacer()
-                    Button(role: .destructive) {
-                        removeItem(item)
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .foregroundStyle(.red)
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            if !items.isEmpty {
+                FlowLayout(spacing: 6) {
+                    ForEach(items, id: \.self) { item in
+                        chip(for: item)
                     }
-                    .buttonStyle(.plain)
                 }
             }
 
-            HStack {
+            HStack(spacing: 8) {
                 TextField(field.placeholder, text: $newItem)
+                    .focused($inputFocused)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .onSubmit(addItem)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                                         style: .continuous)
+                            .fill(Color.white.opacity(inputFocused ? 0.10 : 0.05))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                                         style: .continuous)
+                            .stroke(inputFocused ? accent.opacity(0.7)
+                                                 : Color.white.opacity(0.10),
+                                    lineWidth: inputFocused ? 1.5 : 1)
+                    )
                 Button(action: addItem) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(newItem.trimmingCharacters(in: .whitespaces).isEmpty ? .secondary : .accentColor)
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                        .liquidGlassCircle()
                 }
                 .buttonStyle(.plain)
                 .disabled(newItem.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-        } header: {
-            Text(field.label)
-        } footer: {
-            if let hint = field.hint {
-                Text(hint)
+                .opacity(newItem.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
             }
         }
+    }
+
+    private func chip(for item: String) -> some View {
+        HStack(spacing: 6) {
+            Text(item)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            Button {
+                removeItem(item)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.8))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 10)
+        .padding(.trailing, 6)
+        .padding(.vertical, 5)
+        .liquidGlassChip()
     }
 
     private func addItem() {
@@ -319,5 +522,50 @@ private struct MultiValueFieldSection: View {
     private func removeItem(_ item: String) {
         let filtered = items.filter { $0 != item }
         rawValue = filtered.joined(separator: ", ")
+    }
+}
+
+// MARK: - FlowLayout (simple wrap layout for chips)
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
+
+        for sv in subviews {
+            let s = sv.sizeThatFits(.unspecified)
+            if x + s.width > maxWidth {
+                y += rowHeight + spacing
+                x = 0
+                rowHeight = 0
+            }
+            x += s.width + spacing
+            rowHeight = max(rowHeight, s.height)
+            totalWidth = max(totalWidth, x)
+        }
+        return CGSize(width: totalWidth, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for sv in subviews {
+            let s = sv.sizeThatFits(.unspecified)
+            if x + s.width > bounds.maxX {
+                y += rowHeight + spacing
+                x = bounds.minX
+                rowHeight = 0
+            }
+            sv.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
+            x += s.width + spacing
+            rowHeight = max(rowHeight, s.height)
+        }
     }
 }
