@@ -59,8 +59,9 @@ struct SettingsView: View {
 
     @ViewBuilder
     private func sidebarRow(provider: DeploymentProvider) -> some View {
-        HStack {
-            Label(provider.displayName, systemImage: provider.iconSymbol)
+        HStack(spacing: 8) {
+            providerIcon(provider, size: 20, cornerRadius: 5)
+            Text(provider.displayName)
             Spacer()
             if provider.isConfigured {
                 if appState.errors[provider.id] != nil {
@@ -69,6 +70,23 @@ struct SettingsView: View {
                     Circle().fill(.green).frame(width: 8, height: 8)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func providerIcon(_ provider: DeploymentProvider, size: CGFloat, cornerRadius: CGFloat) -> some View {
+        if let asset = provider.iconAsset {
+            Image(asset)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size * 0.6, height: size * 0.6)
+                .frame(width: size, height: size)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        } else {
+            Image(systemName: provider.iconSymbol)
+                .font(.system(size: size * 0.5))
+                .frame(width: size, height: size)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
     }
 }
@@ -92,11 +110,7 @@ struct ProviderSettingsDetail: View {
         VStack(spacing: 0) {
             // Header — like System Settings
             VStack(spacing: 8) {
-                Image(systemName: provider.iconSymbol)
-                    .font(.system(size: 40))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 56, height: 56)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                providerDetailIcon(provider)
 
                 Text(provider.displayName)
                     .font(.title2.weight(.semibold))
@@ -266,6 +280,24 @@ struct ProviderSettingsDetail: View {
             testing = false
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             testResult = nil
+        }
+    }
+
+    @ViewBuilder
+    private func providerDetailIcon(_ provider: DeploymentProvider) -> some View {
+        if let asset = provider.iconAsset {
+            Image(asset)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 32, height: 32)
+                .frame(width: 56, height: 56)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        } else {
+            Image(systemName: provider.iconSymbol)
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+                .frame(width: 56, height: 56)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
@@ -508,3 +540,22 @@ struct MultiValueFieldView: View {
         rawValue = current.joined(separator: ", ")
     }
 }
+
+// MARK: - Previews
+
+#Preview("Settings — Full") {
+    SettingsView()
+        .environmentObject(AppState())
+}
+
+#Preview("Settings — General") {
+    GeneralSettingsDetail()
+        .frame(width: 480, height: 500)
+}
+
+#Preview("Settings — Provider") {
+    ProviderSettingsDetail(provider: ServiceRegistry.shared.providers.first!)
+        .environmentObject(AppState())
+        .frame(width: 480, height: 500)
+}
+

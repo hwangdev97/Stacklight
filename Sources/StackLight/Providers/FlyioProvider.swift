@@ -4,6 +4,7 @@ final class FlyioProvider: DeploymentProvider {
     let id = "flyio"
     let displayName = "Fly.io"
     let iconSymbol = "paperplane.fill"
+    let iconAsset: String? = "flydotio"
     let docsURL = URL(string: "https://fly.io/docs/flyctl/tokens-create/")
 
     let dashboardURL = URL(string: "https://fly.io/dashboard")

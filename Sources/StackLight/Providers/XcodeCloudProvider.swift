@@ -5,6 +5,7 @@ final class XcodeCloudProvider: DeploymentProvider {
     let id = "xcodeCloud"
     let displayName = "Xcode Cloud"
     let iconSymbol = "hammer.fill"
+    let iconAsset: String? = "xcode"
     let docsURL = URL(string: "https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api")
 
     // App Store Connect doesn't have a stable per-team dashboard URL without

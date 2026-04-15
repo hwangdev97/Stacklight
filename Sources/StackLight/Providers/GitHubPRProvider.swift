@@ -4,6 +4,7 @@ final class GitHubPRProvider: DeploymentProvider {
     let id = "githubPRs"
     let displayName = "GitHub Pull Requests"
     let iconSymbol = "arrow.triangle.pull"
+    let iconAsset: String? = "github"
     let docsURL = URL(string: "https://github.com/settings/tokens")
 
     var dashboardURL: URL? {

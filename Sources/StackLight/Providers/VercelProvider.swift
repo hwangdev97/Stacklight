@@ -4,6 +4,7 @@ final class VercelProvider: DeploymentProvider {
     let id = "vercel"
     let displayName = "Vercel"
     let iconSymbol = "triangleshape.fill"
+    let iconAsset: String? = "vercel"
     let docsURL = URL(string: "https://vercel.com/account/tokens")
 
     var dashboardURL: URL? {

@@ -4,6 +4,7 @@ final class NetlifyProvider: DeploymentProvider {
     let id = "netlify"
     let displayName = "Netlify"
     let iconSymbol = "network"
+    let iconAsset: String? = "netlify"
     let docsURL = URL(string: "https://app.netlify.com/user/applications#personal-access-tokens")
 
     let dashboardURL = URL(string: "https://app.netlify.com")

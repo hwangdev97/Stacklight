@@ -10,6 +10,9 @@ protocol DeploymentProvider: AnyObject {
     /// SF Symbol name for this service
     var iconSymbol: String { get }
 
+    /// Asset catalog image name (SVG icon), if available
+    var iconAsset: String? { get }
+
     /// Whether the provider has valid credentials configured
     var isConfigured: Bool { get }
 
@@ -31,5 +34,6 @@ protocol DeploymentProvider: AnyObject {
 
 extension DeploymentProvider {
     var docsURL: URL? { nil }
+    var iconAsset: String? { nil }
     var dashboardURL: URL? { nil }
 }
