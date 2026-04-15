@@ -6,6 +6,13 @@ final class RailwayProvider: DeploymentProvider {
     let iconSymbol = "train.side.front.car"
     let docsURL = URL(string: "https://docs.railway.com/reference/public-api#creating-a-token")
 
+    var dashboardURL: URL? {
+        if let projectId = UserDefaults.standard.string(forKey: "railway.projectId"), !projectId.isEmpty {
+            return URL(string: "https://railway.com/project/\(projectId)")
+        }
+        return URL(string: "https://railway.com/dashboard")
+    }
+
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "railway.token"), !token.isEmpty else { return false }
         let projectId = UserDefaults.standard.string(forKey: "railway.projectId") ?? ""

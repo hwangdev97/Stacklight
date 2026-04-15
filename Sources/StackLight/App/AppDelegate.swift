@@ -64,6 +64,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSWorkspace.shared.open(url)
     }
 
+    @objc func openDashboardURL(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     @objc func refreshNow(_ sender: NSMenuItem) {
         appState.refresh()
     }

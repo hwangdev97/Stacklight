@@ -6,6 +6,13 @@ final class CloudflareProvider: DeploymentProvider {
     let iconSymbol = "cloud.fill"
     let docsURL = URL(string: "https://dash.cloudflare.com/profile/api-tokens")
 
+    var dashboardURL: URL? {
+        if let accountId = UserDefaults.standard.string(forKey: "cloudflare.accountId"), !accountId.isEmpty {
+            return URL(string: "https://dash.cloudflare.com/\(accountId)/workers-and-pages")
+        }
+        return URL(string: "https://dash.cloudflare.com")
+    }
+
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
               let accountId = UserDefaults.standard.string(forKey: "cloudflare.accountId") else {

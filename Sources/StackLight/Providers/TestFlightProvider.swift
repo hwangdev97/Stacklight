@@ -7,6 +7,13 @@ final class TestFlightProvider: DeploymentProvider {
     let iconSymbol = "airplane"
     let docsURL = URL(string: "https://appstoreconnect.apple.com/apps")
 
+    var dashboardURL: URL? {
+        if let appId = UserDefaults.standard.string(forKey: "testflight.appId"), !appId.isEmpty {
+            return URL(string: "https://appstoreconnect.apple.com/apps/\(appId)/testflight/ios")
+        }
+        return URL(string: "https://appstoreconnect.apple.com/apps")
+    }
+
     var isConfigured: Bool {
         guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
               let keyID = KeychainManager.read(key: "asc.privateKeyID"),

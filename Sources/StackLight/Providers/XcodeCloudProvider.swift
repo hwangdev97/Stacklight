@@ -7,6 +7,10 @@ final class XcodeCloudProvider: DeploymentProvider {
     let iconSymbol = "hammer.fill"
     let docsURL = URL(string: "https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api")
 
+    // App Store Connect doesn't have a stable per-team dashboard URL without
+    // the team ID; land on the apps list which is where Xcode Cloud lives.
+    let dashboardURL = URL(string: "https://appstoreconnect.apple.com/apps")
+
     var isConfigured: Bool {
         guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
               let keyID = KeychainManager.read(key: "asc.privateKeyID"),

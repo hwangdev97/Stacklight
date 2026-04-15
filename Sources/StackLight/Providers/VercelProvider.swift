@@ -6,6 +6,13 @@ final class VercelProvider: DeploymentProvider {
     let iconSymbol = "triangleshape.fill"
     let docsURL = URL(string: "https://vercel.com/account/tokens")
 
+    var dashboardURL: URL? {
+        if let teamId = UserDefaults.standard.string(forKey: "vercel.teamId"), !teamId.isEmpty {
+            return URL(string: "https://vercel.com/\(teamId)")
+        }
+        return URL(string: "https://vercel.com/dashboard")
+    }
+
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "vercel.token") else { return false }
         return !token.isEmpty

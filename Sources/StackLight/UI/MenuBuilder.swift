@@ -26,13 +26,25 @@ enum MenuBuilder {
             for provider in configuredProviders {
                 let providerDeployments = grouped[provider.id] ?? []
 
-                // Section header
+                // Section header — clickable when the provider exposes a
+                // dashboardURL, so users can jump straight to the platform UI.
                 if menu.items.count > 0 {
                     menu.addItem(NSMenuItem.separator())
                 }
-                let header = NSMenuItem(title: provider.displayName, action: nil, keyEquivalent: "")
-                header.isEnabled = false
-                header.attributedTitle = sectionHeaderTitle(provider.displayName)
+                let hasDashboard = provider.dashboardURL != nil
+                let header = NSMenuItem(
+                    title: provider.displayName,
+                    action: hasDashboard ? #selector(AppDelegate.openDashboardURL(_:)) : nil,
+                    keyEquivalent: ""
+                )
+                header.attributedTitle = sectionHeaderTitle(provider.displayName, showsArrow: hasDashboard)
+                if hasDashboard {
+                    header.target = target
+                    header.representedObject = provider.dashboardURL
+                    header.toolTip = "Open \(provider.displayName) dashboard"
+                } else {
+                    header.isEnabled = false
+                }
                 menu.addItem(header)
 
                 // Error for this provider
@@ -167,13 +179,24 @@ enum MenuBuilder {
         return result
     }
 
-    private static func sectionHeaderTitle(_ name: String) -> NSAttributedString {
-        NSAttributedString(
+    private static func sectionHeaderTitle(_ name: String, showsArrow: Bool = false) -> NSAttributedString {
+        let result = NSMutableAttributedString(
             string: name,
             attributes: [
                 .font: NSFont.boldSystemFont(ofSize: 11),
                 .foregroundColor: NSColor.secondaryLabelColor
             ]
         )
+        if showsArrow {
+            let arrow = NSAttributedString(
+                string: "  ↗",
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
+                    .foregroundColor: NSColor.tertiaryLabelColor
+                ]
+            )
+            result.append(arrow)
+        }
+        return result
     }
 }

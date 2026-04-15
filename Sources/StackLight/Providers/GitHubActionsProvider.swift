@@ -6,6 +6,19 @@ final class GitHubActionsProvider: DeploymentProvider {
     let iconSymbol = "gear.badge.checkmark"
     let docsURL = URL(string: "https://github.com/settings/tokens")
 
+    var dashboardURL: URL? {
+        // If a single repo is configured, jump straight to its Actions tab;
+        // otherwise open the user's global "recent activity" feed.
+        let repos = (UserDefaults.standard.string(forKey: "github.repos") ?? "")
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        if repos.count == 1 {
+            return URL(string: "https://github.com/\(repos[0])/actions")
+        }
+        return URL(string: "https://github.com")
+    }
+
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "github.token"), !token.isEmpty else { return false }
         let repos = UserDefaults.standard.string(forKey: "github.repos") ?? ""

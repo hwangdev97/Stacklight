@@ -6,6 +6,11 @@ final class GitHubPRProvider: DeploymentProvider {
     let iconSymbol = "arrow.triangle.pull"
     let docsURL = URL(string: "https://github.com/settings/tokens")
 
+    var dashboardURL: URL? {
+        // GitHub's aggregated PR inbox across all repos the user is involved in.
+        URL(string: "https://github.com/pulls")
+    }
+
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "github.token"), !token.isEmpty else { return false }
         let repos = UserDefaults.standard.string(forKey: "github.pr.repos") ?? ""

@@ -21,8 +21,15 @@ protocol DeploymentProvider: AnyObject {
 
     /// URL to the documentation page for obtaining credentials
     var docsURL: URL? { get }
+
+    /// URL to the provider's web dashboard, shown in the menu bar header as a
+    /// quick-jump link. May depend on user configuration (team, repo, app ID),
+    /// so implementations can return different URLs based on current settings.
+    /// Return `nil` to hide the jump-to-dashboard affordance.
+    var dashboardURL: URL? { get }
 }
 
 extension DeploymentProvider {
     var docsURL: URL? { nil }
+    var dashboardURL: URL? { nil }
 }
