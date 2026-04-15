@@ -3,7 +3,7 @@ options:
   xcodeVersion: "26.0"
   deploymentTarget:
     macOS: "13.0"
-    iOS: "17.0"
+    iOS: "26.0"
   groupSortPosition: none
   createIntermediateGroups: true
 
@@ -85,7 +85,9 @@ targets:
         GENERATE_INFOPLIST_FILE: false
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"
-        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        MTL_ENABLE_DEBUG_INFO: "INCLUDE_SOURCE"
+        MTL_FAST_MATH: "YES"
     dependencies:
       - package: AppStoreConnect-Swift-SDK
 
