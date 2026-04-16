@@ -5,7 +5,16 @@ struct StackLightApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        Window("StackLight Settings", id: "settings") {
+        MenuBarExtra {
+            MenuBarRootView()
+                .environmentObject(appDelegate.appState)
+        } label: {
+            MenuBarLabel()
+                .environmentObject(appDelegate.appState)
+        }
+        .menuBarExtraStyle(.window)
+
+        Window("Settings", id: "settings") {
             SettingsViewContainer()
                 .environmentObject(appDelegate.appState)
         }
@@ -18,6 +27,49 @@ struct StackLightApp: App {
         }
         .defaultSize(width: 560, height: 520)
         .windowResizability(.contentSize)
+    }
+}
+
+/// Wraps the SwiftUI menu content and pulls data/actions from AppState,
+/// keeping `MenuBarContentView` itself free of singletons so it's easy to
+/// `#Preview`.
+private struct MenuBarRootView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        MenuBarContentView(
+            providers: ServiceRegistry.shared.providers.filter { $0.isConfigured },
+            deployments: appState.deployments,
+            errors: appState.errors,
+            lastRefresh: appState.lastRefresh,
+            onRefresh: { appState.refresh() },
+            onOpenSettings: {
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "settings")
+            },
+            onOpenFeedback: {
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "feedback")
+            },
+            onQuit: { NSApp.terminate(nil) }
+        )
+    }
+}
+
+/// The menu bar icon itself. Tints red when any provider has an error or any
+/// recent deployment failed, matching the old `updateStatusIcon()` behavior.
+private struct MenuBarLabel: View {
+    @EnvironmentObject var appState: AppState
+
+    private var hasProblem: Bool {
+        !appState.errors.isEmpty || appState.deployments.contains { $0.status == .failed }
+    }
+
+    var body: some View {
+        Image("MenubarIcon")
+            .renderingMode(.template)
+            .foregroundStyle(hasProblem ? Color.red : Color.primary)
     }
 }
 

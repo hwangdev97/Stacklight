@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 @MainActor
 final class AppState: ObservableObject {
@@ -7,26 +6,11 @@ final class AppState: ObservableObject {
     @Published var errors: [String: String] = [:] // providerID -> error message
     @Published var lastRefresh: Date?
 
-    var onDeploymentsChanged: (() -> Void)?
     var openSettingsWindow: (() -> Void)?
     var openFeedbackWindow: (() -> Void)?
 
     private let pollingManager = PollingManager()
     private let notificationManager = NotificationManager()
-    private var cancellables = Set<AnyCancellable>()
-
-    init() {
-        // Observe published changes to trigger menu rebuild
-        $deployments
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.onDeploymentsChanged?() }
-            .store(in: &cancellables)
-
-        $errors
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.onDeploymentsChanged?() }
-            .store(in: &cancellables)
-    }
 
     func startPolling() {
         // Read poll interval from settings
