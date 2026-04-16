@@ -239,7 +239,6 @@ private struct MenuRow<Label: View>: View {
 
 // MARK: - Preview fixtures
 
-#if DEBUG
 private enum PreviewFixtures {
     /// All nine real providers, treated as if every one were configured.
     static let allProviders: [DeploymentProvider] = [
@@ -346,7 +345,6 @@ private enum PreviewFixtures {
                minutesAgo: 4320)
     ]
 }
-#endif
 
 // MARK: - Previews
 
