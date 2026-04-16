@@ -1,10 +1,12 @@
 import Foundation
+import SwiftUI
 
 final class GitHubActionsProvider: DeploymentProvider {
     let id = "githubActions"
     let displayName = "GitHub Actions"
     let iconSymbol = "gear.badge.checkmark"
     let iconAsset: String? = "github"
+    let color = Color(red: 0.14, green: 0.16, blue: 0.19)
     let docsURL = URL(string: "https://github.com/settings/tokens")
 
     var dashboardURL: URL? {

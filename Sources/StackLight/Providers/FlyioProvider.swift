@@ -1,10 +1,12 @@
 import Foundation
+import SwiftUI
 
 final class FlyioProvider: DeploymentProvider {
     let id = "flyio"
     let displayName = "Fly.io"
     let iconSymbol = "paperplane.fill"
     let iconAsset: String? = "flydotio"
+    let color = Color(red: 0.57, green: 0.29, blue: 0.93)
     let docsURL = URL(string: "https://fly.io/docs/flyctl/tokens-create/")
 
     let dashboardURL = URL(string: "https://fly.io/dashboard")

@@ -1,10 +1,12 @@
 import Foundation
+import SwiftUI
 
 final class GitHubPRProvider: DeploymentProvider {
     let id = "githubPRs"
     let displayName = "GitHub Pull Requests"
     let iconSymbol = "arrow.triangle.pull"
     let iconAsset: String? = "github"
+    let color = Color(red: 0.52, green: 0.28, blue: 0.85)
     let docsURL = URL(string: "https://github.com/settings/tokens")
 
     var dashboardURL: URL? {

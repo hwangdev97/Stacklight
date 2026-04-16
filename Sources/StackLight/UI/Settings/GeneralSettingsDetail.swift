@@ -10,14 +10,9 @@ struct GeneralSettingsDetail: View {
     @State private var loginError: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
+        Form {
             VStack(spacing: 8) {
-                Image(systemName: "gear")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 56, height: 56)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                GlassDetailIcon(color: .gray, systemImage: "gear")
 
                 Text("General")
                     .font(.title2.weight(.semibold))
@@ -29,9 +24,9 @@ struct GeneralSettingsDetail: View {
             }
             .padding(.top, 24)
             .padding(.bottom, 20)
-
-            // Polling section
-            settingsCard {
+            .frame(maxWidth: .infinity, alignment: .center)
+            
+            Section {
                 HStack {
                     Label("Refresh interval", systemImage: "arrow.clockwise")
                     Spacer()
@@ -43,61 +38,33 @@ struct GeneralSettingsDetail: View {
                         .frame(width: 36, alignment: .trailing)
                 }
             }
-            .padding(.horizontal, 20)
+            
 
-            // Notifications section
-            settingsCard {
+            Section {
                 Toggle(isOn: $notificationsEnabled) {
                     Label("Notify on status changes", systemImage: "bell.badge")
                 }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
 
-            // Startup section
-            settingsCard {
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(isOn: $launchAtLogin) {
-                        Label("Launch at login", systemImage: "play.circle")
-                    }
-                    .onChange(of: launchAtLogin) { newValue in
-                        toggleLaunchAtLogin(enabled: newValue)
-                    }
-                    if let loginError {
-                        Text(loginError)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    }
+                Toggle(isOn: $launchAtLogin) {
+                    Label("Launch at login", systemImage: "play.circle")
+                }
+                .onChange(of: launchAtLogin) { newValue in
+                    toggleLaunchAtLogin(enabled: newValue)
+                }
+
+                if let loginError {
+                    Text(loginError)
+                        .font(.caption)
+                        .foregroundColor(.red)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
 
-            // About section
-            settingsCard {
-                VStack(spacing: 0) {
-                    row(label: "App", value: "StackLight")
-                    Divider().padding(.leading, 16)
-                    row(label: "Version", value: "1.0.0")
-                }
+            Section {
+                row(label: "App", value: "StackLight")
+                row(label: "Version", value: "1.0.0")
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-
-            Spacer(minLength: 20)
         }
-    }
-
-    @ViewBuilder
-    private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(.vertical, 10)
-            .padding(.horizontal, 16)
-            .background(.background, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(.quaternary, lineWidth: 0.5)
-            )
+        .formStyle(.grouped)
     }
 
     private func row(label: String, value: String) -> some View {

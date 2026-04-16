@@ -1,10 +1,12 @@
 import Foundation
+import SwiftUI
 
 final class RailwayProvider: DeploymentProvider {
     let id = "railway"
     let displayName = "Railway"
     let iconSymbol = "train.side.front.car"
     let iconAsset: String? = "railway"
+    let color = Color(red: 0.51, green: 0.47, blue: 0.98)
     let docsURL = URL(string: "https://docs.railway.com/reference/public-api#creating-a-token")
 
     var dashboardURL: URL? {

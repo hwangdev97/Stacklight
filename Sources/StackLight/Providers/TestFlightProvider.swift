@@ -1,10 +1,12 @@
 import Foundation
+import SwiftUI
 import AppStoreConnect_Swift_SDK
 
 final class TestFlightProvider: DeploymentProvider {
     let id = "testFlight"
     let displayName = "TestFlight"
     let iconSymbol = "airplane"
+    let color = Color(red: 0.25, green: 0.65, blue: 0.96)
     let docsURL = URL(string: "https://appstoreconnect.apple.com/apps")
 
     var dashboardURL: URL? {

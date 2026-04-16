@@ -16,8 +16,7 @@ struct ProviderSettingsDetail: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header — like System Settings
+        Form {
             VStack(spacing: 8) {
                 providerDetailIcon(provider)
 
@@ -36,125 +35,102 @@ struct ProviderSettingsDetail: View {
             }
             .padding(.top, 24)
             .padding(.bottom, 20)
+            .frame(maxWidth: .infinity, alignment: .center)
 
-            // Error banner
             if let error = appState.errors[provider.id] {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.yellow)
-                    Text(error)
-                        .font(.caption)
-                        .lineLimit(2)
-                    Spacer()
+                Section {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.yellow)
+                        Text(error)
+                            .font(.caption)
+                            .lineLimit(3)
+                        Spacer()
+                    }
                 }
-                .padding(10)
-                .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .padding(.horizontal, 20)
-                .padding(.bottom, 12)
             }
 
-            // Credential fields — grouped card style
-            VStack(spacing: 0) {
-                ForEach(Array(provider.settingsFields().enumerated()), id: \.element.id) { index, field in
-                    if field.isMultiValue {
-                        // Multi-value: rendered separately below
-                    } else {
-                        if index > 0 && !provider.settingsFields()[index - 1].isMultiValue {
-                            Divider().padding(.leading, 16)
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(field.label)
-                                    .frame(width: 100, alignment: .leading)
-                                    .foregroundStyle(.primary)
+            let singleValueFields = provider.settingsFields().filter { !$0.isMultiValue }
+            if !singleValueFields.isEmpty {
+                Section {
+                    ForEach(singleValueFields, id: \.id) { field in
+                        VStack(alignment: .leading, spacing: 2) {
+                            LabeledContent(field.label) {
                                 if field.isSecret {
                                     SecureField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                        .textFieldStyle(.plain)
+                                        .multilineTextAlignment(.trailing)
                                 } else {
                                     TextField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                        .textFieldStyle(.plain)
+                                        .multilineTextAlignment(.trailing)
                                 }
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
 
                             if let hint = field.hint {
                                 Text(hint)
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
-                                    .padding(.horizontal, 16)
-                                    .padding(.bottom, 8)
                             }
                         }
                     }
                 }
             }
-            .background(.background, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(.quaternary, lineWidth: 0.5)
-            )
-            .padding(.horizontal, 20)
 
-            // Multi-value fields — tag list with add/remove
             ForEach(provider.settingsFields().filter { $0.isMultiValue }, id: \.id) { field in
-                MultiValueFieldView(field: field, rawValue: binding(for: field))
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
+                Section {
+                    MultiValueFieldView(field: field, rawValue: binding(for: field))
+                }
             }
 
-            // Actions
-            HStack(spacing: 12) {
-                Button("Save") {
-                    saveFields()
-                    saved = true
-                    appState.restartPolling()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { saved = false }
-                }
-                .keyboardShortcut(.defaultAction)
+            Section {
+                HStack(spacing: 12) {
+                    Button("Save") {
+                        saveFields()
+                        saved = true
+                        appState.restartPolling()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { saved = false }
+                    }
+                    .keyboardShortcut(.defaultAction)
 
-                if saved {
-                    Label("Saved", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                    if saved {
+                        Label("Saved", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                            .transition(.opacity.combined(with: .scale))
+                    }
+
+                    Spacer()
+
+                    if let testResult {
+                        Group {
+                            switch testResult {
+                            case .success(let count):
+                                Label("\(count) deployments", systemImage: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            case .failure(let msg):
+                                Label(String(msg.prefix(40)), systemImage: "xmark.circle.fill")
+                                    .foregroundStyle(.red)
+                                    .help(msg)
+                            }
+                        }
                         .font(.caption)
-                        .transition(.opacity.combined(with: .scale))
-                }
+                        .transition(.opacity)
+                    }
 
-                Spacer()
-
-                if let testResult {
-                    Group {
-                        switch testResult {
-                        case .success(let count):
-                            Label("\(count) deployments", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                        case .failure(let msg):
-                            Label(String(msg.prefix(40)), systemImage: "xmark.circle.fill")
-                                .foregroundStyle(.red)
-                                .help(msg)
+                    Button {
+                        testConnection()
+                    } label: {
+                        if testing {
+                            ProgressView().controlSize(.small).frame(width: 40)
+                        } else {
+                            Text("Test").frame(width: 40)
                         }
                     }
-                    .font(.caption)
-                    .transition(.opacity)
+                    .disabled(testing)
                 }
-
-                Button {
-                    testConnection()
-                } label: {
-                    if testing {
-                        ProgressView().controlSize(.small).frame(width: 40)
-                    } else {
-                        Text("Test").frame(width: 40)
-                    }
-                }
-                .disabled(testing)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .animation(.easeInOut(duration: 0.2), value: saved)
-
-            Spacer(minLength: 20)
         }
+        .formStyle(.grouped)
+        .animation(.easeInOut(duration: 0.2), value: saved)
         .onAppear { loadFields() }
     }
 
@@ -194,20 +170,11 @@ struct ProviderSettingsDetail: View {
 
     @ViewBuilder
     private func providerDetailIcon(_ provider: DeploymentProvider) -> some View {
-        if let asset = provider.iconAsset {
-            Image(asset)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 32, height: 32)
-                .frame(width: 56, height: 56)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        } else {
-            Image(systemName: provider.iconSymbol)
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-                .frame(width: 56, height: 56)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        }
+        GlassDetailIcon(
+            color: provider.color,
+            systemImage: provider.iconAsset == nil ? provider.iconSymbol : nil,
+            asset: provider.iconAsset
+        )
     }
 
     private func saveFields() {

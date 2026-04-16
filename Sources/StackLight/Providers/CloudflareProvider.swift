@@ -1,9 +1,11 @@
 import Foundation
+import SwiftUI
 
 final class CloudflareProvider: DeploymentProvider {
     let id = "cloudflare"
     let displayName = "Cloudflare Pages"
     let iconSymbol = "cloud.fill"
+    let color = Color(red: 0.96, green: 0.50, blue: 0.13)
     let docsURL = URL(string: "https://dash.cloudflare.com/profile/api-tokens")
 
     var dashboardURL: URL? {

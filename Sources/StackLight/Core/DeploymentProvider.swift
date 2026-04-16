@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 protocol DeploymentProvider: AnyObject {
     /// Unique identifier, e.g. "vercel", "cloudflare"
@@ -12,6 +13,9 @@ protocol DeploymentProvider: AnyObject {
 
     /// Asset catalog image name (SVG icon), if available
     var iconAsset: String? { get }
+
+    /// Brand tint used as the backdrop for this provider's icon badge.
+    var color: Color { get }
 
     /// Whether the provider has valid credentials configured
     var isConfigured: Bool { get }
@@ -36,4 +40,5 @@ extension DeploymentProvider {
     var docsURL: URL? { nil }
     var iconAsset: String? { nil }
     var dashboardURL: URL? { nil }
+    var color: Color { .blue }
 }

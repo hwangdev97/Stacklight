@@ -21,14 +21,9 @@ struct FeedbackView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header — matches ProviderSettingsDetail style
+        Form {
             VStack(spacing: 8) {
-                Image(systemName: "bubble.left.and.bubble.right.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 56, height: 56)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                GlassDetailIcon(color: .gray, systemImage: "bubble.left.and.bubble.right.fill")
 
                 Text("Send Feedback")
                     .font(.title2.weight(.semibold))
@@ -40,64 +35,36 @@ struct FeedbackView: View {
             }
             .padding(.top, 24)
             .padding(.bottom, 20)
+            .frame(maxWidth: .infinity, alignment: .center)
 
-            // Missing-token banner
             if !hasToken {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.yellow)
-                    Text("No GitHub token set. Add a Personal Access Token in GitHub Pull Requests settings to enable feedback.")
-                        .font(.caption)
-                        .lineLimit(3)
-                    Spacer()
-                    if let onOpenGitHubSettings {
-                        Button("Open GitHub Settings") {
-                            onOpenGitHubSettings()
+                Section {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.yellow)
+                        Text("No GitHub token set. Add a Personal Access Token in GitHub Pull Requests settings to enable feedback.")
+                            .font(.caption)
+                            .lineLimit(3)
+                        Spacer()
+                        if let onOpenGitHubSettings {
+                            Button("Open GitHub Settings") {
+                                onOpenGitHubSettings()
+                            }
+                            .controlSize(.small)
                         }
-                        .controlSize(.small)
                     }
                 }
-                .padding(10)
-                .background(.yellow.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .padding(.horizontal, 20)
-                .padding(.bottom, 12)
             }
 
-            // Form card
-            VStack(spacing: 0) {
-                // Category
-                HStack {
-                    Text("Category")
-                        .frame(width: 100, alignment: .leading)
-                        .foregroundStyle(.primary)
-                    Picker("", selection: $category) {
-                        ForEach(FeedbackCategory.allCases) { cat in
-                            Text(cat.displayName).tag(cat)
-                        }
+            Section {
+                Picker("Category", selection: $category) {
+                    ForEach(FeedbackCategory.allCases) { cat in
+                        Text(cat.displayName).tag(cat)
                     }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                    Spacer()
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
 
-                Divider().padding(.leading, 16)
+                TextField("Title", text: $title, prompt: Text("Short summary"))
 
-                // Title
-                HStack {
-                    Text("Title")
-                        .frame(width: 100, alignment: .leading)
-                        .foregroundStyle(.primary)
-                    TextField("", text: $title, prompt: Text("Short summary"))
-                        .textFieldStyle(.plain)
-                }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-
-                Divider().padding(.leading, 16)
-
-                // Description
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Description")
                         .foregroundStyle(.primary)
@@ -121,55 +88,45 @@ struct FeedbackView: View {
                             .strokeBorder(.quaternary, lineWidth: 0.5)
                     )
                 }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 16)
             }
-            .background(.background, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(.quaternary, lineWidth: 0.5)
-            )
-            .padding(.horizontal, 20)
 
-            // Action row
-            HStack(spacing: 12) {
-                Button("Submit") {
-                    submit()
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(!canSubmit)
-
-                if isSubmitting {
-                    ProgressView().controlSize(.small)
-                }
-
-                Spacer()
-
-                if let submittedURL {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("Submitted")
-                            .foregroundStyle(.green)
-                        Link("View issue", destination: submittedURL)
+            Section {
+                HStack(spacing: 12) {
+                    Button("Submit") {
+                        submit()
                     }
-                    .font(.caption)
-                    .transition(.opacity)
-                } else if let errorMessage {
-                    Label(String(errorMessage.prefix(60)), systemImage: "xmark.circle.fill")
-                        .foregroundStyle(.red)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!canSubmit)
+
+                    if isSubmitting {
+                        ProgressView().controlSize(.small)
+                    }
+
+                    Spacer()
+
+                    if let submittedURL {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text("Submitted")
+                                .foregroundStyle(.green)
+                            Link("View issue", destination: submittedURL)
+                        }
                         .font(.caption)
-                        .help(errorMessage)
                         .transition(.opacity)
+                    } else if let errorMessage {
+                        Label(String(errorMessage.prefix(60)), systemImage: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                            .help(errorMessage)
+                            .transition(.opacity)
+                    }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .animation(.easeInOut(duration: 0.2), value: submittedURL)
-            .animation(.easeInOut(duration: 0.2), value: errorMessage)
-
-            Spacer(minLength: 20)
         }
+        .formStyle(.grouped)
+        .animation(.easeInOut(duration: 0.2), value: submittedURL)
+        .animation(.easeInOut(duration: 0.2), value: errorMessage)
         .onAppear { hasToken = FeedbackView.tokenPresent() }
     }
 
