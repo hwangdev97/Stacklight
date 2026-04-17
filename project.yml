@@ -24,7 +24,7 @@ targets:
     info:
       path: Sources/StackLight/Info.plist
       properties:
-        CFBundleIdentifier: com.shapebar.app
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleName: StackLight
         CFBundleIconName: AppIcon
         CFBundleIconFile: AppIcon
@@ -33,7 +33,7 @@ targets:
         LSUIElement: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.shapebar.app
+        PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
@@ -59,7 +59,7 @@ targets:
     info:
       path: Sources/StackLightiOS/Resources/Info.plist
       properties:
-        CFBundleIdentifier: com.shapebar.stacklight.ios
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleName: StackLight
         CFBundleDisplayName: StackLight
         ITSAppUsesNonExemptEncryption: false
@@ -73,10 +73,10 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         BGTaskSchedulerPermittedIdentifiers:
-          - com.shapebar.stacklight.ios.refresh
+          - app.yellowplus.StackLight.ios.refresh
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.shapebar.stacklight.ios
+        PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.ios
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic
@@ -101,3 +101,4 @@ targets:
     settings:
       base:
         SWIFT_VERSION: "5.9"
+        "PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]": app.yellowplus.StackLight.test

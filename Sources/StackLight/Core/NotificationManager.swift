@@ -71,7 +71,7 @@ final class NotificationManager {
         }
 
         let request = UNNotificationRequest(
-            identifier: "shapebar.\(deployment.id).\(deployment.status.rawValue)",
+            identifier: "stacklight.\(deployment.id).\(deployment.status.rawValue)",
             content: content,
             trigger: nil // deliver immediately
         )

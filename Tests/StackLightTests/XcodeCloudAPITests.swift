@@ -3,7 +3,7 @@ import XCTest
 import AppStoreConnect_Swift_SDK
 
 /// Live integration tests for Xcode Cloud API.
-/// Requires valid ASC credentials in Keychain (service: com.shapebar.app).
+/// Requires valid ASC credentials in Keychain (service: app.yellowplus.StackLight).
 /// Run with: swift test --filter XcodeCloudAPITests
 final class XcodeCloudAPITests: XCTestCase {
 

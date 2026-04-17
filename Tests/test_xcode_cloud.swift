@@ -10,7 +10,7 @@ import Security
 func readKeychain(key: String) -> String? {
     let query: [String: Any] = [
         kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: "com.shapebar.app",
+        kSecAttrService as String: "app.yellowplus.StackLight",
         kSecAttrAccount as String: key,
         kSecMatchLimit as String: kSecMatchLimitOne,
         kSecReturnData as String: true
@@ -147,14 +147,14 @@ test("XcodeCloudProvider.isConfigured logic returns true") {
 }
 
 test("All three ASC keys use same Keychain service") {
-    // Verify they're all under com.shapebar.app
+    // Verify they're all under app.yellowplus.StackLight
     let keys = ["asc.issuerID", "asc.privateKeyID", "asc.privateKey"]
     for key in keys {
         guard readKeychain(key: key) != nil else {
-            throw Err(description: "\(key) not readable with service=com.shapebar.app")
+            throw Err(description: "\(key) not readable with service=app.yellowplus.StackLight")
         }
     }
-    print("    → All keys accessible under 'com.shapebar.app'")
+    print("    → All keys accessible under 'app.yellowplus.StackLight'")
 }
 
 // Summary
