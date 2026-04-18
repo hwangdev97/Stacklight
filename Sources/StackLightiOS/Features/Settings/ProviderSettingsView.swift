@@ -73,7 +73,7 @@ struct ProviderSettingsView: View {
     private var heroBanner: some View {
         ZStack {
             VStack(spacing: DesignTokens.Spacing.sm) {
-                GlassIconChip(systemImage: provider.iconSymbol,
+                GlassIconChip(provider: provider,
                               tint: theme.accent, size: 58)
 
                 Text(provider.displayName)

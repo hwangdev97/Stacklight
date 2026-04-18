@@ -77,8 +77,8 @@ struct DeploymentCard: View {
 
     private var topRow: some View {
         HStack(alignment: .top) {
-            if let symbol = provider?.iconSymbol {
-                GlassIconChip(systemImage: symbol, tint: theme.accent, size: 36)
+            if let provider {
+                GlassIconChip(provider: provider, tint: theme.accent, size: 36)
             }
             Spacer()
         }

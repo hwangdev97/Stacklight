@@ -52,6 +52,7 @@ targets:
     sources:
       - path: Sources/StackLight/Core
       - path: Sources/StackLight/Providers
+      - path: Sources/StackLight/Assets.xcassets
       - path: Sources/StackLight/AppIcon.icon
       - path: Sources/StackLightiOS
         excludes:

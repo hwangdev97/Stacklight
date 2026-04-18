@@ -72,7 +72,7 @@ private struct ProviderTile: View {
         VStack(alignment: .leading, spacing: 0) {
             // Top area: floating icon chip
             HStack {
-                GlassIconChip(systemImage: provider.iconSymbol,
+                GlassIconChip(provider: provider,
                               tint: theme.accent, size: 34)
                 Spacer()
                 if provider.isConfigured {

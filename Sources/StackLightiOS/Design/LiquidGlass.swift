@@ -69,15 +69,35 @@ struct LiquidGlassGroup<Content: View>: View {
 /// the reference image (fan / heater / settings / power).
 struct GlassIconChip: View {
     let systemImage: String
+    var asset: String? = nil
     var tint: Color = .white
     var size: CGFloat = 34
 
     var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: size * 0.42, weight: .semibold))
-            .foregroundStyle(tint)
-            .frame(width: size, height: size)
-            .liquidGlassCircle()
+        Group {
+            if let asset {
+                Image(asset)
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: size * 0.5, height: size * 0.5)
+            } else {
+                Image(systemName: systemImage)
+                    .font(.system(size: size * 0.42, weight: .semibold))
+            }
+        }
+        .foregroundStyle(tint)
+        .frame(width: size, height: size)
+        .liquidGlassCircle()
+    }
+}
+
+extension GlassIconChip {
+    init(provider: DeploymentProvider, tint: Color = .white, size: CGFloat = 34) {
+        self.init(systemImage: provider.iconSymbol,
+                  asset: provider.iconAsset,
+                  tint: tint,
+                  size: size)
     }
 }
 

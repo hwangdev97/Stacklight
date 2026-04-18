@@ -140,15 +140,25 @@ private struct ProviderRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Provider icon with a faint brand-tinted glass halo.
-            Image(systemName: provider.iconSymbol)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(theme.accent)
-                .frame(width: 32, height: 32)
-                .background(
-                    Circle()
-                        .fill(theme.tint.opacity(0.45))
-                )
-                .liquidGlassCircle()
+            Group {
+                if let asset = provider.iconAsset {
+                    Image(asset)
+                        .resizable()
+                        .renderingMode(.template)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 16, height: 16)
+                } else {
+                    Image(systemName: provider.iconSymbol)
+                        .font(.system(size: 15, weight: .semibold))
+                }
+            }
+            .foregroundStyle(theme.accent)
+            .frame(width: 32, height: 32)
+            .background(
+                Circle()
+                    .fill(theme.tint.opacity(0.45))
+            )
+            .liquidGlassCircle()
 
             Text(provider.displayName)
                 .font(.system(size: 15, weight: .medium, design: .rounded))
