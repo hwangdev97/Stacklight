@@ -133,3 +133,8 @@ private struct ProviderTile: View {
         }
     }
 }
+
+#Preview {
+    AddIntegrationView()
+        .environmentObject(AppState())
+}

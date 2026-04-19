@@ -29,3 +29,16 @@ struct LiquidRefreshIndicator: View {
             .accessibilityHidden(true)
     }
 }
+
+#Preview {
+    VStack(spacing: 40) {
+        LiquidRefreshIndicator(progress: 0.0, isRefreshing: false)
+        LiquidRefreshIndicator(progress: 0.5, isRefreshing: false)
+        LiquidRefreshIndicator(progress: 1.0, isRefreshing: false)
+        LiquidRefreshIndicator(progress: 1.0, isRefreshing: true)
+    }
+    .padding(40)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(DesignTokens.Palette.background)
+    .preferredColorScheme(.dark)
+}

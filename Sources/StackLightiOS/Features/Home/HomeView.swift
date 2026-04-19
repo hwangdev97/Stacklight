@@ -1,5 +1,4 @@
 import SwiftUI
-import SafariServices
 
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
@@ -8,12 +7,6 @@ struct HomeView: View {
     @State private var safariTarget: SafariTarget?
     @State private var showErrorBanner = true
     @State private var selectedProviderID: String? = nil
-
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
-        return f
-    }()
 
     // MARK: Body
 
@@ -25,15 +18,19 @@ struct HomeView: View {
                 content
 
                 if appState.isRefreshing {
-                    LiquidRefreshIndicator(progress: 1.0, isRefreshing: true)
-                        .padding(.top, 4)
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .padding(10)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .padding(.top, 8)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.82),
                        value: appState.isRefreshing)
             .navigationTitle("Home")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar { toolbarContent }
             .refreshable {
@@ -54,18 +51,34 @@ struct HomeView: View {
         .tint(.white)
     }
 
-    // MARK: Content
+    // MARK: Content branching
 
     @ViewBuilder
     private var content: some View {
         if !appState.hasConfiguredProvider {
-            emptyStateNoProviders
+            EmptyStateCard(
+                title: "No Integrations",
+                message: "Add an integration to start monitoring deployments.",
+                cta: "Add Integration",
+                systemImage: "plus"
+            ) {
+                showAddIntegration = true
+            }
+            .padding(DesignTokens.Spacing.lg)
         } else if filteredDeployments.isEmpty && appState.errors.isEmpty {
-            emptyStateNoDeployments
+            EmptyStateCard(
+                title: "All Quiet",
+                message: "No recent deployments. Pull down to refresh.",
+                cta: nil,
+                systemImage: "clock"
+            )
+            .padding(DesignTokens.Spacing.lg)
         } else {
             deploymentScroll
         }
     }
+
+    // MARK: Derived data
 
     // The configured providers that actually have deployments (used for the
     // pill rail so we don't clutter it with services that never posted anything).
@@ -92,19 +105,25 @@ struct HomeView: View {
                 }
 
                 if !appState.errors.isEmpty && showErrorBanner {
-                    errorBanner
-                        .padding(.horizontal, DesignTokens.Spacing.lg)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                    HomeErrorBanner(errors: appState.errors) {
+                        withAnimation { showErrorBanner = false }
+                    }
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
                 LiquidGlassGroup(spacing: 16) {
-                    ForEach(filteredDeployments) { deployment in
-                        DeploymentCard(deployment: deployment) { url in
-                            safariTarget = SafariTarget(url: url)
+                    VStack(spacing: DesignTokens.Spacing.md) {
+                        ForEach(filteredDeployments) { deployment in
+                            DeploymentCard(deployment: deployment) { url in
+                                safariTarget = SafariTarget(url: url)
+                            }
+                            .padding(.vertical, 12)
                         }
                     }
                 }
                 .padding(.horizontal, DesignTokens.Spacing.lg)
+                
 
                 if let lastRefresh = appState.lastRefresh {
                     LastRefreshPill(lastRefresh: lastRefresh)
@@ -116,9 +135,44 @@ struct HomeView: View {
         }
     }
 
-    // MARK: Error banner
+    // MARK: Toolbar
 
-    private var errorBanner: some View {
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    
+                    
+            }
+            .accessibilityLabel("Settings")
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showAddIntegration = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    
+                    
+            }
+            .accessibilityLabel("Add Integration")
+        }
+    }
+}
+
+// MARK: - Error banner
+
+private struct HomeErrorBanner: View {
+    let errors: [String: String]
+    let onDismiss: () -> Void
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 10) {
                 GlassIconChip(systemImage: "exclamationmark.triangle.fill",
@@ -127,9 +181,7 @@ struct HomeView: View {
                     .font(DesignTokens.Typography.cardTitle)
                     .foregroundStyle(.white)
                 Spacer()
-                Button {
-                    withAnimation { showErrorBanner = false }
-                } label: {
+                Button(action: onDismiss) {
                     Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.white.opacity(0.9))
@@ -138,7 +190,7 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
             }
-            ForEach(appState.errors.sorted(by: { $0.key < $1.key }), id: \.key) { providerID, message in
+            ForEach(errors.sorted(by: { $0.key < $1.key }), id: \.key) { providerID, message in
                 let name = ServiceRegistry.shared.provider(withID: providerID)?.displayName ?? providerID
                 Text("\(name): \(message)")
                     .font(DesignTokens.Typography.caption)
@@ -155,192 +207,107 @@ struct HomeView: View {
                 intensity: 0.9)
         )
     }
-
-    // MARK: Empty states
-
-    private var emptyStateNoProviders: some View {
-        EmptyStateCard(
-            title: "No Integrations",
-            message: "Add an integration to start monitoring deployments.",
-            cta: "Add Integration",
-            systemImage: "plus"
-        ) {
-            showAddIntegration = true
-        }
-        .padding(DesignTokens.Spacing.lg)
-    }
-
-    private var emptyStateNoDeployments: some View {
-        EmptyStateCard(
-            title: "All Quiet",
-            message: "No recent deployments. Pull down to refresh.",
-            cta: nil,
-            systemImage: "clock",
-            action: nil
-        )
-        .padding(DesignTokens.Spacing.lg)
-    }
-
-    // MARK: Toolbar
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 38, height: 38)
-                    .liquidGlassCircle()
-            }
-            .accessibilityLabel("Settings")
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                showAddIntegration = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 38, height: 38)
-                    .liquidGlassCircle()
-            }
-            .accessibilityLabel("Add Integration")
-        }
-    }
 }
 
-// MARK: - Empty state glass card
+// MARK: - Previews
 
-private struct EmptyStateCard: View {
-    let title: String
-    let message: String
-    let cta: String?
-    let systemImage: String
-    var action: (() -> Void)? = nil
-
-    // Rotate through provider themes every 4 seconds so the empty state feels
-    // alive and shows off what the app will look like once configured.
-    @State private var themeIndex = 0
-    private static let rotatingThemes: [ProviderTheme] = [
-        .forProviderID("vercel"),
-        .forProviderID("cloudflare"),
-        .forProviderID("netlify"),
-        .forProviderID("flyio"),
-        .forProviderID("xcodeCloud"),
-    ]
-
-    init(title: String, message: String, cta: String?, systemImage: String,
-         action: (() -> Void)? = nil) {
-        self.title = title
-        self.message = message
-        self.cta = cta
-        self.systemImage = systemImage
-        self.action = action
-    }
-
-    var body: some View {
-        VStack(spacing: DesignTokens.Spacing.lg) {
-            GlassIconChip(systemImage: systemImage, tint: .white, size: 56)
-
-            VStack(spacing: DesignTokens.Spacing.xs) {
-                Text(title)
-                    .font(DesignTokens.Typography.sectionTitle)
-                    .foregroundStyle(.white)
-                Text(message)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.80))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-
-            if let cta, let action {
-                Button(action: action) {
-                    HStack(spacing: 6) {
-                        Image(systemName: systemImage)
-                        Text(cta).fontWeight(.semibold)
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .liquidGlassChip()
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.vertical, 48)
-        .padding(.horizontal, DesignTokens.Spacing.xl)
-        .frame(maxWidth: .infinity)
-        .background(
-            GlowBackground(
-                theme: Self.rotatingThemes[themeIndex],
-                shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.hero,
-                                        style: .continuous),
-                intensity: 0.9)
-            .animation(.easeInOut(duration: 1.5), value: themeIndex)
-        )
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 4_000_000_000)
-                withAnimation { themeIndex = (themeIndex + 1) % Self.rotatingThemes.count }
-            }
-        }
-    }
+@MainActor
+private func previewState(
+    deployments: [Deployment] = [],
+    errors: [String: String] = [:],
+    lastRefresh: Date? = nil,
+    isRefreshing: Bool = false,
+    hasProviders: Bool = true
+) -> AppState {
+    let state = AppState()
+    state.deployments = deployments
+    state.errors = errors
+    state.lastRefresh = lastRefresh
+    state.isRefreshing = isRefreshing
+    state.previewConfiguredOverride = hasProviders
+    return state
 }
 
-// MARK: - Last-refresh pill
+private let previewDeployments: [Deployment] = [
+    Deployment(
+        id: "1",
+        providerID: "vercel",
+        projectName: "marketing-site",
+        status: .success,
+        url: URL(string: "https://vercel.com"),
+        createdAt: Date().addingTimeInterval(-120),
+        commitMessage: "Update landing copy",
+        branch: "main"
+    ),
+    Deployment(
+        id: "2",
+        providerID: "cloudflare",
+        projectName: "docs",
+        status: .building,
+        url: URL(string: "https://cloudflare.com"),
+        createdAt: Date().addingTimeInterval(-30),
+        commitMessage: "Rework nav",
+        branch: "feat/nav"
+    ),
+    Deployment(
+        id: "3",
+        providerID: "netlify",
+        projectName: "blog",
+        status: .failed,
+        url: URL(string: "https://netlify.com"),
+        createdAt: Date().addingTimeInterval(-900),
+        commitMessage: "Fix broken build",
+        branch: "fix/build"
+    ),
+    Deployment(
+        id: "4",
+        providerID: "flyio",
+        projectName: "api",
+        status: .queued,
+        url: nil,
+        createdAt: Date().addingTimeInterval(-60),
+        commitMessage: "Deploy edge workers",
+        branch: "main"
+    ),
+]
 
-private struct LastRefreshPill: View {
-    let lastRefresh: Date
-
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
-        return f
-    }()
-
-    private var staleness: Color {
-        let age = -lastRefresh.timeIntervalSinceNow
-        switch age {
-        case ..<120:  return DesignTokens.Palette.success
-        case ..<600:  return DesignTokens.Palette.building
-        default:      return DesignTokens.Palette.queued
-        }
-    }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(staleness)
-                .frame(width: 6, height: 6)
-                .shadow(color: staleness, radius: 4)
-            Text("Updated \(Self.relativeFormatter.localizedString(for: lastRefresh, relativeTo: Date()))")
-                .font(DesignTokens.Typography.caption)
-                .foregroundStyle(.white.opacity(0.7))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .liquidGlassChip()
-    }
+#Preview("No Integrations") {
+    HomeView()
+        .environmentObject(previewState(hasProviders: false))
 }
 
-// MARK: - Sheet item wrapper
-
-struct SafariTarget: Identifiable {
-    let id = UUID()
-    let url: URL
+#Preview("With Deployments") {
+    HomeView()
+        .environmentObject(previewState(
+            deployments: previewDeployments,
+            lastRefresh: Date().addingTimeInterval(-45)
+        ))
 }
 
-// MARK: - SafariView wrapper
+#Preview("Refreshing") {
+    HomeView()
+        .environmentObject(previewState(
+            deployments: previewDeployments,
+            lastRefresh: Date().addingTimeInterval(-45),
+            isRefreshing: true
+        ))
+}
 
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
+#Preview("With Errors") {
+    HomeView()
+        .environmentObject(previewState(
+            deployments: previewDeployments,
+            errors: [
+                "vercel": "401 Unauthorized — token expired",
+                "githubActions": "Network connection lost",
+            ],
+            lastRefresh: Date().addingTimeInterval(-600)
+        ))
+}
 
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        SFSafariViewController(url: url)
-    }
-
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+#Preview("Empty — No Deployments") {
+    HomeView()
+        .environmentObject(previewState(
+            lastRefresh: Date()
+        ))
 }

@@ -569,3 +569,13 @@ private struct FlowLayout: Layout {
         }
     }
 }
+
+#Preview {
+    NavigationStack {
+        if let provider = ServiceRegistry.shared.provider(withID: "vercel") {
+            ProviderSettingsView(provider: provider)
+                .environmentObject(AppState())
+        }
+    }
+    .preferredColorScheme(.dark)
+}

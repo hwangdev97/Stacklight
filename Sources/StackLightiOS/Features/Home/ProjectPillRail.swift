@@ -42,3 +42,22 @@ struct ProjectPillRail: View {
         .buttonStyle(.plain)
     }
 }
+
+private struct ProjectPillRailPreviewWrapper: View {
+    @State private var selected: String? = nil
+
+    var body: some View {
+        ProjectPillRail(
+            selectedProviderID: $selected,
+            providerIDs: ServiceRegistry.shared.providers.map(\.id)
+        )
+    }
+}
+
+#Preview {
+    ProjectPillRailPreviewWrapper()
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DesignTokens.Palette.background)
+        .preferredColorScheme(.dark)
+}

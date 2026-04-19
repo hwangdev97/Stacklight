@@ -85,6 +85,7 @@ struct StatusOrbShaderView: View {
                                 .float(Float(pulse))
                             ])
                     )
+                    .drawingGroup(opaque: false)
             }
         }
         .allowsHitTesting(false)
@@ -115,6 +116,7 @@ struct LiquidDropletShaderView: View {
                                 .float(Float(intensity))
                             ])
                     )
+                    .drawingGroup(opaque: false)
             }
         }
         .allowsHitTesting(false)

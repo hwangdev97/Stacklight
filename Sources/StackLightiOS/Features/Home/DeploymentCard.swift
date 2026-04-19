@@ -180,3 +180,45 @@ private struct HeroCardButtonStyle: ButtonStyle {
                        value: configuration.isPressed)
     }
 }
+
+#Preview {
+    ScrollView {
+        VStack(spacing: 16) {
+            DeploymentCard(deployment: Deployment(
+                id: "1",
+                providerID: "vercel",
+                projectName: "marketing-site",
+                status: .success,
+                url: URL(string: "https://vercel.com"),
+                createdAt: Date().addingTimeInterval(-120),
+                commitMessage: "Update landing copy",
+                branch: "main"
+            )) { _ in }
+
+            DeploymentCard(deployment: Deployment(
+                id: "2",
+                providerID: "cloudflare",
+                projectName: "docs",
+                status: .building,
+                url: URL(string: "https://cloudflare.com"),
+                createdAt: Date().addingTimeInterval(-30),
+                commitMessage: "Rework nav",
+                branch: "feat/nav"
+            )) { _ in }
+
+            DeploymentCard(deployment: Deployment(
+                id: "3",
+                providerID: "netlify",
+                projectName: "blog",
+                status: .failed,
+                url: nil,
+                createdAt: Date().addingTimeInterval(-900),
+                commitMessage: "Fix broken build",
+                branch: "fix/build"
+            )) { _ in }
+        }
+        .padding()
+    }
+    .background(DesignTokens.Palette.background)
+    .preferredColorScheme(.dark)
+}

@@ -185,3 +185,8 @@ private struct ProviderRow: View {
         .padding(.vertical, 6)
     }
 }
+
+#Preview {
+    SettingsView()
+        .environmentObject(AppState())
+}

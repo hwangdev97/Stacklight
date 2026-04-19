@@ -66,3 +66,11 @@ struct GeneralSettingsView: View {
         .tint(.white)
     }
 }
+
+#Preview {
+    NavigationStack {
+        GeneralSettingsView()
+            .environmentObject(AppState())
+    }
+    .preferredColorScheme(.dark)
+}
