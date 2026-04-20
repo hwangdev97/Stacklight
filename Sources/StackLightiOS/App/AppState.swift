@@ -8,12 +8,10 @@ final class AppState: ObservableObject {
     @Published var lastRefresh: Date?
     @Published var isRefreshing: Bool = false
 
-    #if DEBUG
     /// Preview-only override for `hasConfiguredProvider`. Set in a `#Preview`
     /// helper to force Home into a specific state without touching Keychain
     /// or `UserDefaults`.
     var previewConfiguredOverride: Bool?
-    #endif
 
     private let pollingManager = PollingManager()
     private let notificationManager = NotificationManager()
@@ -56,9 +54,7 @@ final class AppState: ObservableObject {
 
     /// Whether at least one provider has valid credentials.
     var hasConfiguredProvider: Bool {
-        #if DEBUG
         if let override = previewConfiguredOverride { return override }
-        #endif
         return !ServiceRegistry.shared.configuredProviders.isEmpty
     }
 }
