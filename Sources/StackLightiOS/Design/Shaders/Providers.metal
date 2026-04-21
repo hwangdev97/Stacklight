@@ -97,8 +97,8 @@ half4 monoBeam(float2 pos, half4 /*color*/,
     float core  = bloom(uv, float2(0.5 + 0.2 * sin(time * 0.2), 0.55), 0.45);
 
     half3 c = (half3)tint.rgb;
-    c += half3(accent.rgb) * (half)(beam * sweep * 0.9 * intensity);
-    c += half3(glow.rgb)   * (half)(core * 0.45 * intensity);
+    c += half3(accent.rgb) * (half)saturate(beam * sweep * 0.9 * intensity);
+    c += half3(glow.rgb)   * (half)saturate(core * 0.45 * intensity * glow.a);
     c = applyStatus(c, statusAccent, 0.35);
     return half4(c, 1.0);
 }
@@ -121,8 +121,8 @@ half4 softBlobs(float2 pos, half4 /*color*/,
     b += bloom(uv, float2(0.55 + 0.20 * cos(t * 0.6), 0.35 + 0.18 * sin(t * 0.7)), 0.42) * 0.7;
 
     half3 c = (half3)tint.rgb * 0.5h;
-    c = mix(c, half3(glow.rgb),   (half)min(b * 0.85 * intensity, 1.0));
-    c = mix(c, half3(accent.rgb), (half)(pow(b, 2.5) * 0.7 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(b * 0.85 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(pow(b, 2.5) * 0.7 * intensity));
     c = applyStatus(c, statusAccent, 0.35);
     return half4(c, 1.0);
 }
@@ -146,8 +146,8 @@ half4 gearShimmer(float2 pos, half4 /*color*/,
     float sheen = wedge * smoothstep(0.5, 0.15, r);
 
     half3 c = (half3)tint.rgb * 0.8h;
-    c = mix(c, half3(glow.rgb),   (half)(core * 0.9 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(sheen * 0.75 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(core * 0.9 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(sheen * 0.75 * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -172,8 +172,8 @@ half4 diffStreaks(float2 pos, half4 /*color*/,
     float wash  = bloom(uv, float2(0.5, 0.5 + 0.1 * sin(time * 0.4)), 0.75);
 
     half3 c = (half3)tint.rgb * 0.7h;
-    c = mix(c, half3(glow.rgb),   (half)(wash * 0.75 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(bands * 0.55 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(wash * 0.75 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(bands * 0.55 * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -196,8 +196,8 @@ half4 rippleField(float2 pos, half4 /*color*/,
     float core = smoothstep(0.8, 0.0, d);
 
     half3 c = (half3)tint.rgb * 0.65h;
-    c = mix(c, half3(glow.rgb),   (half)(core   * 0.85 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(ripple * 0.5  * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(core   * 0.85 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(ripple * 0.5  * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -219,8 +219,8 @@ half4 motionStreaks(float2 pos, half4 /*color*/,
     float wash = bloom(uv, float2(0.8, 0.5), 0.8);
 
     half3 c = (half3)tint.rgb * 0.75h;
-    c = mix(c, half3(glow.rgb),   (half)(wash * 0.8 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(line * 0.5 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(wash * 0.8 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(line * 0.5 * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -241,8 +241,8 @@ half4 vaporTrail(float2 pos, half4 /*color*/,
     float core  = bloom(uv, float2(0.35 + 0.05 * sin(time * 0.2), 0.55), 0.55);
 
     half3 c = (half3)tint.rgb * 0.7h;
-    c = mix(c, half3(glow.rgb),   (half)(core  * 0.9 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(trail * 0.65 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(core  * 0.9 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(trail * 0.65 * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -264,8 +264,8 @@ half4 depthClouds(float2 pos, half4 /*color*/,
     float core  = bloom(uv, float2(0.5, 0.45), 0.7);
 
     half3 c = (half3)tint.rgb * 0.75h;
-    c = mix(c, half3(glow.rgb),   (half)(core * 0.85 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(vol  * 0.55 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(core * 0.85 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(vol  * 0.55 * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -289,8 +289,8 @@ half4 sweepWing(float2 pos, half4 /*color*/,
     float core  = bloom(uv, float2(0.5, 0.5), 0.9);
 
     half3 c = (half3)tint.rgb * 0.7h;
-    c = mix(c, half3(glow.rgb),   (half)(core * 0.8 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(min(head + tail * 0.6, 1.0) * band * 0.85 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(core * 0.8 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(min(head + tail * 0.6, 1.0) * band * 0.85 * intensity));
     c = applyStatus(c, statusAccent, 0.30);
     return half4(c, 1.0);
 }
@@ -310,8 +310,8 @@ half4 errorAura(float2 pos, half4 /*color*/,
     float halo = bloom(uv, float2(0.5, 0.5), 0.65 + 0.05 * pulse);
 
     half3 c = (half3)tint.rgb * 0.6h;
-    c = mix(c, half3(glow.rgb),   (half)(halo * (0.65 + 0.25 * pulse) * intensity));
-    c = mix(c, half3(accent.rgb), (half)(pow(halo, 3.0) * 0.55 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(halo * (0.65 + 0.25 * pulse) * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(pow(halo, 3.0) * 0.55 * intensity));
     return half4(c, 1.0);
 }
 
@@ -332,8 +332,8 @@ half4 neutral(float2 pos, half4 /*color*/,
     b += bloom(uv, float2(0.7 + 0.1 * cos(t * 1.1), 0.6 + 0.1 * sin(t * 0.9)), 0.55) * 0.8;
 
     half3 c = (half3)tint.rgb * 0.8h;
-    c = mix(c, half3(glow.rgb),   (half)(b * 0.6 * intensity));
-    c = mix(c, half3(accent.rgb), (half)(pow(b, 3.0) * 0.5 * intensity));
+    c = mix(c, half3(glow.rgb),   (half)saturate(b * 0.6 * intensity * glow.a));
+    c = mix(c, half3(accent.rgb), (half)saturate(pow(b, 3.0) * 0.5 * intensity));
     return half4(c, 1.0);
 }
 
@@ -366,6 +366,68 @@ half4 statusOrb(float2 pos, half4 /*color*/,
     c += (half3)statusColor.rgb * (half)(halo * 0.5);
     half alpha = (half)(body + halo * 0.4);
     return half4(c, min(alpha, (half)1.0));
+}
+
+// ===========================================================================
+// pixelBeams (Cloudflare alt)
+// Warm orange "pixel-beams" — vertical columns of pixelated light rising out
+// of a warm ember bed. Each column runs on its own phase/speed so the grid
+// shimmers rather than marching in lockstep. The grid is intentionally coarse
+// (~14 columns) so its structure survives the downstream 22pt blur.
+// ===========================================================================
+[[ stitchable ]]
+half4 pixelBeams(float2 pos, half4 /*color*/,
+                 float2 size, float time,
+                 float4 tint, float4 accent, float4 glow,
+                 float4 statusAccent, float intensity)
+{
+    const float cols = 14.0;
+    float rows = max(1.0, cols * (size.y / max(size.x, 1.0)));
+    float2 uv = pos / size;
+    float2 cell = floor(float2(uv.x * cols, uv.y * rows));
+
+    float seed  = hash21(float2(cell.x, 7.7));
+    float phase = seed * 6.2831853;
+    float speed = 0.35 + seed * 0.75;
+
+    // Each column fills from the bottom up to `top` (0..~0.9).
+    float top = 0.25 + 0.65 * (0.5 + 0.5 * sin(time * speed + phase));
+
+    float2 cellUV = (cell + 0.5) / float2(cols, rows);
+    float fillY   = 1.0 - cellUV.y;                         // 0 top .. 1 bottom
+    float edge    = 1.0 - top;
+    float inBeam  = smoothstep(edge - 0.02, edge + 0.02, fillY);
+
+    // Along-beam gradient: brightest at the crest.
+    float along     = clamp((fillY - edge) / max(top, 1e-3), 0.0, 1.0);
+    float beamShape = pow(1.0 - along, 1.6);
+
+    // Per-column flicker using fbm against time.
+    float flick = 0.78 + 0.22 * valueNoise(float2(cell.x * 0.4, time * 1.6));
+
+    // Horizontal per-cell softening — beams taper instead of merging.
+    float colCenter = (cell.x + 0.5) / cols;
+    float xDist     = abs(uv.x - colCenter) * cols;
+    float xShape    = smoothstep(0.55, 0.12, xDist);
+
+    float mask = inBeam * beamShape * flick * xShape;
+
+    // Warm ember base — slow, breathing.
+    float ember = fbm(uv * float2(3.0, 5.0) + float2(0.0, time * 0.20));
+    half3 base  = (half3)tint.rgb * (half)(0.22 + 0.35 * ember);
+
+    // Build beam colour: tint → glow → accent as mask grows.
+    half3 beamCol = mix((half3)tint.rgb, (half3)glow.rgb,   (half)clamp(mask * glow.a, 0.0, 1.0));
+    beamCol       = mix(beamCol,         (half3)accent.rgb, (half)clamp(pow(mask, 1.8), 0.0, 1.0));
+
+    half3 c = mix(base, beamCol, (half)clamp(mask * intensity, 0.0, 1.0));
+
+    // Subtle row banding for retro pixel feel.
+    float band = 0.94 + 0.06 * fract(cell.y * 0.5);
+    c *= (half)band;
+
+    c = applyStatus(c, statusAccent, 0.30);
+    return half4(c, 1.0);
 }
 
 // ===========================================================================

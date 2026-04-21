@@ -35,7 +35,7 @@ struct GlowBackground<S: Shape>: View {
                         animated: animated && !DesignTokens.Motion.reduceMotion
                     )
                     .blur(radius: 22)
-                    .opacity(0.95)
+                    .opacity(0.35)
                 }
             }
             .overlay {

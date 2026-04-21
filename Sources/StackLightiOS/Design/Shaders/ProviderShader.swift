@@ -57,6 +57,7 @@ struct ProviderShaderView: View {
         case .sweepWing:     return "sweepWing"
         case .errorAura:     return "errorAura"
         case .neutral:       return "neutral"
+        case .pixelBeams:    return "pixelBeams"
         }
     }
 }
