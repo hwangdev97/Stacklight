@@ -3,6 +3,7 @@ import UserNotifications
 
 @main
 struct StackLightiOSApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var appState = AppState()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -23,8 +24,13 @@ struct StackLightiOSApp: App {
                     appState.startPolling()
                 }
                 .onChange(of: scenePhase) { _, newPhase in
-                    if newPhase == .active {
+                    switch newPhase {
+                    case .active:
                         appState.refresh()
+                    case .background:
+                        BackgroundRefreshCoordinator.scheduleNext()
+                    default:
+                        break
                     }
                 }
                 .onOpenURL { url in

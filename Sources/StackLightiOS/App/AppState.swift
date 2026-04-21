@@ -14,7 +14,6 @@ final class AppState: ObservableObject {
     var previewConfiguredOverride: Bool?
 
     private let pollingManager = PollingManager()
-    private let notificationManager = NotificationManager()
     private var lastPublishedFingerprint: String = ""
 
     func startPolling() {
@@ -27,7 +26,7 @@ final class AppState: ObservableObject {
             self.deployments = newDeployments
             self.lastRefresh = Date()
             self.isRefreshing = false
-            self.notificationManager.checkForChanges(old: old, new: newDeployments)
+            NotificationManager.shared.checkForChangesPersistent(old: old, new: newDeployments)
             self.publishSnapshot(newDeployments)
         }
         pollingManager.onError = { [weak self] providerID, error in

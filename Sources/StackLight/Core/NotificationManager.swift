@@ -3,27 +3,32 @@ import UserNotifications
 
 @MainActor
 final class NotificationManager {
-    private var previousStates: [String: Deployment.Status] = [:]
+    static let shared = NotificationManager()
 
-    func checkForChanges(old: [Deployment], new: [Deployment]) {
-        guard AppConfig.defaults.object(forKey: "notificationsEnabled") as? Bool ?? true else {
-            updateStates(from: new)
-            return
-        }
+    private init() {}
 
-        // Skip notifications on first load (no previous data)
-        guard !previousStates.isEmpty else {
-            updateStates(from: new)
-            return
-        }
+    /// Diffs `new` against both `old` (in-memory prior poll result) and the
+    /// persisted `NotifiedStateStore`, firing a local notification for each
+    /// meaningful transition. Persisted state is the authoritative dedupe key
+    /// so a status change delivered in the foreground isn't re-announced when
+    /// iOS wakes the app in the background, and vice versa.
+    func checkForChangesPersistent(old: [Deployment], new: [Deployment]) {
+        let enabled = AppConfig.defaults.object(forKey: "notificationsEnabled") as? Bool ?? true
+        var notified = NotifiedStateStore.read()
+        let firstRun = notified.isEmpty
 
-        for deployment in new {
-            guard let oldStatus = previousStates[deployment.id] else { continue }
-            let newStatus = deployment.status
+        if enabled && !firstRun {
+            for deployment in new {
+                let stateKey = NotifiedStateStore.key(for: deployment)
+                let lastRaw = notified[stateKey]
+                let newRaw = deployment.status.rawValue
+                guard lastRaw != newRaw else { continue }
 
-            // Only notify on meaningful transitions
-            if oldStatus != newStatus {
-                switch newStatus {
+                let oldStatus: Deployment.Status? =
+                    old.first(where: { $0.id == deployment.id })?.status
+                    ?? lastRaw.flatMap { Deployment.Status(rawValue: $0) }
+
+                switch deployment.status {
                 case .failed:
                     sendNotification(
                         title: "Deploy Failed",
@@ -42,14 +47,12 @@ final class NotificationManager {
             }
         }
 
-        updateStates(from: new)
-    }
-
-    private func updateStates(from deployments: [Deployment]) {
-        previousStates = Dictionary(
-            deployments.map { ($0.id, $0.status) },
-            uniquingKeysWith: { _, last in last }
-        )
+        for deployment in new {
+            notified[NotifiedStateStore.key(for: deployment)] = deployment.status.rawValue
+        }
+        let liveKeys = Set(new.map { NotifiedStateStore.key(for: $0) })
+        notified = notified.filter { liveKeys.contains($0.key) }
+        NotifiedStateStore.write(notified)
     }
 
     private func formatBody(_ deployment: Deployment) -> String {
@@ -73,7 +76,7 @@ final class NotificationManager {
         let request = UNNotificationRequest(
             identifier: "stacklight.\(deployment.id).\(deployment.status.rawValue)",
             content: content,
-            trigger: nil // deliver immediately
+            trigger: nil
         )
         UNUserNotificationCenter.current().add(request)
     }

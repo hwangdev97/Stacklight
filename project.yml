@@ -67,6 +67,8 @@ targets:
         CFBundleIconName: AppIcon
         ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
+        UIBackgroundModes:
+          - fetch
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UILaunchScreen:
