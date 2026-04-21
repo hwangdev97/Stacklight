@@ -80,17 +80,10 @@ struct HomeView: View {
 
     // MARK: Derived data
 
-    // The configured providers that actually have deployments (used for the
-    // pill rail so we don't clutter it with services that never posted anything).
-    private var activeProviderIDs: [String] {
-        let configured = ServiceRegistry.shared.configuredProviders.map(\.id)
-        let withData = Set(appState.sortedDeployments.map(\.providerID))
-        return configured.filter { withData.contains($0) }
-    }
+    private var activeProviderIDs: [String] { appState.activeProviderIDs }
 
     private var filteredDeployments: [Deployment] {
-        guard let id = selectedProviderID else { return appState.sortedDeployments }
-        return appState.sortedDeployments.filter { $0.providerID == id }
+        appState.filteredDeployments(for: selectedProviderID)
     }
 
     // MARK: Scroll list
@@ -146,10 +139,22 @@ struct HomeView: View {
                 Image(systemName: "gearshape")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
-                    
-                    
             }
+            .hoverEffect(.highlight)
+            .keyboardShortcut(",", modifiers: .command)
             .accessibilityLabel("Settings")
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                appState.refresh()
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .hoverEffect(.highlight)
+            .keyboardShortcut("r", modifiers: .command)
+            .accessibilityLabel("Refresh")
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
@@ -158,54 +163,11 @@ struct HomeView: View {
                 Image(systemName: "plus")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
-                    
-                    
             }
+            .hoverEffect(.highlight)
+            .keyboardShortcut("n", modifiers: .command)
             .accessibilityLabel("Add Integration")
         }
-    }
-}
-
-// MARK: - Error banner
-
-private struct HomeErrorBanner: View {
-    let errors: [String: String]
-    let onDismiss: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 10) {
-                GlassIconChip(systemImage: "exclamationmark.triangle.fill",
-                              tint: .white, size: 32)
-                Text("Some services failed to refresh")
-                    .font(DesignTokens.Typography.cardTitle)
-                    .foregroundStyle(.white)
-                Spacer()
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .frame(width: 28, height: 28)
-                        .liquidGlassCircle()
-                }
-                .buttonStyle(.plain)
-            }
-            ForEach(errors.sorted(by: { $0.key < $1.key }), id: \.key) { providerID, message in
-                let name = ServiceRegistry.shared.provider(withID: providerID)?.displayName ?? providerID
-                Text("\(name): \(message)")
-                    .font(DesignTokens.Typography.caption)
-                    .foregroundStyle(.white.opacity(0.82))
-                    .lineLimit(2)
-            }
-        }
-        .padding(DesignTokens.Spacing.lg)
-        .background(
-            GlowBackground(
-                theme: .error,
-                shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.md,
-                                        style: .continuous),
-                intensity: 0.9)
-        )
     }
 }
 

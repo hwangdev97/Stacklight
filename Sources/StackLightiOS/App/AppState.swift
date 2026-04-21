@@ -53,6 +53,22 @@ final class AppState: ObservableObject {
         deployments.sorted { $0.createdAt > $1.createdAt }
     }
 
+    /// Sorted deployments filtered to a single provider, or all of them when
+    /// `providerID` is `nil`. Shared between Home's compact list and the
+    /// iPad grid.
+    func filteredDeployments(for providerID: String?) -> [Deployment] {
+        guard let providerID else { return sortedDeployments }
+        return sortedDeployments.filter { $0.providerID == providerID }
+    }
+
+    /// Configured providers that have actually produced deployments in this
+    /// session. Used for filter UIs so we don't list services with no data.
+    var activeProviderIDs: [String] {
+        let configured = ServiceRegistry.shared.configuredProviders.map(\.id)
+        let withData = Set(sortedDeployments.map(\.providerID))
+        return configured.filter { withData.contains($0) }
+    }
+
     /// Whether at least one provider has valid credentials.
     var hasConfiguredProvider: Bool {
         if let override = previewConfiguredOverride { return override }

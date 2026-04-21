@@ -18,6 +18,7 @@ struct DeploymentsWidget: Widget {
             .systemSmall,
             .systemMedium,
             .systemLarge,
+            .systemExtraLarge,
             .accessoryCircular,
             .accessoryRectangular,
             .accessoryInline
@@ -34,6 +35,7 @@ struct DeploymentsWidgetEntryView: View {
         case .systemSmall:         SmallDeploymentView(entry: entry)
         case .systemMedium:        MediumDeploymentView(entry: entry)
         case .systemLarge:         LargeDeploymentView(entry: entry)
+        case .systemExtraLarge:    ExtraLargeDeploymentView(entry: entry)
         case .accessoryCircular:   AccessoryCircularView(entry: entry)
         case .accessoryRectangular: AccessoryRectangularView(entry: entry)
         case .accessoryInline:     AccessoryInlineView(entry: entry)

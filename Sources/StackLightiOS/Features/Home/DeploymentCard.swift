@@ -41,6 +41,7 @@ struct DeploymentCard: View {
             cardBody
         }
         .buttonStyle(HeroCardButtonStyle())
+        .hoverEffect(.lift)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(.isButton)

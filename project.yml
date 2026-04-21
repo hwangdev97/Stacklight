@@ -70,7 +70,7 @@ targets:
         UIBackgroundModes:
           - fetch
         UIApplicationSceneManifest:
-          UIApplicationSupportsMultipleScenes: false
+          UIApplicationSupportsMultipleScenes: true
         UILaunchScreen:
           UIColorName: ""
         UISupportedInterfaceOrientations:

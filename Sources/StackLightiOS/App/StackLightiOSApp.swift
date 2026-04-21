@@ -18,7 +18,7 @@ struct StackLightiOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            RootView()
                 .environmentObject(appState)
                 .task {
                     appState.startPolling()
