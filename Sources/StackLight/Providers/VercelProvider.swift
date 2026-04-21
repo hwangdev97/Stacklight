@@ -9,6 +9,14 @@ final class VercelProvider: DeploymentProvider {
     let color = Color.black
     let docsURL = URL(string: "https://vercel.com/account/tokens")
 
+    /// UserDefaults keys for filter config.
+    static let branchFilterKey = "vercel.branchFilter"
+    static let hideSkippedKey = "vercel.hideSkippedPreviews"
+    static let knownBranchesKey = "vercel.knownBranches"
+
+    /// Sentinel stored in `branchFilterKey` meaning "no filter".
+    static let allBranchesSentinel = ""
+
     var dashboardURL: URL? {
         if let teamId = AppConfig.defaults.string(forKey: "vercel.teamId"), !teamId.isEmpty {
             return URL(string: "https://vercel.com/\(teamId)")
@@ -25,7 +33,8 @@ final class VercelProvider: DeploymentProvider {
         guard let token = KeychainManager.read(key: "vercel.token") else { return [] }
 
         var components = URLComponents(string: "https://api.vercel.com/v6/deployments")!
-        components.queryItems = [URLQueryItem(name: "limit", value: "10")]
+        // Fetch extra rows so filters still return a useful window.
+        components.queryItems = [URLQueryItem(name: "limit", value: "30")]
 
         if let teamId = AppConfig.defaults.string(forKey: "vercel.teamId"), !teamId.isEmpty {
             components.queryItems?.append(URLQueryItem(name: "teamId", value: teamId))
@@ -46,14 +55,62 @@ final class VercelProvider: DeploymentProvider {
         }
 
         let response = try JSONDecoder().decode(VercelResponse.self, from: data)
-        return response.deployments.map { $0.toDeployment() }
+        let rawDeployments = response.deployments
+
+        // Remember every branch we've seen so the settings picker has real
+        // options to offer the next time it opens.
+        cacheKnownBranches(from: rawDeployments)
+
+        let branchFilter = (AppConfig.defaults.string(forKey: Self.branchFilterKey) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let hideSkipped = AppConfig.defaults.bool(forKey: Self.hideSkippedKey)
+
+        return rawDeployments
+            .filter { deployment in
+                if branchFilter.isEmpty { return true }
+                guard let ref = deployment.meta?.githubCommitRef, !ref.isEmpty else {
+                    return false
+                }
+                return ref.caseInsensitiveCompare(branchFilter) == .orderedSame
+            }
+            .filter { deployment in
+                guard hideSkipped else { return true }
+                return !deployment.isSkippedPreview
+            }
+            .prefix(10)
+            .map { $0.toDeployment() }
     }
 
     func settingsFields() -> [SettingsField] {
         [
-            SettingsField(key: "vercel.token", label: "API Token", isSecret: true, placeholder: "Bearer token from Vercel dashboard"),
-            SettingsField(key: "vercel.teamId", label: "Team ID", placeholder: "Optional, for team deployments")
+            SettingsField(key: "vercel.token", label: "API Token", isSecret: true,
+                          placeholder: "Bearer token from Vercel dashboard"),
+            SettingsField(key: "vercel.teamId", label: "Team ID",
+                          placeholder: "Optional, for team deployments"),
+            SettingsField(
+                key: Self.branchFilterKey,
+                label: "Branch Filter",
+                placeholder: "All branches",
+                hint: "Only show deployments from the chosen branch.",
+                kind: .branchPicker(branchesKey: Self.knownBranchesKey)
+            ),
+            SettingsField(
+                key: Self.hideSkippedKey,
+                label: "Hide Skipped Previews",
+                hint: "Cancelled preview builds won't appear in the list.",
+                kind: .toggle
+            )
         ]
+    }
+
+    private func cacheKnownBranches(from deployments: [VercelDeployment]) {
+        let branches = Set(deployments.compactMap { $0.meta?.githubCommitRef }
+            .filter { !$0.isEmpty })
+        guard !branches.isEmpty else { return }
+
+        let existing = AppConfig.defaults.stringArray(forKey: Self.knownBranchesKey) ?? []
+        let merged = Array(Set(existing).union(branches)).sorted()
+        AppConfig.defaults.set(merged, forKey: Self.knownBranchesKey)
     }
 }
 
@@ -76,11 +133,20 @@ private struct VercelDeployment: Decodable {
     let state: String?
     let url: String?
     let created: TimeInterval // milliseconds
+    let target: String?
     let meta: VercelMeta?
 
     struct VercelMeta: Decodable {
         let githubCommitMessage: String?
         let githubCommitRef: String?
+    }
+
+    /// A "skipped" preview in Vercel is a non-production deployment that ended
+    /// up cancelled — typically because the commit produced no effective
+    /// changes or a newer deploy superseded it.
+    var isSkippedPreview: Bool {
+        let isPreview = (target ?? "").lowercased() != "production"
+        return isPreview && (state?.uppercased() == "CANCELED")
     }
 
     func toDeployment() -> Deployment {

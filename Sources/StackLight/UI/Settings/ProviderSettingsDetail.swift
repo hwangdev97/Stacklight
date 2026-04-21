@@ -55,15 +55,7 @@ struct ProviderSettingsDetail: View {
                 Section {
                     ForEach(singleValueFields, id: \.id) { field in
                         VStack(alignment: .leading, spacing: 2) {
-                            LabeledContent(field.label) {
-                                if field.isSecret {
-                                    SecureField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                        .multilineTextAlignment(.trailing)
-                                } else {
-                                    TextField("", text: binding(for: field), prompt: Text(field.placeholder))
-                                        .multilineTextAlignment(.trailing)
-                                }
-                            }
+                            fieldRow(field)
 
                             if let hint = field.hint {
                                 Text(hint)
@@ -134,6 +126,32 @@ struct ProviderSettingsDetail: View {
         .onAppear { loadFields() }
     }
 
+    @ViewBuilder
+    private func fieldRow(_ field: SettingsField) -> some View {
+        switch field.kind {
+        case .toggle:
+            Toggle(field.label, isOn: toggleBinding(for: field))
+        case .branchPicker(let branchesKey):
+            LabeledContent(field.label) {
+                BranchPickerControl(
+                    value: binding(for: field),
+                    branchesKey: branchesKey,
+                    placeholder: field.placeholder
+                )
+            }
+        case .text:
+            LabeledContent(field.label) {
+                if field.isSecret {
+                    SecureField("", text: binding(for: field), prompt: Text(field.placeholder))
+                        .multilineTextAlignment(.trailing)
+                } else {
+                    TextField("", text: binding(for: field), prompt: Text(field.placeholder))
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+        }
+    }
+
     private func binding(for field: SettingsField) -> Binding<String> {
         Binding(
             get: { fieldValues[field.key] ?? "" },
@@ -141,10 +159,19 @@ struct ProviderSettingsDetail: View {
         )
     }
 
+    private func toggleBinding(for field: SettingsField) -> Binding<Bool> {
+        Binding(
+            get: { (fieldValues[field.key] ?? "") == "1" },
+            set: { fieldValues[field.key] = $0 ? "1" : "0" }
+        )
+    }
+
     private func loadFields() {
         for field in provider.settingsFields() {
             if field.isSecret {
                 fieldValues[field.key] = KeychainManager.read(key: field.key) ?? ""
+            } else if field.isToggle {
+                fieldValues[field.key] = AppConfig.defaults.bool(forKey: field.key) ? "1" : "0"
             } else {
                 fieldValues[field.key] = AppConfig.defaults.string(forKey: field.key) ?? ""
             }
@@ -186,11 +213,94 @@ struct ProviderSettingsDetail: View {
                 } else {
                     try? KeychainManager.save(key: field.key, value: value)
                 }
+            } else if field.isToggle {
+                AppConfig.defaults.set(value == "1", forKey: field.key)
             } else {
                 AppConfig.defaults.set(value, forKey: field.key)
             }
         }
         ASCCredentialStore.invalidate()
+    }
+}
+
+// MARK: - Branch Picker
+
+/// Dropdown that backs a free-form string setting. When known branches have
+/// been cached (from a previous `fetchDeployments()` call) they show up as
+/// menu items; otherwise the user gets "All", "main", and a "Custom…" escape
+/// hatch that reveals an inline text field.
+struct BranchPickerControl: View {
+    @Binding var value: String
+    let branchesKey: String
+    let placeholder: String
+
+    @State private var showCustomField: Bool = false
+    @State private var customDraft: String = ""
+
+    private static let allOption = ""
+    private static let customSentinel = "__custom__"
+
+    private var knownBranches: [String] {
+        AppConfig.defaults.stringArray(forKey: branchesKey) ?? []
+    }
+
+    private var options: [String] {
+        var opts = [Self.allOption, "main"]
+        for branch in knownBranches where !opts.contains(branch) {
+            opts.append(branch)
+        }
+        return opts
+    }
+
+    private var selectedOption: String {
+        // If the stored value matches one of the menu options, select it;
+        // otherwise treat it as a custom entry.
+        if value.isEmpty { return Self.allOption }
+        return options.contains(value) ? value : Self.customSentinel
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Picker("", selection: Binding(
+                get: { selectedOption },
+                set: { newSelection in
+                    if newSelection == Self.customSentinel {
+                        showCustomField = true
+                        customDraft = options.contains(value) ? "" : value
+                    } else {
+                        showCustomField = false
+                        value = newSelection
+                    }
+                }
+            )) {
+                Text("All branches").tag(Self.allOption)
+                ForEach(options.filter { $0 != Self.allOption }, id: \.self) { branch in
+                    Text(branch).tag(branch)
+                }
+                Divider()
+                Text("Custom…").tag(Self.customSentinel)
+            }
+            .labelsHidden()
+            .fixedSize()
+
+            if showCustomField || (!value.isEmpty && !options.contains(value)) {
+                TextField("", text: Binding(
+                    get: { customDraft.isEmpty ? value : customDraft },
+                    set: { newValue in
+                        customDraft = newValue
+                        value = newValue.trimmingCharacters(in: .whitespaces)
+                    }
+                ), prompt: Text(placeholder.isEmpty ? "branch-name" : placeholder))
+                .textFieldStyle(.roundedBorder)
+                .frame(minWidth: 140)
+            }
+        }
+        .onAppear {
+            if !value.isEmpty && !options.contains(value) {
+                showCustomField = true
+                customDraft = value
+            }
+        }
     }
 }
 

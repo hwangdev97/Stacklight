@@ -148,26 +148,75 @@ struct ProviderSettingsView: View {
 
     @ViewBuilder
     private func credentialField(_ field: SettingsField) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(field.label)
-                .font(DesignTokens.Typography.caption)
-                .foregroundStyle(.white.opacity(0.70))
+        switch field.kind {
+        case .toggle:
+            VStack(alignment: .leading, spacing: 6) {
+                Toggle(isOn: toggleBinding(for: field)) {
+                    Text(field.label)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.white.opacity(0.90))
+                }
+                .tint(theme.accent)
 
-            GlassTextField(
-                placeholder: field.placeholder,
-                text: binding(for: field),
-                isSecret: field.isSecret,
-                accent: theme.accent,
-                isFocused: focusedKey == field.key
-            )
-            .focused($focusedKey, equals: field.key)
+                if let hint = field.hint {
+                    Text(hint)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+            }
 
-            if let hint = field.hint {
-                Text(hint)
+        case .branchPicker(let branchesKey):
+            VStack(alignment: .leading, spacing: 6) {
+                Text(field.label)
                     .font(DesignTokens.Typography.caption)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.70))
+
+                BranchPickerControl(
+                    value: binding(for: field),
+                    branchesKey: branchesKey,
+                    placeholder: field.placeholder,
+                    accent: theme.accent,
+                    isFocused: focusedKey == field.key,
+                    focusKey: field.key,
+                    focusedKey: $focusedKey
+                )
+
+                if let hint = field.hint {
+                    Text(hint)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+            }
+
+        case .text:
+            VStack(alignment: .leading, spacing: 6) {
+                Text(field.label)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.white.opacity(0.70))
+
+                GlassTextField(
+                    placeholder: field.placeholder,
+                    text: binding(for: field),
+                    isSecret: field.isSecret,
+                    accent: theme.accent,
+                    isFocused: focusedKey == field.key
+                )
+                .focused($focusedKey, equals: field.key)
+
+                if let hint = field.hint {
+                    Text(hint)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
             }
         }
+    }
+
+    private func toggleBinding(for field: SettingsField) -> Binding<Bool> {
+        Binding(
+            get: { (fieldValues[field.key] ?? "") == "1" },
+            set: { fieldValues[field.key] = $0 ? "1" : "0" }
+        )
     }
 
     // MARK: Multi-value cards
@@ -285,6 +334,8 @@ struct ProviderSettingsView: View {
         for field in provider.settingsFields() {
             if field.isSecret {
                 fieldValues[field.key] = KeychainManager.read(key: field.key) ?? ""
+            } else if field.isToggle {
+                fieldValues[field.key] = AppConfig.defaults.bool(forKey: field.key) ? "1" : "0"
             } else {
                 fieldValues[field.key] = AppConfig.defaults.string(forKey: field.key) ?? ""
             }
@@ -300,6 +351,8 @@ struct ProviderSettingsView: View {
                 } else {
                     try? KeychainManager.save(key: field.key, value: value)
                 }
+            } else if field.isToggle {
+                AppConfig.defaults.set(value == "1", forKey: field.key)
             } else {
                 AppConfig.defaults.set(value, forKey: field.key)
             }
@@ -422,6 +475,122 @@ struct GlassTextField: View {
                         lineWidth: isFocused ? 1.5 : 1)
         )
         .animation(.easeOut(duration: 0.2), value: isFocused)
+    }
+}
+
+// MARK: - Branch Picker (iOS)
+
+/// Dropdown backed by a plain string setting. Offers "All", "main", any
+/// branches that the provider has cached from recent fetches, plus a
+/// "Custom…" option that reveals a free-form input for arbitrary branch names.
+struct BranchPickerControl: View {
+    @Binding var value: String
+    let branchesKey: String
+    let placeholder: String
+    let accent: Color
+    let isFocused: Bool
+    let focusKey: String
+    var focusedKey: FocusState<String?>.Binding
+
+    @State private var showCustomField: Bool = false
+    @State private var customDraft: String = ""
+
+    private static let allOption = ""
+    private static let customSentinel = "__custom__"
+
+    private var knownBranches: [String] {
+        AppConfig.defaults.stringArray(forKey: branchesKey) ?? []
+    }
+
+    private var options: [String] {
+        var opts = [Self.allOption, "main"]
+        for branch in knownBranches where !opts.contains(branch) {
+            opts.append(branch)
+        }
+        return opts
+    }
+
+    private var selectedOption: String {
+        if value.isEmpty { return Self.allOption }
+        return options.contains(value) ? value : Self.customSentinel
+    }
+
+    private var selectionLabel: String {
+        switch selectedOption {
+        case Self.allOption: return "All branches"
+        case Self.customSentinel: return value.isEmpty ? "Custom…" : value
+        default: return selectedOption
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Menu {
+                Button("All branches") { select(Self.allOption) }
+                ForEach(options.filter { $0 != Self.allOption }, id: \.self) { branch in
+                    Button(branch) { select(branch) }
+                }
+                Divider()
+                Button("Custom…") { select(Self.customSentinel) }
+            } label: {
+                HStack {
+                    Text(selectionLabel)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                                     style: .continuous)
+                        .fill(Color.white.opacity(0.05))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.sm,
+                                     style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+            }
+
+            if showCustomField || (!value.isEmpty && !options.contains(value)) {
+                GlassTextField(
+                    placeholder: placeholder.isEmpty ? "branch-name" : placeholder,
+                    text: Binding(
+                        get: { customDraft.isEmpty ? value : customDraft },
+                        set: { newValue in
+                            customDraft = newValue
+                            value = newValue.trimmingCharacters(in: .whitespaces)
+                        }
+                    ),
+                    isSecret: false,
+                    accent: accent,
+                    isFocused: isFocused
+                )
+                .focused(focusedKey, equals: focusKey)
+            }
+        }
+        .onAppear {
+            if !value.isEmpty && !options.contains(value) {
+                showCustomField = true
+                customDraft = value
+            }
+        }
+    }
+
+    private func select(_ option: String) {
+        if option == Self.customSentinel {
+            showCustomField = true
+            customDraft = options.contains(value) ? "" : value
+            focusedKey.wrappedValue = focusKey
+        } else {
+            showCustomField = false
+            customDraft = ""
+            value = option
+        }
     }
 }
 
