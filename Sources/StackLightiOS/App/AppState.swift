@@ -38,6 +38,13 @@ final class AppState: ObservableObject {
 
     func refresh() {
         errors.removeAll()
+        // Without any configured provider, PollingManager.poll() short-circuits
+        // and never fires onUpdate/onError — which would leave isRefreshing
+        // stuck at true and the Home spinner visible forever on the empty state.
+        guard hasConfiguredProvider else {
+            isRefreshing = false
+            return
+        }
         isRefreshing = true
         pollingManager.refresh()
     }
