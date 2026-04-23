@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         BackgroundRefreshCoordinator.register()
+        PhoneSessionManager.shared.activate()
         return true
     }
 }

@@ -4,6 +4,7 @@ options:
   deploymentTarget:
     macOS: "13.0"
     iOS: "26.0"
+    watchOS: "10.0"
   groupSortPosition: none
   createIntermediateGroups: true
 
@@ -104,6 +105,83 @@ targets:
       - target: StackLightWidgets
         embed: true
         codeSign: true
+      - target: StackLightWatch
+        embed: true
+        codeSign: true
+
+  StackLightWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: Sources/StackLight/Core/Deployment.swift
+      - path: Sources/StackLight/Core/Deployment+Codable.swift
+      - path: Sources/StackLight/Core/SharedStore.swift
+      - path: Sources/StackLight/Core/AppConfig.swift
+      - path: Sources/StackLight/Core/WidgetRefresh.swift
+      - path: Sources/StackLightWidgets/Views/WidgetStatusBadge.swift
+      - path: Sources/StackLightWatch
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/StackLightWatch.entitlements"
+    info:
+      path: Sources/StackLightWatch/Resources/Info.plist
+      properties:
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleName: StackLight
+        CFBundleDisplayName: StackLight
+        ITSAppUsesNonExemptEncryption: false
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: app.yellowplus.StackLight
+        WKWatchOnly: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.watchkitapp
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: QDJ93ZUQ9B
+        CODE_SIGN_ENTITLEMENTS: Sources/StackLightWatch/Resources/StackLightWatch.entitlements
+        GENERATE_INFOPLIST_FILE: false
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "4"
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+    dependencies:
+      - target: StackLightWatchComplications
+        embed: true
+        codeSign: true
+
+  StackLightWatchComplications:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: Sources/StackLight/Core/Deployment.swift
+      - path: Sources/StackLight/Core/Deployment+Codable.swift
+      - path: Sources/StackLight/Core/SharedStore.swift
+      - path: Sources/StackLight/Core/AppConfig.swift
+      - path: Sources/StackLightWidgets/Views/WidgetStatusBadge.swift
+      - path: Sources/StackLightWatchComplications
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/StackLightWatchComplications.entitlements"
+    info:
+      path: Sources/StackLightWatchComplications/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: StackLight
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.watchkitapp.complications
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: QDJ93ZUQ9B
+        CODE_SIGN_ENTITLEMENTS: Sources/StackLightWatchComplications/Resources/StackLightWatchComplications.entitlements
+        GENERATE_INFOPLIST_FILE: false
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "4"
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+        SKIP_INSTALL: YES
 
   StackLightWidgets:
     type: app-extension

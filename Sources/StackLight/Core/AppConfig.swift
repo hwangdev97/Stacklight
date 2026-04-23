@@ -9,7 +9,7 @@ enum AppConfig {
     static let appGroupSuite = SharedStore.suiteName
 
     static var defaults: UserDefaults {
-        #if os(iOS)
+        #if os(iOS) || os(watchOS)
         return UserDefaults(suiteName: appGroupSuite) ?? .standard
         #else
         return .standard
