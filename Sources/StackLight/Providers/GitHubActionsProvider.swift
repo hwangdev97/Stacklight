@@ -55,7 +55,8 @@ final class GitHubActionsProvider: DeploymentProvider {
     func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "github.token", label: "Personal Access Token", isSecret: true, placeholder: "ghp_... (needs repo scope)"),
-            SettingsField(key: "github.repos", label: "Repositories", placeholder: "owner/repo, owner/repo2")
+            SettingsField(key: "github.repos", label: "Repositories", placeholder: "owner/repo", isMultiValue: true,
+                          hint: "Add repos to watch for workflow runs")
         ]
     }
 
