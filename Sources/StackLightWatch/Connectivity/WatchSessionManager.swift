@@ -32,6 +32,12 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
         let session = WCSession.default
         session.delegate = self
         session.activate()
+        // Cold-start catch-up: if iOS already handed us the last context before
+        // we activated, drain it now so the UI doesn't sit empty until the
+        // next poll.
+        if !session.receivedApplicationContext.isEmpty {
+            handleReplyOrMessage(session.receivedApplicationContext)
+        }
     }
 
     /// Ask the iPhone for the freshest snapshot it has. The reply handler runs

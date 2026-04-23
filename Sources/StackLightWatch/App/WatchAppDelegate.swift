@@ -6,6 +6,9 @@ import WatchKit
 final class WatchAppDelegate: NSObject, WKApplicationDelegate {
     func applicationDidFinishLaunching() {
         WatchSessionManager.shared.activate()
+        // Seed the first background refresh ticket. Without this, the very
+        // first slot is only requested when the app backgrounds.
+        WatchRefreshScheduler.scheduleNext()
     }
 
     func handle(_ backgroundTasks: Set<WKRefreshBackgroundTask>) {
