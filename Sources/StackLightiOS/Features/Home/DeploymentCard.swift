@@ -1,18 +1,18 @@
 import SwiftUI
 
-/// The hero card for a single deployment — modelled on the large rounded
-/// cards in the reference smart-home mockup.
+/// The hero card for a single deployment.
 ///
-/// Layout (approximate):
+/// Information hierarchy (top → bottom):
 ///
-///   ┌──────────────────────────────────────┐
-///   │  ○ icon                              │
-///   │                                      │
-///   │          2m                          │ ← display numeral
-///   │      Website                         │ ← project name
-///   │                                      │
-///   │  [ ● Building · main · abc ]     ⏻  │ ← status chip + power
-///   └──────────────────────────────────────┘
+///   ┌──────────────────────────────────────────┐
+///   │  ○ provider icon         ● Building      │ ← provider + status pill
+///   │                                          │
+///   │  Fix dropdown not closing                │ ← commit message (primary)
+///   │  on outside click                        │
+///   │                                          │
+///   │  ⎇ claude/fix-dropdown-close        ⏻    │ ← branch chip + power
+///   │  slabox-app-landing · 13m ago            │ ← repo · time (caption)
+///   └──────────────────────────────────────────┘
 ///
 ///  Behind everything: `GlowBackground(theme: providerTheme)` — the animated
 ///  Metal shader frosted by Liquid Glass.
@@ -70,7 +70,7 @@ struct DeploymentCard: View {
             }
             .padding(DesignTokens.Spacing.lg)
         }
-        .frame(height: 172)
+        .frame(minHeight: 172)
         .frame(maxWidth: .infinity)
     }
 
@@ -82,36 +82,44 @@ struct DeploymentCard: View {
                 GlassIconChip(provider: provider, tint: theme.accent, size: 36)
             }
             Spacer()
+            statusChip
         }
     }
 
-    private var centerRow: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(Self.relativeFormatter.localizedString(
-                    for: deployment.createdAt, relativeTo: Date()))
-                .font(DesignTokens.Typography.display(size: 46))
-                .foregroundStyle(Color.white)
-                .monospacedDigit()
-                .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 2)
+    private var primaryTitle: String {
+        if let msg = deployment.commitMessage, !msg.isEmpty { return msg }
+        return deployment.projectName
+    }
 
-            Text(deployment.projectName)
-                .font(DesignTokens.Typography.cardTitle)
-                .foregroundStyle(Color.white.opacity(0.82))
-                .lineLimit(1)
-                .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 1)
+    private var centerRow: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(primaryTitle)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.white)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 2)
         }
     }
 
     private var bottomRow: some View {
-        HStack(spacing: 10) {
-            statusChip
-            if let branch = deployment.branch {
-                branchChip(branch)
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            HStack(spacing: 10) {
+                if let branch = deployment.branch {
+                    branchChip(branch)
+                }
+                Spacer(minLength: 0)
+                if deployment.url != nil {
+                    powerChip
+                }
             }
-            Spacer(minLength: 0)
-            if deployment.url != nil {
-                powerChip
-            }
+
+            Text("\(deployment.projectName) · \(Self.relativeFormatter.localizedString(for: deployment.createdAt, relativeTo: Date()))")
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(Color.white.opacity(0.55))
+                .lineLimit(1)
+                .monospacedDigit()
         }
     }
 
@@ -166,7 +174,10 @@ struct DeploymentCard: View {
 
     private var accessibilityText: String {
         let providerName = provider?.displayName ?? deployment.providerID
-        return "\(providerName) \(deployment.projectName), \(deployment.status.displayName), " +
+        let branchPart = deployment.branch.map { "Branch \($0). " } ?? ""
+        return "\(providerName): \(primaryTitle). " +
+               branchPart +
+               "\(deployment.projectName), \(deployment.status.displayName), " +
                Self.relativeFormatter.localizedString(for: deployment.createdAt, relativeTo: Date())
     }
 }
@@ -216,6 +227,19 @@ private struct HeroCardButtonStyle: ButtonStyle {
                 createdAt: Date().addingTimeInterval(-900),
                 commitMessage: "Fix broken build",
                 branch: "fix/build"
+            )) { _ in }
+
+            // Fallback: no commit message (Netlify/TestFlight/Fly.io) —
+            // primary slot should render the project name.
+            DeploymentCard(deployment: Deployment(
+                id: "4",
+                providerID: "netlify",
+                projectName: "slabox-app-landing",
+                status: .success,
+                url: URL(string: "https://netlify.app"),
+                createdAt: Date().addingTimeInterval(-3_600),
+                commitMessage: nil,
+                branch: nil
             )) { _ in }
         }
         .padding()
