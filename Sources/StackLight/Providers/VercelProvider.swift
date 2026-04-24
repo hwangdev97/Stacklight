@@ -29,12 +29,19 @@ final class VercelProvider: DeploymentProvider {
         return !token.isEmpty
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
-        guard let token = KeychainManager.read(key: "vercel.token") else { return [] }
+    func fetchDeployments() async throws -> DeploymentFetchResult {
+        guard let token = KeychainManager.read(key: "vercel.token") else { return .empty }
+
+        let projectNames = (AppConfig.defaults.string(forKey: "vercel.projectNames") ?? "")
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
 
         var components = URLComponents(string: "https://api.vercel.com/v6/deployments")!
-        // Fetch extra rows so filters still return a useful window.
-        components.queryItems = [URLQueryItem(name: "limit", value: "30")]
+        // With a project filter we widen the fetch window so quieter projects
+        // don't get drowned out by one noisy project in the first 30 results.
+        let limit = projectNames.isEmpty ? 30 : 100
+        components.queryItems = [URLQueryItem(name: "limit", value: String(limit))]
 
         if let teamId = AppConfig.defaults.string(forKey: "vercel.teamId"), !teamId.isEmpty {
             components.queryItems?.append(URLQueryItem(name: "teamId", value: teamId))
@@ -65,7 +72,13 @@ final class VercelProvider: DeploymentProvider {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let hideSkipped = AppConfig.defaults.bool(forKey: Self.hideSkippedKey)
 
-        return rawDeployments
+        let allowedNames = Set(projectNames.map { $0.lowercased() })
+
+        let filtered = rawDeployments
+            .filter { deployment in
+                guard !allowedNames.isEmpty else { return true }
+                return allowedNames.contains(deployment.name.lowercased())
+            }
             .filter { deployment in
                 if branchFilter.isEmpty { return true }
                 guard let ref = deployment.meta?.githubCommitRef, !ref.isEmpty else {
@@ -79,6 +92,8 @@ final class VercelProvider: DeploymentProvider {
             }
             .prefix(10)
             .map { $0.toDeployment() }
+
+        return DeploymentFetchResult(deployments: Array(filtered))
     }
 
     func settingsFields() -> [SettingsField] {
@@ -99,6 +114,13 @@ final class VercelProvider: DeploymentProvider {
                 label: "Hide Skipped Previews",
                 hint: "Cancelled preview builds won't appear in the list.",
                 kind: .toggle
+            ),
+            SettingsField(
+                key: "vercel.projectNames",
+                label: "Project Names",
+                placeholder: "my-site, docs-site",
+                isMultiValue: true,
+                hint: "Leave empty to include all projects under this token."
             )
         ]
     }

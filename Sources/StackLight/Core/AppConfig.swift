@@ -15,4 +15,16 @@ enum AppConfig {
         return .standard
         #endif
     }
+
+    /// One-shot UserDefaults rename. If `newKey` is empty (or missing) and
+    /// `oldKey` has a value, copy it over and remove the old entry. Idempotent
+    /// — safe to call from every provider `init()` on every app launch.
+    static func migrateSingleToMulti(oldKey: String, newKey: String) {
+        let existing = (defaults.string(forKey: newKey) ?? "").trimmingCharacters(in: .whitespaces)
+        guard existing.isEmpty else { return }
+        let legacy = (defaults.string(forKey: oldKey) ?? "").trimmingCharacters(in: .whitespaces)
+        guard !legacy.isEmpty else { return }
+        defaults.set(legacy, forKey: newKey)
+        defaults.removeObject(forKey: oldKey)
+    }
 }

@@ -377,8 +377,8 @@ struct ProviderSettingsView: View {
         testing = true
         testResult = nil
         do {
-            let deployments = try await provider.fetchDeployments()
-            testResult = .success(deployments.count)
+            let result = try await provider.fetchDeployments()
+            testResult = .success(result.deployments.count)
         } catch {
             testResult = .failure(error.localizedDescription)
         }

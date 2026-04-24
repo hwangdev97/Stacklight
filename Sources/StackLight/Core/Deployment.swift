@@ -52,3 +52,21 @@ extension Deployment {
         return formatter.localizedString(for: createdAt, relativeTo: Date())
     }
 }
+
+/// Per-fetch result for a single provider. `deployments` holds everything that
+/// was fetched successfully; `itemErrors` collects per-entry failures so one
+/// bad repo/site/app ID doesn't poison the whole batch.
+struct DeploymentFetchResult {
+    let deployments: [Deployment]
+    /// Ordered list of `(entry-identifier, error)`. The identifier is whatever
+    /// the provider shows the user for that entry — e.g. `"owner/repo"` for
+    /// GitHub, `"12345"` for a TestFlight App ID.
+    let itemErrors: [(item: String, error: Error)]
+
+    static let empty = DeploymentFetchResult(deployments: [], itemErrors: [])
+
+    init(deployments: [Deployment], itemErrors: [(item: String, error: Error)] = []) {
+        self.deployments = deployments
+        self.itemErrors = itemErrors
+    }
+}

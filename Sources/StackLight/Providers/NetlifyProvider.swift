@@ -17,27 +17,18 @@ final class NetlifyProvider: DeploymentProvider {
         return !siteIds.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
-        guard let token = KeychainManager.read(key: "netlify.token") else { return [] }
+    func fetchDeployments() async throws -> DeploymentFetchResult {
+        guard let token = KeychainManager.read(key: "netlify.token") else { return .empty }
 
         let siteIds = (AppConfig.defaults.string(forKey: "netlify.siteIds") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
-        guard !siteIds.isEmpty else { return [] }
+        guard !siteIds.isEmpty else { return .empty }
 
-        return try await withThrowingTaskGroup(of: [Deployment].self) { group in
-            for siteId in siteIds {
-                group.addTask {
-                    try await self.fetchDeploys(token: token, siteId: siteId)
-                }
-            }
-            var all: [Deployment] = []
-            for try await batch in group {
-                all.append(contentsOf: batch)
-            }
-            return all
+        return await DeploymentFetchResult.collecting(siteIds, name: { $0 }) { siteId in
+            try await Self.fetchDeploys(token: token, siteId: siteId)
         }
     }
 
@@ -48,7 +39,7 @@ final class NetlifyProvider: DeploymentProvider {
         ]
     }
 
-    private func fetchDeploys(token: String, siteId: String) async throws -> [Deployment] {
+    private static func fetchDeploys(token: String, siteId: String) async throws -> [Deployment] {
         var components = URLComponents(string: "https://api.netlify.com/api/v1/sites/\(siteId)/deploys")!
         components.queryItems = [URLQueryItem(name: "per_page", value: "10")]
 

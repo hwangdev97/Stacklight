@@ -20,27 +20,18 @@ final class GitHubPRProvider: DeploymentProvider {
         return !repos.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
-        guard let token = KeychainManager.read(key: "github.token") else { return [] }
+    func fetchDeployments() async throws -> DeploymentFetchResult {
+        guard let token = KeychainManager.read(key: "github.token") else { return .empty }
 
         let repos = (AppConfig.defaults.string(forKey: "github.pr.repos") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
-        guard !repos.isEmpty else { return [] }
+        guard !repos.isEmpty else { return .empty }
 
-        return try await withThrowingTaskGroup(of: [Deployment].self) { group in
-            for repo in repos {
-                group.addTask {
-                    try await self.fetchPullRequests(token: token, repo: repo)
-                }
-            }
-            var all: [Deployment] = []
-            for try await batch in group {
-                all.append(contentsOf: batch)
-            }
-            return all
+        return await DeploymentFetchResult.collecting(repos, name: { $0 }) { repo in
+            try await Self.fetchPullRequests(token: token, repo: repo)
         }
     }
 
@@ -54,7 +45,7 @@ final class GitHubPRProvider: DeploymentProvider {
 
     // MARK: - API
 
-    private func fetchPullRequests(token: String, repo: String) async throws -> [Deployment] {
+    private static func fetchPullRequests(token: String, repo: String) async throws -> [Deployment] {
         var components = URLComponents(string: "https://api.github.com/repos/\(repo)/pulls")!
         components.queryItems = [
             URLQueryItem(name: "state", value: "open"),
@@ -67,7 +58,13 @@ final class GitHubPRProvider: DeploymentProvider {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, httpResponse) = try await URLSession.shared.data(for: request)
+        if let http = httpResponse as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            let message = (try? JSONDecoder().decode(GitHubErrorResponse.self, from: data))?.message
+                ?? "HTTP \(http.statusCode)"
+            throw NSError(domain: "GitHubPR", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: message])
+        }
         let prs = try JSONDecoder.ghPRDecoder.decode([GHPullRequest].self, from: data)
         return prs.map { $0.toDeployment(repo: repo) }
     }

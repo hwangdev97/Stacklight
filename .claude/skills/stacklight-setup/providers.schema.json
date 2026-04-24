@@ -7,8 +7,9 @@
       "displayName": "Vercel",
       "docs": "https://vercel.com/account/tokens",
       "fields": [
-        { "key": "vercel.token",  "label": "API Token", "secret": true,  "required": true,  "placeholder": "Bearer token from Vercel dashboard" },
-        { "key": "vercel.teamId", "label": "Team ID",   "secret": false, "required": false, "placeholder": "Optional, for team deployments" }
+        { "key": "vercel.token",        "label": "API Token",     "secret": true,  "required": true,  "placeholder": "Bearer token from Vercel dashboard" },
+        { "key": "vercel.teamId",       "label": "Team ID",       "secret": false, "required": false, "placeholder": "Optional, for team deployments" },
+        { "key": "vercel.projectNames", "label": "Project Names", "secret": false, "required": false, "multiValue": true, "placeholder": "my-site, docs-site", "hint": "Leave empty to include all projects under this token." }
       ],
       "testEndpoint": "https://api.vercel.com/v2/user",
       "testAuth": "Bearer ${vercel.token}"
@@ -60,8 +61,8 @@
       "displayName": "Railway",
       "docs": "https://railway.app/account/tokens",
       "fields": [
-        { "key": "railway.token",     "label": "API Token", "secret": true,  "required": true, "placeholder": "Railway API token" },
-        { "key": "railway.projectId", "label": "Project ID","secret": false, "required": true, "placeholder": "Railway project ID" }
+        { "key": "railway.token",      "label": "API Token",   "secret": true,  "required": true, "placeholder": "Railway API token" },
+        { "key": "railway.projectIds", "label": "Project IDs", "secret": false, "required": true, "multiValue": true, "placeholder": "Railway project IDs", "hint": "Add one Railway project ID per entry" }
       ],
       "testEndpoint": "https://backboard.railway.app/graphql/v2",
       "testAuth": "Bearer ${railway.token}",
@@ -92,7 +93,7 @@
       "displayName": "TestFlight",
       "docs": "https://appstoreconnect.apple.com",
       "fields": [
-        { "key": "testflight.appId", "label": "App ID", "secret": false, "required": true, "placeholder": "App Store Connect App ID (numeric)", "hint": "API credentials are shared with Xcode Cloud — configure them in the Xcode Cloud tab first" }
+        { "key": "testflight.appIds", "label": "App IDs", "secret": false, "required": true, "multiValue": true, "placeholder": "12345, 67890", "hint": "API credentials are shared with Xcode Cloud — configure them in the Xcode Cloud tab first" }
       ],
       "credentialSharedWith": ["xcodeCloud"],
       "requires": ["asc.issuerID", "asc.privateKeyID", "asc.privateKey"]

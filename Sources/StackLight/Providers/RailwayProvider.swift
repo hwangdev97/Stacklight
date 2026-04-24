@@ -9,26 +9,54 @@ final class RailwayProvider: DeploymentProvider {
     let color = Color(red: 0.51, green: 0.47, blue: 0.98)
     let docsURL = URL(string: "https://docs.railway.com/reference/public-api#creating-a-token")
 
+    init() {
+        AppConfig.migrateSingleToMulti(oldKey: "railway.projectId", newKey: "railway.projectIds")
+    }
+
     var dashboardURL: URL? {
-        if let projectId = AppConfig.defaults.string(forKey: "railway.projectId"), !projectId.isEmpty {
-            return URL(string: "https://railway.com/project/\(projectId)")
+        let ids = parsedProjectIds()
+        if ids.count == 1 {
+            return URL(string: "https://railway.com/project/\(ids[0])")
         }
         return URL(string: "https://railway.com/dashboard")
     }
 
     var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "railway.token"), !token.isEmpty else { return false }
-        let projectId = AppConfig.defaults.string(forKey: "railway.projectId") ?? ""
-        return !projectId.isEmpty
+        return !parsedProjectIds().isEmpty
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
-        guard let token = KeychainManager.read(key: "railway.token"),
-              let projectId = AppConfig.defaults.string(forKey: "railway.projectId"),
-              !projectId.isEmpty else {
-            return []
-        }
+    func fetchDeployments() async throws -> DeploymentFetchResult {
+        guard let token = KeychainManager.read(key: "railway.token") else { return .empty }
 
+        let projectIds = parsedProjectIds()
+        guard !projectIds.isEmpty else { return .empty }
+
+        return await DeploymentFetchResult.collecting(projectIds, name: { $0 }) { projectId in
+            try await Self.fetchDeployments(token: token, projectId: projectId)
+        }
+    }
+
+    func settingsFields() -> [SettingsField] {
+        [
+            SettingsField(key: "railway.token", label: "API Token", isSecret: true, placeholder: "Railway API token"),
+            SettingsField(key: "railway.projectIds", label: "Project IDs",
+                          placeholder: "Railway project IDs",
+                          isMultiValue: true,
+                          hint: "Add one Railway project ID per entry")
+        ]
+    }
+
+    // MARK: - Helpers
+
+    private func parsedProjectIds() -> [String] {
+        (AppConfig.defaults.string(forKey: "railway.projectIds") ?? "")
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    private static func fetchDeployments(token: String, projectId: String) async throws -> [Deployment] {
         let query = """
         query {
           deployments(input: { projectId: "\(projectId)" }, first: 10) {
@@ -41,6 +69,9 @@ final class RailwayProvider: DeploymentProvider {
                 meta {
                   commitMessage
                   branch
+                }
+                project {
+                  name
                 }
               }
             }
@@ -62,27 +93,33 @@ final class RailwayProvider: DeploymentProvider {
 
         return (response.data?.deployments?.edges ?? []).compactMap { edge in
             guard let node = edge.node else { return nil }
+            let branch = node.meta?.branch
+            let projectName = node.project?.name
+            let label: String
+            switch (projectName, branch) {
+            case let (name?, ref?) where !name.isEmpty && !ref.isEmpty:
+                label = "\(name) · \(ref)"
+            case let (name?, _) where !name.isEmpty:
+                label = name
+            case let (_, ref?) where !ref.isEmpty:
+                label = ref
+            default:
+                label = "Deploy"
+            }
             return Deployment(
                 id: "railway-\(node.id)",
                 providerID: "railway",
-                projectName: node.meta?.branch ?? "Deploy",
+                projectName: label,
                 status: mapStatus(node.status),
                 url: node.staticUrl.flatMap { URL(string: "https://\($0)") },
                 createdAt: node.createdAt ?? Date(),
                 commitMessage: node.meta?.commitMessage,
-                branch: node.meta?.branch
+                branch: branch
             )
         }
     }
 
-    func settingsFields() -> [SettingsField] {
-        [
-            SettingsField(key: "railway.token", label: "API Token", isSecret: true, placeholder: "Railway API token"),
-            SettingsField(key: "railway.projectId", label: "Project ID", placeholder: "Railway project ID")
-        ]
-    }
-
-    private func mapStatus(_ status: String?) -> Deployment.Status {
+    private static func mapStatus(_ status: String?) -> Deployment.Status {
         switch status?.uppercased() {
         case "BUILDING", "DEPLOYING": return .building
         case "SUCCESS":               return .success
@@ -118,11 +155,16 @@ private struct RailwayGraphQLResponse: Decodable {
         let createdAt: Date?
         let staticUrl: String?
         let meta: RailwayMeta?
+        let project: RailwayProject?
     }
 
     struct RailwayMeta: Decodable {
         let commitMessage: String?
         let branch: String?
+    }
+
+    struct RailwayProject: Decodable {
+        let name: String?
     }
 }
 

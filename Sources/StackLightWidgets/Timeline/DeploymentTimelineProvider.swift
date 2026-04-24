@@ -92,7 +92,7 @@ struct DeploymentTimelineProvider: AppIntentTimelineProvider {
         return await withTaskGroup(of: [Deployment].self) { group in
             for provider in providers {
                 group.addTask {
-                    (try? await provider.fetchDeployments()) ?? []
+                    (try? await provider.fetchDeployments())?.deployments ?? []
                 }
             }
             var all: [Deployment] = []

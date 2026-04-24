@@ -20,8 +20,13 @@ protocol DeploymentProvider: AnyObject {
     /// Whether the provider has valid credentials configured
     var isConfigured: Bool { get }
 
-    /// Fetch the latest deployments/builds from this service
-    func fetchDeployments() async throws -> [Deployment]
+    /// Fetch the latest deployments/builds from this service.
+    ///
+    /// Top-level `throws` covers whole-provider failures (bad credentials,
+    /// network down). For multi-entry providers, per-entry failures travel
+    /// inside `DeploymentFetchResult.itemErrors` so one bad entry doesn't
+    /// kill the rest of the batch.
+    func fetchDeployments() async throws -> DeploymentFetchResult
 
     /// Declarative list of settings fields this provider needs
     func settingsFields() -> [SettingsField]

@@ -8,10 +8,15 @@ struct ProviderSettingsDetail: View {
     @State private var saved = false
     @State private var testing = false
     @State private var testResult: TestResult?
+    /// Last Test's per-entry error dict, keyed by the entry identifier the
+    /// provider reports (e.g. "owner/repo" for GitHub, "12345" for a
+    /// TestFlight App ID). Forwarded to `MultiValueFieldView` so individual
+    /// chip rows can show an inline exclamation badge.
+    @State private var itemErrors: [String: String] = [:]
     @EnvironmentObject var appState: AppState
 
     private enum TestResult {
-        case success(Int)
+        case success(count: Int, failedItems: Int)
         case failure(String)
     }
 
@@ -69,7 +74,7 @@ struct ProviderSettingsDetail: View {
 
             ForEach(provider.settingsFields().filter { $0.isMultiValue }, id: \.id) { field in
                 Section {
-                    MultiValueFieldView(field: field, rawValue: binding(for: field))
+                    MultiValueFieldView(field: field, rawValue: binding(for: field), itemErrors: itemErrors)
                 }
             }
 
@@ -95,9 +100,18 @@ struct ProviderSettingsDetail: View {
                     if let testResult {
                         Group {
                             switch testResult {
-                            case .success(let count):
-                                Label("\(count) deployments", systemImage: "checkmark.circle.fill")
-                                    .foregroundStyle(.green)
+                            case let .success(count, failedItems):
+                                if failedItems == 0 {
+                                    Label("\(count) deployments", systemImage: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                } else {
+                                    Label("\(count) ok · \(failedItems) failed", systemImage: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                        .help(itemErrors
+                                            .map { "\($0.key): \($0.value)" }
+                                            .sorted()
+                                            .joined(separator: "\n"))
+                                }
                             case .failure(let msg):
                                 Label(String(msg.prefix(40)), systemImage: "xmark.circle.fill")
                                     .foregroundStyle(.red)
@@ -182,16 +196,25 @@ struct ProviderSettingsDetail: View {
         saveFields()
         testing = true
         testResult = nil
+        itemErrors = [:]
         Task {
             do {
-                let deployments = try await provider.fetchDeployments()
-                testResult = .success(deployments.count)
+                let result = try await provider.fetchDeployments()
+                var errDict: [String: String] = [:]
+                for entry in result.itemErrors {
+                    errDict[entry.item] = entry.error.localizedDescription
+                }
+                itemErrors = errDict
+                testResult = .success(count: result.deployments.count, failedItems: result.itemErrors.count)
             } catch {
                 testResult = .failure(error.localizedDescription)
             }
             testing = false
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             testResult = nil
+            // Keep itemErrors visible on the chip rows until the user edits
+            // the list or re-runs Test. Clearing them here would make the
+            // badges vanish after 5s which is worse UX.
         }
     }
 

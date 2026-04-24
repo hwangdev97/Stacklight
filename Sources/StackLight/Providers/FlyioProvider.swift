@@ -17,27 +17,18 @@ final class FlyioProvider: DeploymentProvider {
         return !apps.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
-        guard let token = KeychainManager.read(key: "flyio.token") else { return [] }
+    func fetchDeployments() async throws -> DeploymentFetchResult {
+        guard let token = KeychainManager.read(key: "flyio.token") else { return .empty }
 
         let apps = (AppConfig.defaults.string(forKey: "flyio.apps") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
-        guard !apps.isEmpty else { return [] }
+        guard !apps.isEmpty else { return .empty }
 
-        return try await withThrowingTaskGroup(of: [Deployment].self) { group in
-            for app in apps {
-                group.addTask {
-                    try await self.fetchMachines(token: token, app: app)
-                }
-            }
-            var all: [Deployment] = []
-            for try await batch in group {
-                all.append(contentsOf: batch)
-            }
-            return all
+        return await DeploymentFetchResult.collecting(apps, name: { $0 }) { app in
+            try await Self.fetchMachines(token: token, app: app)
         }
     }
 
@@ -48,7 +39,7 @@ final class FlyioProvider: DeploymentProvider {
         ]
     }
 
-    private func fetchMachines(token: String, app: String) async throws -> [Deployment] {
+    private static func fetchMachines(token: String, app: String) async throws -> [Deployment] {
         guard let url = URL(string: "https://api.machines.dev/v1/apps/\(app)/machines") else { return [] }
 
         var request = URLRequest(url: url)
@@ -71,7 +62,7 @@ final class FlyioProvider: DeploymentProvider {
         }
     }
 
-    private func mapStatus(_ state: String?) -> Deployment.Status {
+    private static func mapStatus(_ state: String?) -> Deployment.Status {
         switch state {
         case "started":                              return .success
         case "stopped", "suspended":                 return .cancelled

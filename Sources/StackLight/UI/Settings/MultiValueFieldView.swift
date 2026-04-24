@@ -5,6 +5,10 @@ import SwiftUI
 struct MultiValueFieldView: View {
     let field: SettingsField
     @Binding var rawValue: String
+    /// Optional per-entry error messages from the last Test/fetch — when
+    /// non-empty, a red exclamation badge appears next to the matching row
+    /// and `.help()` shows the full error on hover.
+    var itemErrors: [String: String] = [:]
     @State private var newItem: String = ""
 
     private var items: [String] {
@@ -35,6 +39,11 @@ struct MultiValueFieldView: View {
                         HStack {
                             Text(item)
                                 .font(.body.monospaced())
+                            if let errorMessage = itemErrors[item] {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .foregroundStyle(.red)
+                                    .help(errorMessage)
+                            }
                             Spacer()
                             Button {
                                 removeItem(item)

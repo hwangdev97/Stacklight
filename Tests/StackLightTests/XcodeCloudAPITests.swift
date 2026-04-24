@@ -130,10 +130,13 @@ final class XcodeCloudAPITests: XCTestCase {
         }
 
         do {
-            let deployments = try await xcProvider.fetchDeployments()
-            print("[testFetchDeployments] Got \(deployments.count) deployments:")
-            for d in deployments.prefix(10) {
+            let result = try await xcProvider.fetchDeployments()
+            print("[testFetchDeployments] Got \(result.deployments.count) deployments:")
+            for d in result.deployments.prefix(10) {
                 print("  - \(d.projectName) | \(d.status.displayName) | \(d.createdAt)")
+            }
+            for (item, error) in result.itemErrors {
+                print("  ! \(item): \(error.localizedDescription)")
             }
         } catch {
             XCTFail("fetchDeployments failed: \(error)")

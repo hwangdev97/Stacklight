@@ -23,10 +23,10 @@ final class CloudflareProvider: DeploymentProvider {
         return !token.isEmpty && !accountId.isEmpty
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
+    func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
               let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId") else {
-            return []
+            return .empty
         }
 
         var projectNames = AppConfig.defaults.string(forKey: "cloudflare.projectNames")?
@@ -34,20 +34,19 @@ final class CloudflareProvider: DeploymentProvider {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty } ?? []
 
-        // If no project names specified, auto-discover all Pages projects
+        // If no project names specified, auto-discover all Pages projects.
+        // A discovery failure here is whole-provider (no list to fan out over),
+        // so let it propagate as a top-level throw.
         if projectNames.isEmpty {
             projectNames = try await fetchProjectNames(token: token, accountId: accountId)
         }
-        guard !projectNames.isEmpty else { return [] }
+        guard !projectNames.isEmpty else { return .empty }
 
-        var allDeployments: [Deployment] = []
-        for projectName in projectNames {
-            let deployments = try await fetchProjectDeployments(
+        return await DeploymentFetchResult.collecting(projectNames, name: { $0 }) { projectName in
+            try await Self.fetchProjectDeployments(
                 token: token, accountId: accountId, projectName: projectName
             )
-            allDeployments.append(contentsOf: deployments)
         }
-        return allDeployments
     }
 
     func settingsFields() -> [SettingsField] {
@@ -71,7 +70,7 @@ final class CloudflareProvider: DeploymentProvider {
         return response.result.map(\.name)
     }
 
-    private func fetchProjectDeployments(token: String, accountId: String, projectName: String) async throws -> [Deployment] {
+    private static func fetchProjectDeployments(token: String, accountId: String, projectName: String) async throws -> [Deployment] {
         let urlString = "https://api.cloudflare.com/client/v4/accounts/\(accountId)/pages/projects/\(projectName)/deployments"
         guard let url = URL(string: urlString) else { return [] }
 

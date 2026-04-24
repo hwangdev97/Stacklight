@@ -18,41 +18,46 @@ final class XcodeCloudProvider: DeploymentProvider {
         ASCCredentialStore.current() != nil
     }
 
-    func fetchDeployments() async throws -> [Deployment] {
+    func fetchDeployments() async throws -> DeploymentFetchResult {
         let provider = try makeProvider()
 
         let productsRequest = APIEndpoint.v1.ciProducts.get(parameters: .init(limit: 25))
         let productsResponse = try await provider.request(productsRequest)
 
         var deployments: [Deployment] = []
+        var itemErrors: [(item: String, error: Error)] = []
         for product in productsResponse.data {
-            let runsRequest = APIEndpoint.v1.ciProducts.id(product.id).buildRuns
-                .get(parameters: .init(
-                    sort: [.minusnumber],
-                    limit: 5
-                ))
-            let runsResponse = try await provider.request(runsRequest)
-
             let productName = product.attributes?.name ?? "Build"
-            let mapped = runsResponse.data.compactMap { run -> Deployment? in
-                guard let attrs = run.attributes else { return nil }
-                return Deployment(
-                    id: run.id,
-                    providerID: "xcodeCloud",
-                    projectName: productName,
-                    status: mapStatus(
-                        progress: attrs.executionProgress,
-                        completion: attrs.completionStatus
-                    ),
-                    url: nil,
-                    createdAt: attrs.createdDate ?? Date(),
-                    commitMessage: attrs.sourceCommit?.message,
-                    branch: nil
-                )
+            do {
+                let runsRequest = APIEndpoint.v1.ciProducts.id(product.id).buildRuns
+                    .get(parameters: .init(
+                        sort: [.minusnumber],
+                        limit: 5
+                    ))
+                let runsResponse = try await provider.request(runsRequest)
+
+                let mapped = runsResponse.data.compactMap { run -> Deployment? in
+                    guard let attrs = run.attributes else { return nil }
+                    return Deployment(
+                        id: run.id,
+                        providerID: "xcodeCloud",
+                        projectName: productName,
+                        status: mapStatus(
+                            progress: attrs.executionProgress,
+                            completion: attrs.completionStatus
+                        ),
+                        url: nil,
+                        createdAt: attrs.createdDate ?? Date(),
+                        commitMessage: attrs.sourceCommit?.message,
+                        branch: nil
+                    )
+                }
+                deployments.append(contentsOf: mapped)
+            } catch {
+                itemErrors.append((item: productName, error: error))
             }
-            deployments.append(contentsOf: mapped)
         }
-        return deployments
+        return DeploymentFetchResult(deployments: deployments, itemErrors: itemErrors)
     }
 
     func settingsFields() -> [SettingsField] {
