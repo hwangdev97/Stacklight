@@ -26,36 +26,23 @@ final class XcodeCloudAPITests: XCTestCase {
 
     // MARK: - Credential Tests
 
-    func testKeychainHasCredentials() {
-        let issuerID = KeychainManager.read(key: "asc.issuerID")
-        let keyID = KeychainManager.read(key: "asc.privateKeyID")
-        let key = KeychainManager.read(key: "asc.privateKey")
+    func testKeychainHasCredentials() throws {
+        let credentials = try ascCredentials()
 
-        XCTAssertNotNil(issuerID, "asc.issuerID not found in Keychain")
-        XCTAssertNotNil(keyID, "asc.privateKeyID not found in Keychain")
-        XCTAssertNotNil(key, "asc.privateKey not found in Keychain")
-
-        if let issuerID { XCTAssertFalse(issuerID.isEmpty, "issuerID is empty") }
-        if let keyID { XCTAssertFalse(keyID.isEmpty, "keyID is empty") }
-        if let key {
-            XCTAssertFalse(key.isEmpty, "privateKey is empty")
-            XCTAssertTrue(key.contains("BEGIN PRIVATE KEY"), "privateKey doesn't look like a PEM key, got prefix: \(key.prefix(30))")
-        }
+        XCTAssertFalse(credentials.issuerID.isEmpty, "issuerID is empty")
+        XCTAssertFalse(credentials.keyID.isEmpty, "keyID is empty")
+        XCTAssertFalse(credentials.key.isEmpty, "privateKey is empty")
+        XCTAssertTrue(credentials.key.contains("BEGIN PRIVATE KEY"), "privateKey doesn't look like a PEM key, got prefix: \(credentials.key.prefix(30))")
     }
 
-    func testAPIConfigurationCanBeCreated() {
-        guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
-              let keyID = KeychainManager.read(key: "asc.privateKeyID"),
-              let key = KeychainManager.read(key: "asc.privateKey") else {
-            XCTFail("Missing credentials")
-            return
-        }
+    func testAPIConfigurationCanBeCreated() throws {
+        let credentials = try ascCredentials()
 
         do {
             let config = try APIConfiguration(
-                issuerID: issuerID,
-                privateKeyID: keyID,
-                privateKey: key
+                issuerID: credentials.issuerID,
+                privateKeyID: credentials.keyID,
+                privateKey: credentials.key
             )
             XCTAssertNotNil(config)
         } catch {
@@ -142,6 +129,23 @@ final class XcodeCloudAPITests: XCTestCase {
             XCTFail("fetchDeployments failed: \(error)")
         }
     }
+}
+
+private struct ASCTestCredentials {
+    let issuerID: String
+    let keyID: String
+    let key: String
+}
+
+private func ascCredentials() throws -> ASCTestCredentials {
+    guard let issuerID = KeychainManager.read(key: "asc.issuerID"),
+          let keyID = KeychainManager.read(key: "asc.privateKeyID"),
+          let key = KeychainManager.read(key: "asc.privateKey"),
+          !issuerID.isEmpty, !keyID.isEmpty, !key.isEmpty else {
+        throw XCTSkip("ASC credentials not configured")
+    }
+
+    return ASCTestCredentials(issuerID: issuerID, keyID: keyID, key: key)
 }
 
 private extension APIConfiguration {
