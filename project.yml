@@ -31,9 +31,13 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.developer-tools
         LSUIElement: true
+        StackLightDistributionChannel: $(STACKLIGHT_DISTRIBUTION_CHANNEL)
+        StackLightGitHubRepository: hwangdev97/Stacklight
+        StackLightGitHubReleasesURL: https://github.com/hwangdev97/Stacklight/releases/latest
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight
+        STACKLIGHT_DISTRIBUTION_CHANNEL: mac-app-store
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_STYLE: Automatic

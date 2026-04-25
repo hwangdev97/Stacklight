@@ -52,6 +52,19 @@ private struct MenuBarRootView: View {
                 NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "feedback")
             },
+            onCheckForUpdates: {
+                Task {
+                    let result: Result<UpdateCheckResult, Error>
+                    do {
+                        result = .success(try await UpdateChecker.checkForUpdates())
+                    } catch {
+                        result = .failure(error)
+                    }
+                    await MainActor.run {
+                        UpdateChecker.presentUpdateCheckResult(result)
+                    }
+                }
+            },
             onQuit: { NSApp.terminate(nil) }
         )
     }

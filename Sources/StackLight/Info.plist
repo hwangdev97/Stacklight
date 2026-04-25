@@ -28,5 +28,11 @@
 	<string>public.app-category.developer-tools</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>StackLightDistributionChannel</key>
+	<string>$(STACKLIGHT_DISTRIBUTION_CHANNEL)</string>
+	<key>StackLightGitHubReleasesURL</key>
+	<string>https://github.com/hwangdev97/Stacklight/releases/latest</string>
+	<key>StackLightGitHubRepository</key>
+	<string>hwangdev97/Stacklight</string>
 </dict>
 </plist>

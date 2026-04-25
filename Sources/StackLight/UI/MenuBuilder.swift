@@ -11,6 +11,19 @@ struct MenuBarContentView: View {
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
     var onOpenFeedback: () -> Void
+    var onCheckForUpdates: () -> Void = {
+        Task {
+            let result: Result<UpdateCheckResult, Error>
+            do {
+                result = .success(try await UpdateChecker.checkForUpdates())
+            } catch {
+                result = .failure(error)
+            }
+            await MainActor.run {
+                UpdateChecker.presentUpdateCheckResult(result)
+            }
+        }
+    }
     var onQuit: () -> Void = { NSApp.terminate(nil) }
 
     @Environment(\.openURL) private var openURL
@@ -165,9 +178,23 @@ struct MenuBarContentView: View {
             MenuRow(action: onOpenFeedback) {
                 menuItemLabel("Send Feedback…")
             }
+            MenuRow(action: onCheckForUpdates) {
+                menuItemLabel(updateMenuTitle)
+            }
             MenuRow(action: onQuit) {
                 menuItemLabel("Quit StackLight", shortcut: "⌘Q")
             }
+        }
+    }
+
+    private var updateMenuTitle: String {
+        switch UpdateChecker.channel {
+        case .github:
+            return "Check for Updates…"
+        case .macAppStore:
+            return "Updates via Mac App Store"
+        case .development:
+            return "Check for Updates…"
         }
     }
 

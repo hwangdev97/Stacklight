@@ -128,6 +128,8 @@ jobs:
             -destination "generic/platform=macOS" \
             -derivedDataPath "${RUNNER_TEMP}/DerivedData" \
             build \
+            PRODUCT_BUNDLE_IDENTIFIER="app.yellowplus.StackLight.github" \
+            STACKLIGHT_DISTRIBUTION_CHANNEL="github" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""

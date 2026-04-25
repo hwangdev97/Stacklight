@@ -61,10 +61,37 @@ struct GeneralSettingsDetail: View {
 
             Section {
                 row(label: "App", value: "StackLight")
-                row(label: "Version", value: "1.0.0")
+                row(label: "Version", value: UpdateChecker.currentVersion)
+                row(label: "Distribution", value: UpdateChecker.channel.displayName)
+                Button {
+                    Task {
+                        let result: Result<UpdateCheckResult, Error>
+                        do {
+                            result = .success(try await UpdateChecker.checkForUpdates())
+                        } catch {
+                            result = .failure(error)
+                        }
+                        await MainActor.run {
+                            UpdateChecker.presentUpdateCheckResult(result)
+                        }
+                    }
+                } label: {
+                    Label(updateButtonTitle, systemImage: "arrow.down.circle")
+                }
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var updateButtonTitle: String {
+        switch UpdateChecker.channel {
+        case .github:
+            return "Check for Updates"
+        case .macAppStore:
+            return "Updates via Mac App Store"
+        case .development:
+            return "Check for Updates"
+        }
     }
 
     private func row(label: String, value: String) -> some View {

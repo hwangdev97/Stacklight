@@ -10,6 +10,7 @@
 		003125FE22733706142FFA38 /* NotifiedStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C04F6546EA1CB4162F0AD /* NotifiedStateStore.swift */; };
 		045EBB8715B8FF0EF2F29B68 /* SettingsField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 376323ACF57C5998A137EB61 /* SettingsField.swift */; };
 		08770C9D1B176080B7903F9E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8CBACCC558FB8BB9CA96E7A /* SettingsView.swift */; };
+		0B956BFEC2B4BA397B679D19 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE683B61BC875B3DE2063B70 /* UpdateChecker.swift */; };
 		1067CC7F2EB56EA3DDECF80D /* ServiceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191D5DAB2F4FCA21D3707F0B /* ServiceRegistry.swift */; };
 		117F19C46535D2F5086E1620 /* AppStoreConnect-Swift-SDK in Frameworks */ = {isa = PBXBuildFile; productRef = 34F52AC87EA977C4122C39DE /* AppStoreConnect-Swift-SDK */; };
 		15C6DF4E699A388CB6EEC4AD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC71BCBD17A44BF3C9D6E5B6 /* RootView.swift */; };
@@ -23,6 +24,7 @@
 		1F9B84E2A52C69DEFA130A98 /* FlyioProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049E0E6967C3536D2AED221A /* FlyioProvider.swift */; };
 		21CC9FC004181A13DDE6F890 /* XcodeCloudProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8331E6BE3D87C305C9A55BC8 /* XcodeCloudProvider.swift */; };
 		235F440410BFA39D5EE1CA91 /* ProviderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2D6FD9A3C71EFA41F36ADF /* ProviderSettingsView.swift */; };
+		23606B6A80B2589E94C8746A /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE683B61BC875B3DE2063B70 /* UpdateChecker.swift */; };
 		24E865F4E5E3B1D0CCD5A2E5 /* BackgroundRefreshIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BD9442ECDE8869445D32A3 /* BackgroundRefreshIdentifiers.swift */; };
 		26095D33CB722A5C477F5E6C /* FlyioProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049E0E6967C3536D2AED221A /* FlyioProvider.swift */; };
 		26B98CA7F28783B9FF186F32 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 338190A01BFDC0F9D08CE188 /* AppIcon.icon */; };
@@ -122,6 +124,7 @@
 		CD5174105EFFCC60F2EA1E23 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFC334A143884D694D8B3265 /* DesignTokens.swift */; };
 		CDFD0441AB52351ECC4C9150 /* ASCCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F59732A1426BC90FA5C6C39 /* ASCCredentialStore.swift */; };
 		CE81BE5ACB56EA46C7051163 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A4DDADF138979C28DAEF0D4 /* KeychainManager.swift */; };
+		CF68720261828C5578EEBD07 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE683B61BC875B3DE2063B70 /* UpdateChecker.swift */; };
 		D35B9A18A42B6E53592B04F7 /* SettingsSplitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 630F4161CDFC6107F2EABACC /* SettingsSplitView.swift */; };
 		D371FD2E13AA0646E25217BC /* NotifiedStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C04F6546EA1CB4162F0AD /* NotifiedStateStore.swift */; };
 		D49FDE5F31FEF658F740D2ED /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00258267409EE7DFFA82672 /* NotificationManager.swift */; };
@@ -254,6 +257,7 @@
 		B7FED1ACAFCF2322568BF7E9 /* RailwayProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RailwayProvider.swift; sourceTree = "<group>"; };
 		BC4FD504264F356A56B68FDC /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		BD2D6FD9A3C71EFA41F36ADF /* ProviderSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderSettingsView.swift; sourceTree = "<group>"; };
+		BE683B61BC875B3DE2063B70 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		C0BCD340A7E4BA54EBF64D4B /* MediumDeploymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediumDeploymentView.swift; sourceTree = "<group>"; };
 		C19B482AE713013FD4D08C5D /* ExtraLargeDeploymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtraLargeDeploymentView.swift; sourceTree = "<group>"; };
 		C4410E6A2DC98DE219A3F788 /* FeedbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackService.swift; sourceTree = "<group>"; };
@@ -528,6 +532,7 @@
 				191D5DAB2F4FCA21D3707F0B /* ServiceRegistry.swift */,
 				376323ACF57C5998A137EB61 /* SettingsField.swift */,
 				013D83CF9B334D1C808A8CE1 /* SharedStore.swift */,
+				BE683B61BC875B3DE2063B70 /* UpdateChecker.swift */,
 				D1640F5519AF9459BC44D72F /* WidgetRefresh.swift */,
 			);
 			path = Core;
@@ -797,6 +802,7 @@
 				5EE0834D5B2947A5D0FBE3B8 /* SharedStore.swift in Sources */,
 				27918BBDAC2CF94A05DE2CBA /* StackLightApp.swift in Sources */,
 				4CC26650DCDA8B300D61A9AB /* TestFlightProvider.swift in Sources */,
+				CF68720261828C5578EEBD07 /* UpdateChecker.swift in Sources */,
 				C77371312769F214E24D547E /* VercelProvider.swift in Sources */,
 				CD006AB9B1C57BD58F435A6E /* WidgetRefresh.swift in Sources */,
 				66A615D1C3B2BE13D3E34052 /* XcodeCloudProvider.swift in Sources */,
@@ -866,6 +872,7 @@
 				B0B8CA0578556FE0CE7B6249 /* StackLightiOSApp.swift in Sources */,
 				7BB5D590A7A5761BE9947D1E /* StatusOrb.swift in Sources */,
 				98599BB8C01A37B871301DCF /* TestFlightProvider.swift in Sources */,
+				0B956BFEC2B4BA397B679D19 /* UpdateChecker.swift in Sources */,
 				2A794D6685BA21B7F0FB687F /* VercelProvider.swift in Sources */,
 				FD44AA263244776D90E077B7 /* WidgetRefresh.swift in Sources */,
 				5FCE6C375BECF58E59E7EF34 /* XcodeCloudProvider.swift in Sources */,
@@ -910,6 +917,7 @@
 				496C3214CCECB64E725A186A /* SmallDeploymentView.swift in Sources */,
 				A050BB1E2E9E00DB6CB55C57 /* StackLightWidgetsBundle.swift in Sources */,
 				1EF70412F7A4662CF528CCCA /* TestFlightProvider.swift in Sources */,
+				23606B6A80B2589E94C8746A /* UpdateChecker.swift in Sources */,
 				C778EC59951248577EFE6256 /* VercelProvider.swift in Sources */,
 				EE549512DF2A55A2048E8B08 /* WidgetRefresh.swift in Sources */,
 				EC101DFE5AAC27C6F1C9A8DB /* WidgetStatusBadge.swift in Sources */,
@@ -1093,6 +1101,7 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
 				SDKROOT = macosx;
+				STACKLIGHT_DISTRIBUTION_CHANNEL = "mac-app-store";
 				SWIFT_VERSION = 5.9;
 			};
 			name = Release;
@@ -1230,6 +1239,7 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
 				SDKROOT = macosx;
+				STACKLIGHT_DISTRIBUTION_CHANNEL = "mac-app-store";
 				SWIFT_VERSION = 5.9;
 			};
 			name = Debug;
