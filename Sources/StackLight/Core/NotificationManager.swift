@@ -69,6 +69,9 @@ final class NotificationManager {
         content.title = title
         content.body = body
         content.sound = .default
+        // Group by provider so multiple alerts mirror onto the Watch as a
+        // stack per service instead of a flat list.
+        content.threadIdentifier = deployment.providerID
         if let url = deployment.url {
             content.userInfo = ["url": url.absoluteString]
         }

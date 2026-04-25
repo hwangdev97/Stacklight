@@ -82,10 +82,14 @@ final class AppState: ObservableObject {
         return !ServiceRegistry.shared.configuredProviders.isEmpty
     }
 
-    /// Write the current deployments to the shared App Group container and
-    /// ping the widget timeline if the status fingerprint changed.
+    /// Write the current deployments to the shared App Group container, ping
+    /// the widget timeline on status changes, and keep the paired Apple Watch
+    /// in sync over WatchConnectivity.
     private func publishSnapshot(_ deployments: [Deployment]) {
-        SharedStore.write(deployments: deployments)
+        let snapshot = SharedStore.Snapshot(deployments: deployments)
+        SharedStore.write(snapshot)
+        PhoneSessionManager.shared.push(snapshot: snapshot)
+
         let fingerprint = deployments
             .map { "\($0.providerID):\($0.id):\($0.status.rawValue)" }
             .sorted()
@@ -93,6 +97,9 @@ final class AppState: ObservableObject {
         if fingerprint != lastPublishedFingerprint {
             lastPublishedFingerprint = fingerprint
             WidgetRefresh.reloadAll()
+            // Also fire a guaranteed-delivery transfer so the Watch reloads its
+            // complications even if the `applicationContext` is coalesced away.
+            PhoneSessionManager.shared.notifyStatusChange(snapshot: snapshot)
         }
     }
 }

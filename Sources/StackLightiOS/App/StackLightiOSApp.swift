@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UserNotifications
 
 @main
@@ -36,6 +37,17 @@ struct StackLightiOSApp: App {
                 .onOpenURL { url in
                     handleDeepLink(url)
                 }
+                .onContinueUserActivity("app.yellowplus.StackLight.openDeployment") { activity in
+                    handleHandoff(activity)
+                }
+        }
+    }
+
+    private func handleHandoff(_ activity: NSUserActivity) {
+        let url = activity.webpageURL
+            ?? (activity.userInfo?["url"] as? String).flatMap(URL.init(string:))
+        if let url {
+            UIApplication.shared.open(url)
         }
     }
 
