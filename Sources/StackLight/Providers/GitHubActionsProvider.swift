@@ -96,10 +96,14 @@ private struct GHWorkflowRun: Decodable {
     }
 
     func toDeployment(repo: String) -> Deployment {
-        Deployment(
+        // Show just the repo name (after the slash) so the row stays compact;
+        // fall back to the full identifier if there's no owner prefix.
+        let shortRepo = repo.split(separator: "/").last.map(String.init) ?? repo
+        return Deployment(
             id: "gh-\(id)",
             providerID: "githubActions",
-            projectName: name ?? repo,
+            projectName: name ?? shortRepo,
+            repository: shortRepo,
             status: mapStatus(),
             url: html_url.flatMap { URL(string: $0) },
             createdAt: created_at ?? Date(),

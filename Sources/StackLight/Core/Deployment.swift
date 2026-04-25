@@ -4,11 +4,37 @@ struct Deployment: Identifiable {
     let id: String
     let providerID: String
     let projectName: String
+    /// Optional repository identifier shown alongside the project name.
+    /// Used by GitHub Actions to disambiguate which configured repo a row
+    /// belongs to when multiple repos are being watched.
+    let repository: String?
     let status: Status
     let url: URL?
     let createdAt: Date
     let commitMessage: String?
     let branch: String?
+
+    init(
+        id: String,
+        providerID: String,
+        projectName: String,
+        repository: String? = nil,
+        status: Status,
+        url: URL?,
+        createdAt: Date,
+        commitMessage: String?,
+        branch: String?
+    ) {
+        self.id = id
+        self.providerID = providerID
+        self.projectName = projectName
+        self.repository = repository
+        self.status = status
+        self.url = url
+        self.createdAt = createdAt
+        self.commitMessage = commitMessage
+        self.branch = branch
+    }
 
     enum Status: String {
         case building

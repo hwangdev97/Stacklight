@@ -138,11 +138,17 @@ struct MenuBarContentView: View {
                 Text(String(deployment.projectName.prefix(24)))
                     .fontWeight(.semibold)
                     .lineLimit(1)
+                if let repository = deployment.repository, repository != deployment.projectName {
+                    Text(repository)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
                 if let branch = deployment.branch {
                     let truncated = branch.count > 28 ? String(branch.prefix(26)) + "…" : branch
                     Text(truncated)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 6)
@@ -286,6 +292,7 @@ private enum PreviewFixtures {
         _ projectName: String,
         _ status: Deployment.Status,
         minutesAgo: Double,
+        repository: String? = nil,
         branch: String? = nil,
         commit: String? = nil,
         hasURL: Bool = true
@@ -294,6 +301,7 @@ private enum PreviewFixtures {
             id: id,
             providerID: providerID,
             projectName: projectName,
+            repository: repository,
             status: status,
             url: hasURL ? URL(string: "https://example.com/\(id)") : nil,
             createdAt: Date().addingTimeInterval(-minutesAgo * 60),
@@ -322,12 +330,13 @@ private enum PreviewFixtures {
                minutesAgo: 210, branch: "experiment/geo-routing", commit: "try: route by POP"),
 
         // GitHub Actions — matrix-like
-        deploy("ga1", "githubActions", "stacklight", .success,
-               minutesAgo: 4, branch: "main", commit: "ci: cache Swift build"),
-        deploy("ga2", "githubActions", "stacklight", .success,
-               minutesAgo: 23, branch: "pr/214", commit: "test: cover MenuBarContentView"),
-        deploy("ga3", "githubActions", "infra-terraform", .building,
-               minutesAgo: 1, branch: "main", hasURL: false),
+        deploy("ga1", "githubActions", "Release", .success,
+               minutesAgo: 120, repository: "stacklight", branch: "v1.0.25"),
+        deploy("ga2", "githubActions", "CI", .success,
+               minutesAgo: 23, repository: "stacklight", branch: "pr/214",
+               commit: "test: cover MenuBarContentView"),
+        deploy("ga3", "githubActions", "Plan", .building,
+               minutesAgo: 1, repository: "infra-terraform", branch: "main", hasURL: false),
 
         // GitHub PRs — each as its own "deployment" row
         deploy("pr1", "githubPRs", "#214 Menubar preview fixtures", .reviewing,
