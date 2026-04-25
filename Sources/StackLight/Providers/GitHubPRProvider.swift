@@ -46,6 +46,10 @@ final class GitHubPRProvider: DeploymentProvider {
     // MARK: - API
 
     private static func fetchPullRequests(token: String, repo: String) async throws -> [Deployment] {
+        guard isValidRepositoryName(repo) else {
+            throw GitHubPRRequestError(statusCode: nil, apiMessage: "Invalid repository format")
+        }
+
         var components = URLComponents(string: "https://api.github.com/repos/\(repo)/pulls")!
         components.queryItems = [
             URLQueryItem(name: "state", value: "open"),
@@ -57,16 +61,47 @@ final class GitHubPRProvider: DeploymentProvider {
         var request = URLRequest(url: components.url!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
 
         let (data, httpResponse) = try await URLSession.shared.data(for: request)
         if let http = httpResponse as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
             let message = (try? JSONDecoder().decode(GitHubErrorResponse.self, from: data))?.message
                 ?? "HTTP \(http.statusCode)"
-            throw NSError(domain: "GitHubPR", code: http.statusCode,
-                          userInfo: [NSLocalizedDescriptionKey: message])
+            throw GitHubPRRequestError(statusCode: http.statusCode, apiMessage: message)
         }
         let prs = try JSONDecoder.ghPRDecoder.decode([GHPullRequest].self, from: data)
         return prs.map { $0.toDeployment(repo: repo) }
+    }
+
+    private static func isValidRepositoryName(_ repo: String) -> Bool {
+        let parts = repo.split(separator: "/", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return false }
+        let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
+        return parts.allSatisfy { part in
+            !part.isEmpty && part.unicodeScalars.allSatisfy { allowed.contains($0) }
+        }
+    }
+}
+
+private struct GitHubPRRequestError: LocalizedError {
+    let statusCode: Int?
+    let apiMessage: String
+
+    var errorDescription: String? {
+        switch statusCode {
+        case nil:
+            return "Use the owner/repo format, for example hwangdev97/stacklight."
+        case 401:
+            return "GitHub token is invalid or expired. Create a new token and save it again."
+        case 403:
+            return "GitHub denied access. Check token permissions, organization SSO, or rate limits."
+        case 404:
+            return "Repository not found or this token cannot access it. Check owner/repo and grant the token access to private repositories."
+        case 422:
+            return "GitHub rejected this repository request. Check the owner/repo value."
+        default:
+            return apiMessage
+        }
     }
 }
 

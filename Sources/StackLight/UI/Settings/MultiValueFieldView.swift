@@ -36,15 +36,32 @@ struct MultiValueFieldView: View {
                         if index > 0 {
                             Divider().padding(.leading, 12)
                         }
-                        HStack {
-                            Text(item)
-                                .font(.body.monospaced())
-                            if let errorMessage = itemErrors[item] {
-                                Image(systemName: "exclamationmark.circle.fill")
-                                    .foregroundStyle(.red)
-                                    .help(errorMessage)
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(spacing: 6) {
+                                    Text(item)
+                                        .font(.body.monospaced())
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+
+                                    if let errorMessage = itemErrors[item] {
+                                        Image(systemName: "exclamationmark.circle.fill")
+                                            .foregroundStyle(.red)
+                                            .help(errorMessage)
+                                    }
+                                }
+
+                                if let errorMessage = itemErrors[item] {
+                                    Text(errorMessage)
+                                        .font(.caption2)
+                                        .foregroundStyle(.red)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .help(errorMessage)
+                                }
                             }
+
                             Spacer()
+
                             Button {
                                 removeItem(item)
                             } label: {
