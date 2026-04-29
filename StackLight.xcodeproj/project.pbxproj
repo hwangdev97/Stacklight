@@ -1249,11 +1249,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightWatch/Resources/StackLightWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightWatch/Resources/Info.plist;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1270,7 +1270,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightiOS/Resources/StackLightiOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightiOS/Resources/Info.plist;
@@ -1279,7 +1279,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
@@ -1295,11 +1295,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightWatch/Resources/StackLightWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightWatch/Resources/Info.plist;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1314,7 +1314,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightWatchComplications/Resources/StackLightWatchComplications.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightWatchComplications/Resources/Info.plist;
@@ -1323,7 +1323,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.watchkitapp.complications;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1429,7 +1429,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightWidgets/Resources/StackLightWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightWidgets/Resources/Info.plist;
@@ -1439,7 +1439,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.widgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1455,7 +1455,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLight/StackLight.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1465,7 +1465,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
 				SDKROOT = macosx;
 				STACKLIGHT_DISTRIBUTION_CHANNEL = "mac-app-store";
@@ -1478,7 +1478,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightWatchComplications/Resources/StackLightWatchComplications.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightWatchComplications/Resources/Info.plist;
@@ -1487,7 +1487,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.watchkitapp.complications;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1568,7 +1568,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightiOS/Resources/StackLightiOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightiOS/Resources/Info.plist;
@@ -1577,7 +1577,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
@@ -1592,7 +1592,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLightWidgets/Resources/StackLightWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/StackLightWidgets/Resources/Info.plist;
@@ -1602,7 +1602,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight.widgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1618,7 +1618,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/StackLight/StackLight.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QDJ93ZUQ9B;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1628,7 +1628,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.yellowplus.StackLight;
 				SDKROOT = macosx;
 				STACKLIGHT_DISTRIBUTION_CHANNEL = "mac-app-store";

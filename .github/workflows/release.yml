@@ -33,7 +33,7 @@ env:
 jobs:
   macos:
     name: Build, Notarize, and Publish macOS App
-    runs-on: macos-latest
+    runs-on: macos-26
 
     steps:
       - name: Check out repository
