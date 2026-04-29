@@ -1,0 +1,40 @@
+---
+import SectionHeading from "../components/SectionHeading.astro";
+
+const points = [
+  {
+    title: "Stored in macOS Keychain",
+    body: "The same vault that holds your iCloud and Wi-Fi passwords.",
+  },
+  {
+    title: "No servers",
+    body: "StackLight talks directly to Vercel, GitHub, Cloudflare, and friends — there's no \"StackLight cloud\" in between.",
+  },
+  {
+    title: "No analytics",
+    body: "No accounts. No tracking. Open source, MIT-licensed — read the code yourself.",
+  },
+];
+---
+
+<section class="bg-surface border-y border-hairline">
+  <div class="mx-auto max-w-container px-6 py-24 md:py-32">
+    <div class="flex flex-col gap-12">
+      <div class="max-w-2xl">
+        <SectionHeading eyebrow="Security & privacy">
+          Your tokens never leave your Mac.
+        </SectionHeading>
+      </div>
+      <ul class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {
+          points.map((p) => (
+            <li class="flex flex-col gap-3 rounded-2xl border border-hairline bg-white p-6">
+              <h3 class="text-lg font-semibold text-ink">{p.title}</h3>
+              <p class="text-base leading-relaxed text-muted">{p.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>

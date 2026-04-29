@@ -20,3 +20,8 @@ xcuserdata/
 
 # StackLight setup skill output (contains secrets)
 .stacklight-config.json
+
+# Marketing site
+site/node_modules/
+site/dist/
+site/.astro/

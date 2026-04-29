@@ -1,0 +1,69 @@
+---
+import SectionHeading from "../components/SectionHeading.astro";
+import DialogueBlock from "../components/DialogueBlock.astro";
+
+const lines = [
+  { speaker: "you" as const, text: "Set up StackLight." },
+  {
+    speaker: "agent" as const,
+    text: "I found your GitHub token via gh. I need a Vercel token and your Cloudflare account ID — paste them here.",
+  },
+  { speaker: "stage" as const, text: "You paste them." },
+  {
+    speaker: "agent" as const,
+    text: "Validated all four. Open StackLight → Settings and paste these values. Done.",
+  },
+];
+
+const columns = [
+  {
+    title: "Finds what you already have",
+    body: "Already logged into the GitHub CLI? Already exported VERCEL_TOKEN? The agent picks those up automatically, so you're not pasting credentials you've already given your machine.",
+  },
+  {
+    title: "Asks only what's missing",
+    body: "For anything it can't find — like your Cloudflare account ID or your TestFlight app IDs — it asks once, in plain English, and tells you where to find each value.",
+  },
+  {
+    title: "Checks before it hands it back",
+    body: "Every token gets test-pinged against the real API before the agent calls the setup done. No silent failures, no \"why isn't this working\" half an hour later.",
+  },
+];
+---
+
+<section class="border-t border-hairline">
+  <div class="mx-auto max-w-container px-6 py-24 md:py-32">
+    <div class="flex flex-col gap-14">
+      <div class="max-w-3xl flex flex-col gap-6">
+        <SectionHeading eyebrow="Setup">
+          Don't feel like hunting for API tokens? Hand it to your AI.
+        </SectionHeading>
+        <p class="text-lg md:text-xl leading-relaxed text-muted">
+          StackLight ships with an AI setup recipe. If you use Claude
+          Code, Codex, Cursor, or any agent that can run on your
+          machine, just say "set up StackLight" — and the agent does
+          the boring part for you.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {
+          columns.map((c) => (
+            <div class="flex flex-col gap-3 rounded-2xl bg-white border border-hairline p-6">
+              <h3 class="text-lg font-semibold text-ink">{c.title}</h3>
+              <p class="text-base leading-relaxed text-muted">{c.body}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <DialogueBlock lines={lines} />
+
+      <p class="text-base text-muted max-w-2xl">
+        Don't use an AI assistant? You can still set everything up by
+        hand in the Settings window — every field comes with a hint
+        and a docs link.
+      </p>
+    </div>
+  </div>
+</section>

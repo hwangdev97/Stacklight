@@ -1,0 +1,49 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "StackLight — All your deploys. One menu bar.",
+  description = "StackLight watches every deploy and pull request you ship across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io, Xcode Cloud, and TestFlight. Lives in your Mac menu bar. Free and open source.",
+} = Astro.props;
+
+const ogImage = new URL("/og.png", Astro.site ?? "https://stacklight.pages.dev").toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+  </head>
+  <body>
+    <slot />
+    <footer class="border-t border-hairline">
+      <div class="mx-auto max-w-container px-6 py-10 text-sm text-muted flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <p>Made for developers, designers, and PMs who ship for a living.</p>
+        <p>
+          MIT licensed ·
+          <a href="https://github.com/hwangdev97/Stacklight" class="hover:underline">GitHub</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

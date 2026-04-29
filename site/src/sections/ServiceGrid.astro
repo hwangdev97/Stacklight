@@ -1,0 +1,35 @@
+---
+import SectionHeading from "../components/SectionHeading.astro";
+import ServiceLogo from "../components/ServiceLogo.astro";
+
+const services = [
+  { name: "Vercel", caption: "Deploy status", src: "/logos/vercel.svg" },
+  { name: "Cloudflare Pages", caption: "Deploy status", src: "/logos/cloudflarepages.svg" },
+  { name: "Netlify", caption: "Deploy status", src: "/logos/netlify.svg" },
+  { name: "Railway", caption: "Deploy status", src: "/logos/railway.svg" },
+  { name: "Fly.io", caption: "Machine deploys", src: "/logos/flydotio.svg" },
+  { name: "GitHub Actions", caption: "Workflow runs", src: "/logos/github.svg" },
+  { name: "GitHub PRs", caption: "Open PRs across repos", src: "/logos/github.svg" },
+  { name: "Xcode Cloud", caption: "Build status" },
+  { name: "TestFlight", caption: "Build processing & review" },
+];
+---
+
+<section class="bg-surface border-y border-hairline">
+  <div class="mx-auto max-w-container px-6 py-24 md:py-28">
+    <div class="flex flex-col gap-12">
+      <div class="max-w-2xl">
+        <SectionHeading eyebrow="What it watches">
+          Nine services. One place.
+        </SectionHeading>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {services.map((s) => <ServiceLogo {...s} />)}
+      </div>
+      <p class="text-base text-muted max-w-2xl">
+        More services on the way. Each one is a single file in the
+        codebase — easy to add, easy to fork.
+      </p>
+    </div>
+  </div>
+</section>

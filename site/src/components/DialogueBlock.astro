@@ -1,0 +1,35 @@
+---
+interface Line {
+  speaker: "you" | "agent" | "stage";
+  text: string;
+}
+
+interface Props {
+  lines: Line[];
+}
+
+const { lines } = Astro.props;
+---
+
+<div class="rounded-3xl border border-hairline bg-surface p-8 md:p-10">
+  <ul class="flex flex-col gap-4 font-mono text-sm md:text-base">
+    {
+      lines.map((line) => {
+        if (line.speaker === "stage") {
+          return (
+            <li class="text-muted italic">{line.text}</li>
+          );
+        }
+        const label = line.speaker === "you" ? "You" : "Agent";
+        const labelColor =
+          line.speaker === "you" ? "text-muted" : "text-accent";
+        return (
+          <li class="flex flex-col gap-1 sm:flex-row sm:gap-4">
+            <span class={`shrink-0 font-semibold ${labelColor}`}>{label}</span>
+            <span class="text-ink leading-relaxed">{line.text}</span>
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
