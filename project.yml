@@ -39,8 +39,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight
         STACKLIGHT_DISTRIBUTION_CHANNEL: mac-app-store
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.1"
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLight/StackLight.entitlements
@@ -99,8 +99,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.1"
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightiOS/Resources/StackLightiOS.entitlements
@@ -150,8 +150,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.watchkitapp
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.1"
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightWatch/Resources/StackLightWatch.entitlements
@@ -187,8 +187,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.watchkitapp.complications
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.1"
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightWatchComplications/Resources/StackLightWatchComplications.entitlements
@@ -217,8 +217,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.widgets
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.1"
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightWidgets/Resources/StackLightWidgets.entitlements
