@@ -1,0 +1,27 @@
+---
+interface Props {
+  name: string;
+  caption: string;
+  src?: string;
+}
+
+const { name, caption, src } = Astro.props;
+---
+
+<div class="flex flex-col items-center gap-3 rounded-2xl border border-hairline bg-white p-6 transition-shadow hover:shadow-sm">
+  <div class="flex h-12 w-12 items-center justify-center">
+    {
+      src ? (
+        <img src={src} alt={`${name} logo`} class="h-10 w-10 object-contain" />
+      ) : (
+        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface text-sm font-semibold text-ink">
+          {name.charAt(0)}
+        </div>
+      )
+    }
+  </div>
+  <div class="text-center">
+    <p class="text-sm font-medium text-ink">{name}</p>
+    <p class="text-xs text-muted">{caption}</p>
+  </div>
+</div>

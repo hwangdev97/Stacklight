@@ -1,0 +1,44 @@
+---
+import SectionHeading from "../components/SectionHeading.astro";
+
+const steps = [
+  {
+    n: "01",
+    title: "Install",
+    body: "Download StackLight, drag it to Applications, launch it. The triangle appears in your menu bar.",
+  },
+  {
+    n: "02",
+    title: "Connect your services",
+    body: "Click the triangle → Settings, pick a service, and paste your token. Or: ask your AI assistant to do it.",
+  },
+  {
+    n: "03",
+    title: "Get back to work",
+    body: "StackLight quietly polls in the background. You only hear from it when something needs your attention.",
+  },
+];
+---
+
+<section class="border-t border-hairline">
+  <div class="mx-auto max-w-container px-6 py-24 md:py-32">
+    <div class="flex flex-col gap-12">
+      <div class="max-w-2xl">
+        <SectionHeading eyebrow="How it works">
+          Three steps to a quieter dashboard life.
+        </SectionHeading>
+      </div>
+      <ol class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {
+          steps.map((s) => (
+            <li class="flex flex-col gap-3 rounded-2xl border border-hairline bg-white p-6">
+              <span class="text-sm font-mono text-accent">{s.n}</span>
+              <h3 class="text-lg font-semibold text-ink">{s.title}</h3>
+              <p class="text-base leading-relaxed text-muted">{s.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</section>

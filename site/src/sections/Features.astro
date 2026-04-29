@@ -1,0 +1,55 @@
+---
+import SectionHeading from "../components/SectionHeading.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+
+const features = [
+  {
+    title: "Lives in the menu bar",
+    body: "No Dock icon, no Electron weight. A triangle that turns red when something breaks.",
+  },
+  {
+    title: "Native macOS notifications",
+    body: "Get pinged when a deploy fails or a build is ready for review. Nothing else.",
+  },
+  {
+    title: "Multi-repo, multi-project",
+    body: "Watch as many GitHub repos, Vercel projects, or TestFlight apps as you want — one token, all of them.",
+  },
+  {
+    title: "Refresh on your terms",
+    body: "Set how often StackLight checks — anywhere from every 30 seconds to every 5 minutes.",
+  },
+  {
+    title: "Branch filtering",
+    body: "Only care about main and staging? Tell Vercel to ignore the rest.",
+  },
+  {
+    title: "Launch at login",
+    body: "One toggle. Forget StackLight is even running until something breaks.",
+  },
+];
+---
+
+<section class="bg-surface border-y border-hairline">
+  <div class="mx-auto max-w-container px-6 py-24 md:py-32">
+    <div class="flex flex-col gap-12">
+      <div class="max-w-2xl">
+        <SectionHeading eyebrow="Features">
+          Built like a Mac app should be.
+        </SectionHeading>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {
+          features.map((f, i) => (
+            <FeatureCard
+              title={f.title}
+              number={String(i + 1).padStart(2, "0")}
+            >
+              {f.body}
+            </FeatureCard>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
