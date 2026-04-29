@@ -12,7 +12,7 @@ permissions:
 jobs:
   test:
     name: Swift Tests
-    runs-on: macos-latest
+    runs-on: macos-26
 
     steps:
       - name: Check out repository
