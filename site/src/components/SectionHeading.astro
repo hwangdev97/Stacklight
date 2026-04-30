@@ -5,18 +5,19 @@ interface Props {
 }
 
 const { eyebrow, align = "left" } = Astro.props;
-const alignClass = align === "center" ? "text-center" : "text-left";
+const alignClass = align === "center" ? "items-center text-center" : "items-start text-left";
 ---
 
-<div class={`flex flex-col gap-3 ${alignClass}`}>
+<div class={`flex flex-col gap-4 ${alignClass}`}>
   {
     eyebrow && (
-      <span class="text-xs font-medium uppercase tracking-[0.18em] text-accent">
+      <span class="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-accent">
+        <span class="h-px w-6 bg-accent" />
         {eyebrow}
       </span>
     )
   }
-  <h2 class="text-display-lg font-semibold text-ink">
+  <h2 class="text-display-lg font-semibold tracking-tight text-ink">
     <slot />
   </h2>
 </div>

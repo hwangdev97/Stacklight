@@ -4,33 +4,39 @@ import FeatureCard from "../components/FeatureCard.astro";
 
 const features = [
   {
+    icon: "menu" as const,
     title: "Lives in the menu bar",
     body: "No Dock icon, no Electron weight. A triangle that turns red when something breaks.",
   },
   {
+    icon: "bell" as const,
     title: "Native macOS notifications",
     body: "Get pinged when a deploy fails or a build is ready for review. Nothing else.",
   },
   {
+    icon: "rocket" as const,
     title: "Multi-repo, multi-project",
     body: "Watch as many GitHub repos, Vercel projects, or TestFlight apps as you want — one token, all of them.",
   },
   {
+    icon: "refresh" as const,
     title: "Refresh on your terms",
     body: "Set how often StackLight checks — anywhere from every 30 seconds to every 5 minutes.",
   },
   {
+    icon: "branch" as const,
     title: "Branch filtering",
     body: "Only care about main and staging? Tell Vercel to ignore the rest.",
   },
   {
+    icon: "sparkles" as const,
     title: "Launch at login",
     body: "One toggle. Forget StackLight is even running until something breaks.",
   },
 ];
 ---
 
-<section class="bg-surface border-y border-hairline">
+<section id="features" class="bg-surface border-y border-hairline">
   <div class="mx-auto max-w-container px-6 py-24 md:py-32">
     <div class="flex flex-col gap-12">
       <div class="max-w-2xl">
@@ -40,11 +46,8 @@ const features = [
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {
-          features.map((f, i) => (
-            <FeatureCard
-              title={f.title}
-              number={String(i + 1).padStart(2, "0")}
-            >
+          features.map((f) => (
+            <FeatureCard title={f.title} icon={f.icon}>
               {f.body}
             </FeatureCard>
           ))

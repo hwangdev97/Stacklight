@@ -1,20 +1,64 @@
 ---
 import SectionHeading from "../components/SectionHeading.astro";
+
+const tabs = [
+  { name: "Vercel", state: "ok" },
+  { name: "GitHub", state: "fail" },
+  { name: "Cloudflare", state: "building" },
+  { name: "TestFlight", state: "ok" },
+];
+
+const dotClass = {
+  ok: "bg-success",
+  building: "bg-building animate-pulse-slow",
+  fail: "bg-danger",
+};
 ---
 
 <section class="border-t border-hairline">
   <div class="mx-auto max-w-container px-6 py-24 md:py-28">
-    <div class="max-w-3xl flex flex-col gap-6">
-      <SectionHeading eyebrow="The problem">
-        Stop tab-hunting your own ship status.
-      </SectionHeading>
-      <p class="text-lg md:text-xl leading-relaxed text-muted">
-        You shipped something an hour ago. Did it actually deploy?
-        Did the build go green? Is there a PR waiting on you? Right
-        now you'd open four dashboards to find out. StackLight gives
-        you the answer in one glance — a triangle in your menu bar
-        that turns red when something needs you.
-      </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+      <div class="flex flex-col gap-6">
+        <SectionHeading eyebrow="The problem">
+          Stop tab-hunting your own ship status.
+        </SectionHeading>
+        <p class="text-lg md:text-xl leading-relaxed text-muted">
+          You shipped something an hour ago. Did it actually deploy?
+          Did the build go green? Is there a PR waiting on you? Right
+          now you'd open four dashboards to find out. StackLight gives
+          you the answer in one glance — a triangle in your menu bar
+          that turns red when something needs you.
+        </p>
+      </div>
+
+      <!-- Tab strip mock -->
+      <div class="rounded-2xl border border-hairline bg-surface p-4 shadow-card">
+        <div class="flex gap-1.5 overflow-hidden">
+          {
+            tabs.map((t, i) => (
+              <div
+                class={`flex items-center gap-2 px-3 py-2 rounded-t-lg text-sm bg-white border border-b-0 border-hairline min-w-0 truncate ${i === 1 ? "ring-1 ring-danger/40" : ""}`}
+              >
+                <span class={`h-1.5 w-1.5 rounded-full shrink-0 ${dotClass[t.state as keyof typeof dotClass]}`}></span>
+                <span class="text-ink truncate">{t.name}</span>
+                <span class="text-soft text-xs">×</span>
+              </div>
+            ))
+          }
+          <div class="flex items-center px-3 py-2 text-soft text-xs">+ 6 more</div>
+        </div>
+        <div class="mt-[-1px] rounded-b-lg rounded-tr-lg bg-white border border-hairline p-6 text-sm text-muted">
+          <div class="flex items-center gap-2 mb-3 text-soft">
+            <span class="h-2 w-2 rounded-full bg-danger"></span>
+            <span class="font-mono">github.com/you/repo/actions</span>
+          </div>
+          <div class="space-y-2">
+            <div class="h-2 rounded bg-sunken w-3/4"></div>
+            <div class="h-2 rounded bg-sunken w-1/2"></div>
+            <div class="h-2 rounded bg-sunken w-2/3"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>

@@ -6,9 +6,21 @@ export default {
       colors: {
         ink: "#0a0a0a",
         muted: "#6b6b6b",
+        soft: "#a3a3a3",
         accent: "#0066ff",
         surface: "#fafafa",
-        hairline: "#e5e5e5",
+        sunken: "#f4f4f5",
+        hairline: "#e7e7e7",
+        success: "#16a34a",
+        danger: "#dc2626",
+        building: "#f59e0b",
+      },
+      boxShadow: {
+        card: "0 1px 0 rgba(10, 10, 10, 0.04), 0 6px 24px -12px rgba(10, 10, 10, 0.08)",
+        menu: "0 12px 48px -16px rgba(10, 10, 10, 0.20), 0 2px 8px -2px rgba(10, 10, 10, 0.08)",
+      },
+      animation: {
+        "pulse-slow": "pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       fontFamily: {
         sans: [

@@ -1,0 +1,25 @@
+---
+import Icon from "./Icon.astro";
+---
+
+<header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 border-b border-hairline/70">
+  <div class="mx-auto max-w-container px-6 h-14 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 text-ink hover:opacity-80 transition-opacity">
+      <span class="flex h-7 w-7 items-center justify-center rounded-md bg-ink text-white text-xs">▲</span>
+      <span class="text-sm font-semibold tracking-tight">StackLight</span>
+    </a>
+    <nav class="flex items-center gap-6 text-sm">
+      <a href="#services" class="hidden sm:inline text-muted hover:text-ink transition-colors">Services</a>
+      <a href="#setup" class="hidden sm:inline text-muted hover:text-ink transition-colors">Setup</a>
+      <a href="#features" class="hidden sm:inline text-muted hover:text-ink transition-colors">Features</a>
+      <a
+        href="https://github.com/hwangdev97/Stacklight"
+        class="flex items-center gap-1.5 text-muted hover:text-ink transition-colors"
+        aria-label="View on GitHub"
+      >
+        <Icon name="github" class="h-4 w-4" />
+        <span class="hidden sm:inline">GitHub</span>
+      </a>
+    </nav>
+  </div>
+</header>

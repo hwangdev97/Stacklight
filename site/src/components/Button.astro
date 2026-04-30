@@ -7,14 +7,14 @@ interface Props {
 const { href, variant = "primary" } = Astro.props;
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full text-base font-medium transition-colors";
+  "inline-flex items-center justify-center gap-2 rounded-full text-base font-medium transition-all duration-150";
 const styles =
   variant === "primary"
-    ? "bg-ink text-white px-6 py-3 hover:bg-black"
-    : "text-ink px-2 py-3 hover:text-accent";
+    ? "bg-ink text-white px-6 py-3 hover:bg-black hover:-translate-y-0.5 hover:shadow-card"
+    : "text-ink px-3 py-3 hover:text-accent";
 ---
 
 <a href={href} class={`${base} ${styles}`}>
   <slot />
-  {variant === "secondary" && <span aria-hidden="true">→</span>}
+  {variant === "secondary" && <span class="transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>}
 </a>

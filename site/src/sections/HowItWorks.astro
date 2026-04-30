@@ -28,11 +28,14 @@ const steps = [
           Three steps to a quieter dashboard life.
         </SectionHeading>
       </div>
-      <ol class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <ol class="relative grid grid-cols-1 md:grid-cols-3 gap-6">
+        <span class="hidden md:block absolute left-[16.66%] right-[16.66%] top-[44px] h-px bg-hairline"></span>
         {
           steps.map((s) => (
-            <li class="flex flex-col gap-3 rounded-2xl border border-hairline bg-white p-6">
-              <span class="text-sm font-mono text-accent">{s.n}</span>
+            <li class="relative flex flex-col gap-4 rounded-2xl border border-hairline bg-white p-6">
+              <span class="relative z-10 flex h-9 w-9 items-center justify-center rounded-full bg-ink text-white text-xs font-mono">
+                {s.n}
+              </span>
               <h3 class="text-lg font-semibold text-ink">{s.title}</h3>
               <p class="text-base leading-relaxed text-muted">{s.body}</p>
             </li>

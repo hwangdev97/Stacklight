@@ -11,22 +11,36 @@ interface Props {
 const { lines } = Astro.props;
 ---
 
-<div class="rounded-3xl border border-hairline bg-surface p-8 md:p-10">
-  <ul class="flex flex-col gap-4 font-mono text-sm md:text-base">
+<div class="rounded-3xl bg-ink text-white shadow-menu overflow-hidden">
+  <!-- Window chrome -->
+  <div class="flex items-center gap-1.5 px-4 py-3 border-b border-white/10">
+    <span class="h-3 w-3 rounded-full bg-[#ff5f57]"></span>
+    <span class="h-3 w-3 rounded-full bg-[#febc2e]"></span>
+    <span class="h-3 w-3 rounded-full bg-[#28c840]"></span>
+    <span class="ml-3 text-xs text-white/40 font-mono">stacklight setup</span>
+  </div>
+
+  <ul class="flex flex-col gap-4 p-6 md:p-8 font-mono text-sm md:text-[15px]">
     {
       lines.map((line) => {
         if (line.speaker === "stage") {
           return (
-            <li class="text-muted italic">{line.text}</li>
+            <li class="flex items-center gap-3 text-white/40 italic">
+              <span class="h-px w-6 bg-white/15"></span>
+              <span>{line.text}</span>
+              <span class="h-px flex-1 bg-white/15"></span>
+            </li>
           );
         }
-        const label = line.speaker === "you" ? "You" : "Agent";
-        const labelColor =
-          line.speaker === "you" ? "text-muted" : "text-accent";
+        const label = line.speaker === "you" ? "you" : "agent";
+        const labelStyles =
+          line.speaker === "you"
+            ? "text-white/50"
+            : "text-accent";
         return (
           <li class="flex flex-col gap-1 sm:flex-row sm:gap-4">
-            <span class={`shrink-0 font-semibold ${labelColor}`}>{label}</span>
-            <span class="text-ink leading-relaxed">{line.text}</span>
+            <span class={`shrink-0 w-16 ${labelStyles}`}>{label} →</span>
+            <span class="text-white/95 leading-relaxed">{line.text}</span>
           </li>
         );
       })

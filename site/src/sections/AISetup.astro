@@ -1,6 +1,7 @@
 ---
 import SectionHeading from "../components/SectionHeading.astro";
 import DialogueBlock from "../components/DialogueBlock.astro";
+import Icon from "../components/Icon.astro";
 
 const lines = [
   { speaker: "you" as const, text: "Set up StackLight." },
@@ -8,7 +9,7 @@ const lines = [
     speaker: "agent" as const,
     text: "I found your GitHub token via gh. I need a Vercel token and your Cloudflare account ID — paste them here.",
   },
-  { speaker: "stage" as const, text: "You paste them." },
+  { speaker: "stage" as const, text: "you paste them" },
   {
     speaker: "agent" as const,
     text: "Validated all four. Open StackLight → Settings and paste these values. Done.",
@@ -17,21 +18,24 @@ const lines = [
 
 const columns = [
   {
+    icon: "search" as const,
     title: "Finds what you already have",
     body: "Already logged into the GitHub CLI? Already exported VERCEL_TOKEN? The agent picks those up automatically, so you're not pasting credentials you've already given your machine.",
   },
   {
+    icon: "sparkles" as const,
     title: "Asks only what's missing",
     body: "For anything it can't find — like your Cloudflare account ID or your TestFlight app IDs — it asks once, in plain English, and tells you where to find each value.",
   },
   {
+    icon: "check" as const,
     title: "Checks before it hands it back",
     body: "Every token gets test-pinged against the real API before the agent calls the setup done. No silent failures, no \"why isn't this working\" half an hour later.",
   },
 ];
 ---
 
-<section class="border-t border-hairline">
+<section id="setup" class="border-t border-hairline">
   <div class="mx-auto max-w-container px-6 py-24 md:py-32">
     <div class="flex flex-col gap-14">
       <div class="max-w-3xl flex flex-col gap-6">
@@ -49,7 +53,10 @@ const columns = [
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {
           columns.map((c) => (
-            <div class="flex flex-col gap-3 rounded-2xl bg-white border border-hairline p-6">
+            <div class="flex flex-col gap-4 rounded-2xl bg-white border border-hairline p-6 transition-shadow hover:shadow-card">
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-ink">
+                <Icon name={c.icon} class="h-5 w-5" />
+              </span>
               <h3 class="text-lg font-semibold text-ink">{c.title}</h3>
               <p class="text-base leading-relaxed text-muted">{c.body}</p>
             </div>
@@ -57,7 +64,9 @@ const columns = [
         }
       </div>
 
-      <DialogueBlock lines={lines} />
+      <div class="max-w-3xl mx-auto w-full">
+        <DialogueBlock lines={lines} />
+      </div>
 
       <p class="text-base text-muted max-w-2xl">
         Don't use an AI assistant? You can still set everything up by

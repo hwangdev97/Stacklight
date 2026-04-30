@@ -4,20 +4,31 @@ import Button from "../components/Button.astro";
 
 <section class="border-t border-hairline">
   <div class="mx-auto max-w-container px-6 py-28 md:py-36">
-    <div class="flex flex-col items-center text-center gap-8">
-      <h2 class="text-display-lg font-semibold text-ink max-w-2xl">
-        Get every deploy in one click.
-      </h2>
-      <p class="text-lg text-muted max-w-xl">
-        Free, open source, and small enough that you'll forget it's running.
-      </p>
-      <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-        <Button href="https://github.com/hwangdev97/Stacklight/releases">
-          Download for macOS
-        </Button>
-        <Button href="https://github.com/hwangdev97/Stacklight" variant="secondary">
-          Star on GitHub
-        </Button>
+    <div class="relative rounded-3xl bg-ink text-white overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,102,255,0.35),_transparent_60%)] pointer-events-none"></div>
+      <div class="absolute inset-0 grid-noise opacity-[0.15] pointer-events-none"></div>
+      <div class="relative flex flex-col items-center text-center gap-7 px-6 py-20 md:py-28">
+        <h2 class="text-display-lg font-semibold tracking-tight max-w-2xl">
+          Get every deploy in one click.
+        </h2>
+        <p class="text-lg text-white/70 max-w-xl">
+          Free, open source, and small enough that you'll forget it's running.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+          <a
+            href="https://github.com/hwangdev97/Stacklight/releases"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-white text-ink px-6 py-3 text-base font-medium hover:bg-white/90 transition-colors"
+          >
+            Download for macOS
+          </a>
+          <a
+            href="https://github.com/hwangdev97/Stacklight"
+            class="inline-flex items-center gap-2 px-2 py-3 text-base font-medium text-white/80 hover:text-white transition-colors"
+          >
+            Star on GitHub
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
       </div>
     </div>
   </div>

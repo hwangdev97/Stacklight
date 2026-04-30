@@ -1,16 +1,20 @@
 ---
 import SectionHeading from "../components/SectionHeading.astro";
+import Icon from "../components/Icon.astro";
 
 const points = [
   {
+    icon: "lock" as const,
     title: "Stored in macOS Keychain",
     body: "The same vault that holds your iCloud and Wi-Fi passwords.",
   },
   {
+    icon: "cloud" as const,
     title: "No servers",
     body: "StackLight talks directly to Vercel, GitHub, Cloudflare, and friends — there's no \"StackLight cloud\" in between.",
   },
   {
+    icon: "shield" as const,
     title: "No analytics",
     body: "No accounts. No tracking. Open source, MIT-licensed — read the code yourself.",
   },
@@ -28,7 +32,10 @@ const points = [
       <ul class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {
           points.map((p) => (
-            <li class="flex flex-col gap-3 rounded-2xl border border-hairline bg-white p-6">
+            <li class="flex flex-col gap-4 rounded-2xl border border-hairline bg-white p-6">
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-ink">
+                <Icon name={p.icon} class="h-5 w-5" />
+              </span>
               <h3 class="text-lg font-semibold text-ink">{p.title}</h3>
               <p class="text-base leading-relaxed text-muted">{p.body}</p>
             </li>

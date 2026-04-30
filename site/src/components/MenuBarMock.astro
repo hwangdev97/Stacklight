@@ -1,0 +1,61 @@
+---
+const rows = [
+  { provider: "Vercel", target: "stacklight-site", state: "ok", time: "2m ago" },
+  { provider: "Cloudflare", target: "docs", state: "building", time: "now" },
+  { provider: "GitHub Actions", target: "ci · main", state: "fail", time: "12m ago" },
+  { provider: "TestFlight", target: "build 142", state: "ok", time: "1h ago" },
+];
+
+const stateClass = {
+  ok: "bg-success",
+  building: "bg-building animate-pulse-slow",
+  fail: "bg-danger",
+};
+---
+
+<div class="relative w-full max-w-md mx-auto select-none">
+  <!-- Faux menu bar strip -->
+  <div class="rounded-t-xl bg-white/90 backdrop-blur border border-hairline px-3 h-7 flex items-center gap-3 text-[11px] text-muted">
+    <span class="font-semibold text-ink">Finder</span>
+    <span>File</span>
+    <span>Edit</span>
+    <span>View</span>
+    <span class="ml-auto flex items-center gap-3">
+      <span class="text-soft">100%</span>
+      <span class="text-soft">Tue 9:41</span>
+      <span class="flex h-5 w-5 items-center justify-center rounded bg-ink text-white text-[10px] ring-2 ring-accent/40">▲</span>
+    </span>
+  </div>
+
+  <!-- Connector caret -->
+  <div class="absolute right-3 top-7 -mt-0.5">
+    <svg width="14" height="8" viewBox="0 0 14 8" class="text-white"><path fill="currentColor" stroke="#e7e7e7" stroke-width="1" d="M0 8 L7 1 L14 8 Z"/></svg>
+  </div>
+
+  <!-- Dropdown panel -->
+  <div class="mt-1 ml-auto w-full rounded-2xl bg-white border border-hairline shadow-menu overflow-hidden">
+    <div class="px-4 pt-3 pb-2 flex items-center justify-between">
+      <span class="text-xs font-semibold uppercase tracking-wider text-soft">Deploys</span>
+      <span class="flex items-center gap-1.5 text-[11px] text-muted">
+        <span class="h-1.5 w-1.5 rounded-full bg-success"></span>
+        Live
+      </span>
+    </div>
+    <ul class="divide-y divide-hairline">
+      {rows.map((r) => (
+        <li class="flex items-center gap-3 px-4 py-3">
+          <span class={`h-2 w-2 rounded-full shrink-0 ${stateClass[r.state as keyof typeof stateClass]}`}></span>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-ink truncate">{r.target}</p>
+            <p class="text-xs text-muted truncate">{r.provider}</p>
+          </div>
+          <span class="text-xs text-soft shrink-0">{r.time}</span>
+        </li>
+      ))}
+    </ul>
+    <div class="px-4 py-2.5 bg-surface text-xs text-muted flex items-center justify-between">
+      <span>Last checked just now</span>
+      <span>Settings</span>
+    </div>
+  </div>
+</div>
