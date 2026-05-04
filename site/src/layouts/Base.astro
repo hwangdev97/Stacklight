@@ -25,7 +25,7 @@ const canonical = new URL(Astro.url.pathname, siteUrl).toString();
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -57,7 +57,7 @@ const canonical = new URL(Astro.url.pathname, siteUrl).toString();
     <footer class="border-t border-hairline bg-white">
       <div class="mx-auto max-w-container px-6 py-12 flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2 text-ink">
-          <span class="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-white text-[10px]" aria-hidden="true">▲</span>
+          <img src="/favicon.png" alt="" class="h-6 w-6" aria-hidden="true" />
           <span class="text-sm font-semibold">StackLight</span>
         </div>
         <p class="text-sm text-muted">

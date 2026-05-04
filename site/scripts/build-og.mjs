@@ -6,8 +6,10 @@ import { dirname, resolve } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const publicDir = resolve(here, "..", "public");
 
+const iconDataUrl = `data:image/png;base64,${readFileSync(resolve(publicDir, "apple-touch-icon.png")).toString("base64")}`;
+
 function render(svgFile, outFile, width) {
-  const svg = readFileSync(resolve(publicDir, svgFile), "utf8");
+  const svg = readFileSync(resolve(publicDir, svgFile), "utf8").replaceAll("__APP_ICON__", iconDataUrl);
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: width },
     font: { loadSystemFonts: true },
@@ -19,4 +21,3 @@ function render(svgFile, outFile, width) {
 }
 
 render("og.svg", "og.png", 1200);
-render("favicon.svg", "apple-touch-icon.png", 180);
