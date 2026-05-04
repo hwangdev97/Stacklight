@@ -10,6 +10,7 @@ struct AdvancedSettingsDetail: View {
     @SettingsValue(\.fileLoggingEnabled) private var fileLoggingEnabled: Bool
     @SettingsValue(\.loggingVerbosity) private var verbosityRaw: String
     @State private var lastCleared: Date?
+    @State private var cacheStats: StackLightCacheSummary?
 
     enum LogVerbosity: String, CaseIterable, Identifiable {
         case debug, info, warning
@@ -138,8 +139,6 @@ struct AdvancedSettingsDetail: View {
         .formStyle(.grouped)
         .onAppear { refreshCacheStats() }
     }
-
-    @State private var cacheStats: StackLightCacheSummary?
 
     private func refreshCacheStats() {
         cacheStats = try? PersistentCache.summary(limit: 0)
