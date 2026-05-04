@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "StackLight",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS(.v13), .iOS(.v17), .watchOS(.v10)],
     products: [
         .library(name: "StackLightCore", targets: ["StackLightCore"]),
         .executable(name: "stacklightcli", targets: ["stacklightcli"])
