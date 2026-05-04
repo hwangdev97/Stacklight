@@ -11,7 +11,7 @@ public final class CloudflareProvider: DeploymentProvider {
     public init() {}
 
     public var dashboardURL: URL? {
-        if let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId"), !accountId.isEmpty {
+        if let accountId = AppConfig.string(forKey: "cloudflare.accountId"), !accountId.isEmpty {
             return URL(string: "https://dash.cloudflare.com/\(accountId)/workers-and-pages")
         }
         return URL(string: "https://dash.cloudflare.com")
@@ -19,7 +19,7 @@ public final class CloudflareProvider: DeploymentProvider {
 
     public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
-              let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId") else {
+              let accountId = AppConfig.string(forKey: "cloudflare.accountId") else {
             return false
         }
         return !token.isEmpty && !accountId.isEmpty
@@ -27,11 +27,11 @@ public final class CloudflareProvider: DeploymentProvider {
 
     public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
-              let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId") else {
+              let accountId = AppConfig.string(forKey: "cloudflare.accountId") else {
             return .empty
         }
 
-        var projectNames = AppConfig.defaults.string(forKey: "cloudflare.projectNames")?
+        var projectNames = AppConfig.string(forKey: "cloudflare.projectNames")?
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty } ?? []

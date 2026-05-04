@@ -20,7 +20,7 @@ public final class VercelProvider: DeploymentProvider {
     public init() {}
 
     public var dashboardURL: URL? {
-        if let teamId = AppConfig.defaults.string(forKey: "vercel.teamId"), !teamId.isEmpty {
+        if let teamId = AppConfig.string(forKey: "vercel.teamId"), !teamId.isEmpty {
             return URL(string: "https://vercel.com/\(teamId)")
         }
         return URL(string: "https://vercel.com/dashboard")
@@ -34,7 +34,7 @@ public final class VercelProvider: DeploymentProvider {
     public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "vercel.token") else { return .empty }
 
-        let projectNames = (AppConfig.defaults.string(forKey: "vercel.projectNames") ?? "")
+        let projectNames = (AppConfig.string(forKey: "vercel.projectNames") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
@@ -45,7 +45,7 @@ public final class VercelProvider: DeploymentProvider {
         let limit = projectNames.isEmpty ? 30 : 100
         components.queryItems = [URLQueryItem(name: "limit", value: String(limit))]
 
-        if let teamId = AppConfig.defaults.string(forKey: "vercel.teamId"), !teamId.isEmpty {
+        if let teamId = AppConfig.string(forKey: "vercel.teamId"), !teamId.isEmpty {
             components.queryItems?.append(URLQueryItem(name: "teamId", value: teamId))
         }
 
@@ -74,9 +74,9 @@ public final class VercelProvider: DeploymentProvider {
         // options to offer the next time it opens.
         cacheKnownBranches(from: rawDeployments)
 
-        let branchFilter = (AppConfig.defaults.string(forKey: Self.branchFilterKey) ?? "")
+        let branchFilter = (AppConfig.string(forKey: Self.branchFilterKey) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let hideSkipped = AppConfig.defaults.bool(forKey: Self.hideSkippedKey)
+        let hideSkipped = AppConfig.bool(forKey: Self.hideSkippedKey)
 
         let allowedNames = Set(projectNames.map { $0.lowercased() })
 
@@ -136,9 +136,9 @@ public final class VercelProvider: DeploymentProvider {
             .filter { !$0.isEmpty })
         guard !branches.isEmpty else { return }
 
-        let existing = AppConfig.defaults.stringArray(forKey: Self.knownBranchesKey) ?? []
+        let existing = AppConfig.stringArray(forKey: Self.knownBranchesKey) ?? []
         let merged = Array(Set(existing).union(branches)).sorted()
-        AppConfig.defaults.set(merged, forKey: Self.knownBranchesKey)
+        AppConfig.setValue(merged, forKey: Self.knownBranchesKey)
     }
 }
 

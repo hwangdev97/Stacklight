@@ -18,8 +18,9 @@ final class AppState: ObservableObject {
     init() {
         // Replay diagnostics toggle into the singleton on cold launch so logs
         // start flowing immediately if the user enabled it last session.
-        let diag = AppConfig.defaults.bool(forKey: "diagnosticsEnabled")
-        let fileLog = AppConfig.defaults.bool(forKey: "fileLoggingEnabled")
+        let store = SettingsStore.shared
+        let diag = store.diagnosticsEnabled
+        let fileLog = store.fileLoggingEnabled
         Task {
             await DiagnosticsLogger.shared.setEnabled(diag)
             await DiagnosticsLogger.shared.setFileLogging(fileLog)
@@ -27,8 +28,7 @@ final class AppState: ObservableObject {
     }
 
     func startPolling() {
-        // Read poll interval from settings
-        let interval = AppConfig.defaults.double(forKey: "pollInterval")
+        let interval = SettingsStore.shared.pollIntervalSeconds
         pollingManager.pollInterval = interval > 0 ? interval : 60
 
         pollingManager.onUpdate = { [weak self] newDeployments in

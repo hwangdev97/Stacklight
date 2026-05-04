@@ -1,9 +1,10 @@
 import SwiftUI
+import StackLightCore
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var appState: AppState
-    @AppStorage("pollInterval") private var pollInterval: Double = 60
-    @AppStorage("notificationsEnabled") private var notificationsEnabled: Bool = true
+    @SettingsValue(\.pollIntervalSeconds) private var pollInterval: Double
+    @SettingsValue(\.notificationsEnabled) private var notificationsEnabled: Bool
 
     var body: some View {
         ZStack {

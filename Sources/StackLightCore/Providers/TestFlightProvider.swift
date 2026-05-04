@@ -57,7 +57,7 @@ public final class TestFlightProvider: DeploymentProvider {
     // MARK: - Helpers
 
     private func parsedAppIds() -> [String] {
-        (AppConfig.defaults.string(forKey: "testflight.appIds") ?? "")
+        (AppConfig.string(forKey: "testflight.appIds") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }

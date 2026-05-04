@@ -6,9 +6,9 @@ import StackLightCore
 /// power users (and bug-reporters) a one-click way to capture HTTP traces,
 /// inspect cache state, and clear caches without dropping into the CLI.
 struct AdvancedSettingsDetail: View {
-    @AppStorage("diagnosticsEnabled") private var diagnosticsEnabled: Bool = false
-    @AppStorage("fileLoggingEnabled") private var fileLoggingEnabled: Bool = false
-    @AppStorage("loggingVerbosity") private var verbosityRaw: String = LogVerbosity.info.rawValue
+    @SettingsValue(\.diagnosticsEnabled) private var diagnosticsEnabled: Bool
+    @SettingsValue(\.fileLoggingEnabled) private var fileLoggingEnabled: Bool
+    @SettingsValue(\.loggingVerbosity) private var verbosityRaw: String
     @State private var lastCleared: Date?
 
     enum LogVerbosity: String, CaseIterable, Identifiable {

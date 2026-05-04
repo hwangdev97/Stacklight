@@ -18,7 +18,7 @@ final class AppState: ObservableObject {
     private var lastPublishedFingerprint: String = ""
 
     func startPolling() {
-        let interval = AppConfig.defaults.double(forKey: "pollInterval")
+        let interval = SettingsStore.shared.pollIntervalSeconds
         pollingManager.pollInterval = interval > 0 ? interval : 60
 
         pollingManager.onUpdate = { [weak self] newDeployments in

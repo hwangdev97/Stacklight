@@ -336,9 +336,9 @@ struct ProviderSettingsView: View {
             if field.isSecret {
                 fieldValues[field.key] = KeychainManager.read(key: field.key) ?? ""
             } else if field.isToggle {
-                fieldValues[field.key] = AppConfig.defaults.bool(forKey: field.key) ? "1" : "0"
+                fieldValues[field.key] = AppConfig.bool(forKey: field.key) ? "1" : "0"
             } else {
-                fieldValues[field.key] = AppConfig.defaults.string(forKey: field.key) ?? ""
+                fieldValues[field.key] = AppConfig.string(forKey: field.key) ?? ""
             }
         }
     }
@@ -353,9 +353,9 @@ struct ProviderSettingsView: View {
                     try? KeychainManager.save(key: field.key, value: value)
                 }
             } else if field.isToggle {
-                AppConfig.defaults.set(value == "1", forKey: field.key)
+                AppConfig.setValue(value == "1", forKey: field.key)
             } else {
-                AppConfig.defaults.set(value, forKey: field.key)
+                AppConfig.setValue(value, forKey: field.key)
             }
         }
         ASCCredentialStore.invalidate()
@@ -393,7 +393,7 @@ struct ProviderSettingsView: View {
             if field.isSecret {
                 KeychainManager.delete(key: field.key)
             } else {
-                AppConfig.defaults.removeObject(forKey: field.key)
+                AppConfig.removeValue(forKey: field.key)
             }
             fieldValues[field.key] = ""
         }
@@ -500,7 +500,7 @@ struct BranchPickerControl: View {
     private static let customSentinel = "__custom__"
 
     private var knownBranches: [String] {
-        AppConfig.defaults.stringArray(forKey: branchesKey) ?? []
+        AppConfig.stringArray(forKey: branchesKey) ?? []
     }
 
     private var options: [String] {

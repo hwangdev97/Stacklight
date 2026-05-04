@@ -1,11 +1,12 @@
 import SwiftUI
 import ServiceManagement
+import StackLightCore
 
 // MARK: - General Settings Detail (System Settings style)
 
 struct GeneralSettingsDetail: View {
-    @AppStorage("pollInterval") private var pollInterval: Double = 60
-    @AppStorage("notificationsEnabled") private var notificationsEnabled: Bool = true
+    @SettingsValue(\.pollIntervalSeconds) private var pollInterval: Double
+    @SettingsValue(\.notificationsEnabled) private var notificationsEnabled: Bool
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginError: String?
 

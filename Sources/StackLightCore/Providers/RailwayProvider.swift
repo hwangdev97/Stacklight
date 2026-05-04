@@ -50,7 +50,7 @@ public final class RailwayProvider: DeploymentProvider {
     // MARK: - Helpers
 
     private func parsedProjectIds() -> [String] {
-        (AppConfig.defaults.string(forKey: "railway.projectIds") ?? "")
+        (AppConfig.string(forKey: "railway.projectIds") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }

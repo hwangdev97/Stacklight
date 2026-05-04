@@ -18,14 +18,14 @@ public final class GitHubPRProvider: DeploymentProvider {
 
     public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "github.token"), !token.isEmpty else { return false }
-        let repos = AppConfig.defaults.string(forKey: "github.pr.repos") ?? ""
+        let repos = AppConfig.string(forKey: "github.pr.repos") ?? ""
         return !repos.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "github.token") else { return .empty }
 
-        let repos = (AppConfig.defaults.string(forKey: "github.pr.repos") ?? "")
+        let repos = (AppConfig.string(forKey: "github.pr.repos") ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
