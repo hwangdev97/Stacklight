@@ -11,7 +11,9 @@ const {
   description = "StackLight watches every deploy and pull request you ship across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io, Xcode Cloud, and TestFlight. Lives in your Mac menu bar. Free and open source.",
 } = Astro.props;
 
-const ogImage = new URL("/og.png", Astro.site ?? "https://stacklight.pages.dev").toString();
+const siteUrl = Astro.site ?? new URL("https://stacklight.pages.dev");
+const ogImage = new URL("/og.png", siteUrl).toString();
+const canonical = new URL(Astro.url.pathname, siteUrl).toString();
 ---
 
 <!doctype html>
@@ -20,27 +22,42 @@ const ogImage = new URL("/og.png", Astro.site ?? "https://stacklight.pages.dev")
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>{title}</title>
     <meta name="description" content={description} />
 
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="StackLight" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="StackLight — a macOS menu bar app showing live deploy status across nine services." />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="StackLight — a macOS menu bar app showing live deploy status across nine services." />
   </head>
   <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-ink focus:text-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+    >
+      Skip to content
+    </a>
     <slot />
     <footer class="border-t border-hairline bg-white">
       <div class="mx-auto max-w-container px-6 py-12 flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2 text-ink">
-          <span class="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-white text-[10px]">▲</span>
+          <span class="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-white text-[10px]" aria-hidden="true">▲</span>
           <span class="text-sm font-semibold">StackLight</span>
         </div>
         <p class="text-sm text-muted">

@@ -1,0 +1,35 @@
+---
+import Base from "../layouts/Base.astro";
+import TopNav from "../components/TopNav.astro";
+import Button from "../components/Button.astro";
+---
+
+<Base
+  title="Lost a deploy? — StackLight"
+  description="The page you're looking for didn't ship. Head back to the homepage."
+>
+  <TopNav />
+  <main id="main" class="relative">
+    <section class="relative overflow-hidden">
+      <div class="absolute inset-0 bg-hero-glow pointer-events-none"></div>
+      <div class="relative mx-auto max-w-container px-6 py-32 md:py-40">
+        <div class="flex flex-col items-center text-center gap-6 max-w-xl mx-auto">
+          <span class="inline-flex items-center gap-2 rounded-full border border-hairline bg-white/70 backdrop-blur px-3 py-1 text-xs text-muted">
+            <span class="h-1.5 w-1.5 rounded-full bg-danger"></span>
+            404 · build not found
+          </span>
+          <h1 class="text-display-lg font-semibold tracking-tight text-ink">
+            Lost a deploy?
+          </h1>
+          <p class="text-lg text-muted">
+            That page didn't make it through CI. Head back to the
+            homepage — everything else shipped fine.
+          </p>
+          <div class="pt-2">
+            <Button href="/">Back to home</Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</Base>
