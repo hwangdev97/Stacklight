@@ -103,7 +103,7 @@ public final class TestFlightProvider: DeploymentProvider {
                 providerID: "testFlight",
                 projectName: label,
                 status: mapStatus(attrs.processingState, betaState: attrs.buildAudienceType),
-                url: nil,
+                url: URL(string: "https://appstoreconnect.apple.com/apps/\(appId)/testflight/ios/\(build.id)"),
                 createdAt: attrs.uploadedDate ?? Date(),
                 commitMessage: nil,
                 branch: nil
