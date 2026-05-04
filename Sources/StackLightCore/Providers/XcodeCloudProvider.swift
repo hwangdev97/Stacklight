@@ -23,13 +23,23 @@ public final class XcodeCloudProvider: DeploymentProvider {
     public func fetchDeployments() async throws -> DeploymentFetchResult {
         let provider = try makeProvider()
 
-        let productsRequest = APIEndpoint.v1.ciProducts.get(parameters: .init(limit: 25))
+        let productsRequest = APIEndpoint.v1.ciProducts.get(parameters: .init(
+            limit: 25,
+            include: [.app]
+        ))
         let productsResponse = try await provider.request(productsRequest)
+
+        let teamId: String? = {
+            let raw = (AppConfig.string(forKey: "asc.teamID") ?? "")
+                .trimmingCharacters(in: .whitespaces)
+            return raw.isEmpty ? nil : raw
+        }()
 
         var deployments: [Deployment] = []
         var itemErrors: [(item: String, error: Error)] = []
         for product in productsResponse.data {
             let productName = product.attributes?.name ?? "Build"
+            let appId = product.relationships?.app?.data?.id
             do {
                 let runsRequest = APIEndpoint.v1.ciProducts.id(product.id).buildRuns
                     .get(parameters: .init(
@@ -40,6 +50,11 @@ public final class XcodeCloudProvider: DeploymentProvider {
 
                 let mapped = runsResponse.data.compactMap { run -> Deployment? in
                     guard let attrs = run.attributes else { return nil }
+                    let url = appId.flatMap { appId -> URL? in
+                        let prefix = teamId.map { "https://appstoreconnect.apple.com/teams/\($0)" }
+                            ?? "https://appstoreconnect.apple.com"
+                        return URL(string: "\(prefix)/apps/\(appId)/ci/builds/\(run.id)")
+                    }
                     return Deployment(
                         id: run.id,
                         providerID: "xcodeCloud",
@@ -48,7 +63,7 @@ public final class XcodeCloudProvider: DeploymentProvider {
                             progress: attrs.executionProgress,
                             completion: attrs.completionStatus
                         ),
-                        url: nil,
+                        url: url,
                         createdAt: attrs.createdDate ?? Date(),
                         commitMessage: attrs.sourceCommit?.message,
                         branch: nil
@@ -69,7 +84,9 @@ public final class XcodeCloudProvider: DeploymentProvider {
             SettingsField(key: "asc.privateKeyID", label: "Key ID", isSecret: true, placeholder: "e.g. ABC1234DEF",
                           hint: "Same page → Keys table → Key ID column"),
             SettingsField(key: "asc.privateKey", label: "Private Key (.p8)", isSecret: true, placeholder: "-----BEGIN PRIVATE KEY-----...",
-                          hint: "Download the .p8 file when creating the key (one-time only), then paste its contents here")
+                          hint: "Download the .p8 file when creating the key (one-time only), then paste its contents here"),
+            SettingsField(key: "asc.teamID", label: "Team ID", placeholder: "Optional — e.g. 8d8c1bdc-...",
+                          hint: "Optional. Copy from any App Store Connect URL: appstoreconnect.apple.com/teams/<this part>/apps/...  Used to build deeplinks to specific build runs.")
         ]
     }
 
