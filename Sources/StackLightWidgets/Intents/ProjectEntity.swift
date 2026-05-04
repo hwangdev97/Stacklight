@@ -1,4 +1,5 @@
 import AppIntents
+import StackLightCore
 
 /// A `(providerID, projectName)` tuple the user can pin. The available list is
 /// derived dynamically from the most recent shared snapshot so the user only

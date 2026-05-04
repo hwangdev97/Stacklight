@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 import WidgetKit
 import AppIntents
 

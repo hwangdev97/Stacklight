@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 @main
 struct StackLightApp: App {

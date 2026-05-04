@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Horizontally scrolling rail of Liquid Glass pills letting the user filter
 /// the Home deployment stream. Analogous to the "Living room / Kitchen"

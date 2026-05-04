@@ -1,4 +1,5 @@
 import AppIntents
+import StackLightCore
 import WidgetKit
 
 /// User-facing configuration for the StackLight widget. Lets the user filter

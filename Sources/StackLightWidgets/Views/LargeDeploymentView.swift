@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 import WidgetKit
 
 /// `.systemLarge` — up to 6 deployments with a last-refresh footer.

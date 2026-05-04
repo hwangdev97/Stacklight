@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 import BackgroundTasks
 import UserNotifications
 
@@ -37,7 +38,7 @@ enum BackgroundRefreshCoordinator {
     /// Submit a new refresh request. Safe to call repeatedly — iOS replaces
     /// any outstanding request with this identifier.
     static func scheduleNext() {
-        let configured = AppConfig.defaults.double(forKey: "pollInterval")
+        let configured = SettingsStore.shared.pollIntervalSeconds
         let desired = configured > 0 ? configured : 60
         let earliest = max(desired, minInterval)
 

@@ -1,10 +1,13 @@
 import SwiftUI
+import StackLightCore
 
 // MARK: - Sidebar Item
 
 enum SettingsItem: Hashable {
     case provider(String)
     case general
+    case projects
+    case advanced
     case feedback
 }
 
@@ -22,6 +25,8 @@ struct SettingsView: View {
                 Section {
                     sidebarRow(title: "General", systemImage: "gear", color: .gray, size: 22)
                         .tag(SettingsItem.general)
+                    sidebarRow(title: "Projects", systemImage: "rectangle.stack", color: .gray, size: 22)
+                        .tag(SettingsItem.projects)
                 }
 
                 Section("Services") {
@@ -32,10 +37,12 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    sidebarRow(title: "Advanced", systemImage: "wrench.and.screwdriver", color: .gray, size: 22)
+                        .tag(SettingsItem.advanced)
                     sidebarRow(title: "Send Feedback", systemImage: "bubble.left.and.bubble.right", color: .gray, size: 22, iconSize: 8)
                         .tag(SettingsItem.feedback)
                 }
-              
+
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
@@ -48,6 +55,10 @@ struct SettingsView: View {
                 }
             case .general:
                 GeneralSettingsDetail()
+            case .projects:
+                ProjectsSettingsDetail()
+            case .advanced:
+                AdvancedSettingsDetail()
             case .feedback:
                 FeedbackView(onOpenGitHubSettings: {
                     selection = .provider("githubPRs")

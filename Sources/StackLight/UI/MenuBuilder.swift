@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// SwiftUI replacement for the former AppKit-based NSMenu. Hosted inside a
 /// `MenuBarExtra` with `.menuBarExtraStyle(.window)` so the entire panel is a
@@ -27,9 +28,34 @@ struct MenuBarContentView: View {
     var onQuit: () -> Void = { NSApp.terminate(nil) }
 
     @Environment(\.openURL) private var openURL
+    @State private var settings: UserSettings = SettingsStore.shared.settings
 
     private var grouped: [String: [Deployment]] {
         Dictionary(grouping: deployments, by: \.providerID)
+    }
+
+    /// Returns deployments for a provider grouped by visibility:
+    /// `(pinned, visible, hidden)`. `hidden` is exposed so the UI can fold it
+    /// into a collapsible "Hidden (N)" submenu instead of dropping items.
+    private func partitioned(_ list: [Deployment]) -> (pinned: [Deployment], visible: [Deployment], hidden: [Deployment]) {
+        var pinned: [Deployment] = []
+        var visible: [Deployment] = []
+        var hidden: [Deployment] = []
+        for deployment in list {
+            switch settings.visibility(for: deployment.key) {
+            case .pinned: pinned.append(deployment)
+            case .visible: visible.append(deployment)
+            case .hidden: hidden.append(deployment)
+            }
+        }
+        return (pinned, visible, hidden)
+    }
+
+    private func updateVisibility(_ visibility: ItemVisibility, for deployment: Deployment) {
+        SettingsStore.shared.mutate { settings in
+            settings.setVisibility(visibility, for: deployment.key)
+        }
+        settings = SettingsStore.shared.settings
     }
 
     var body: some View {
@@ -87,7 +113,7 @@ struct MenuBarContentView: View {
                 .padding(.vertical, 4)
             }
 
-            let list = Array((grouped[provider.id] ?? []).prefix(5))
+            let list = grouped[provider.id] ?? []
             if list.isEmpty && errors[provider.id] == nil {
                 Text("No recent deployments")
                     .font(.caption)
@@ -95,8 +121,32 @@ struct MenuBarContentView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
             } else {
-                ForEach(list, id: \.id) { deployment in
-                    deploymentRow(deployment)
+                let parts = partitioned(list)
+                // Pinned rows go first (already labeled with a pin glyph).
+                ForEach(parts.pinned, id: \.id) { deployment in
+                    deploymentRow(deployment, isPinned: true)
+                }
+                // Then the normal feed (capped at 5 to keep the menu compact).
+                ForEach(Array(parts.visible.prefix(5)), id: \.id) { deployment in
+                    deploymentRow(deployment, isPinned: false)
+                }
+                // Hidden items collapse into a folded count so the user can
+                // unhide without opening Settings.
+                if !parts.hidden.isEmpty {
+                    Menu {
+                        ForEach(parts.hidden, id: \.id) { deployment in
+                            Button("Show \(deployment.projectName)") {
+                                updateVisibility(.visible, for: deployment)
+                            }
+                        }
+                    } label: {
+                        Text("Hidden (\(parts.hidden.count))")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 2)
                 }
             }
         }
@@ -127,14 +177,20 @@ struct MenuBarContentView: View {
     }
 
     @ViewBuilder
-    private func deploymentRow(_ deployment: Deployment) -> some View {
+    private func deploymentRow(_ deployment: Deployment, isPinned: Bool = false) -> some View {
         MenuRow(isEnabled: deployment.url != nil) {
             if let url = deployment.url { openURL(url) }
         } label: {
             HStack(spacing: 8) {
-                Circle()
-                    .fill(statusColor(deployment.status))
-                    .frame(width: 8, height: 8)
+                if isPinned {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Circle()
+                        .fill(statusColor(deployment.status))
+                        .frame(width: 8, height: 8)
+                }
                 Text(String(deployment.projectName.prefix(24)))
                     .fontWeight(.semibold)
                     .lineLimit(1)
@@ -158,13 +214,39 @@ struct MenuBarContentView: View {
             }
         }
         .help(deployment.commitMessage ?? "")
+        .contextMenu {
+            let current = settings.visibility(for: deployment.key)
+            Button {
+                updateVisibility(current == .pinned ? .visible : .pinned, for: deployment)
+            } label: {
+                Label(current == .pinned ? "Unpin" : "Pin", systemImage: "pin")
+            }
+            Button {
+                updateVisibility(.hidden, for: deployment)
+            } label: {
+                Label("Hide", systemImage: "eye.slash")
+            }
+            if current != .visible {
+                Button {
+                    updateVisibility(.visible, for: deployment)
+                } label: {
+                    Label("Reset", systemImage: "arrow.uturn.backward")
+                }
+            }
+            if let url = deployment.url {
+                Divider()
+                Button("Open in Browser") { openURL(url) }
+            }
+        }
     }
 
     @ViewBuilder
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let lastRefresh {
-                Text("Updated \(relativeTime(from: lastRefresh))")
+                let configuredCount = providers.count
+                let okCount = max(0, configuredCount - errors.count)
+                Text("Updated \(relativeTime(from: lastRefresh)) · \(okCount)/\(configuredCount) ok")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 12)

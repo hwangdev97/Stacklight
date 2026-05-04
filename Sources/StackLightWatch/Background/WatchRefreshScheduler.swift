@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 import WatchKit
 #if canImport(WidgetKit)
 import WidgetKit

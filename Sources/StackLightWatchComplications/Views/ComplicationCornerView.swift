@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 import WidgetKit
 
 /// `.accessoryCorner` — pinned to a watch-face corner with a curved text

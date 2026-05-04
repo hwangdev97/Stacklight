@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 import UserNotifications
 
 @MainActor
@@ -13,7 +14,7 @@ final class NotificationManager {
     /// so a status change delivered in the foreground isn't re-announced when
     /// iOS wakes the app in the background, and vice versa.
     func checkForChangesPersistent(old: [Deployment], new: [Deployment]) {
-        let enabled = AppConfig.defaults.object(forKey: "notificationsEnabled") as? Bool ?? true
+        let enabled = SettingsStore.shared.notificationsEnabled
         var notified = NotifiedStateStore.read()
         let firstRun = notified.isEmpty
 

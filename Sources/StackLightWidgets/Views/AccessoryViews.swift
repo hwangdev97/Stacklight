@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 import WidgetKit
 
 /// `.accessoryCircular` — status orb + provider glyph on the lock screen.

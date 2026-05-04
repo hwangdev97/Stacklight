@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Small rounded-square icon for a deployment provider. Uses the provider's
 /// custom asset if available, otherwise falls back to an SF Symbol.

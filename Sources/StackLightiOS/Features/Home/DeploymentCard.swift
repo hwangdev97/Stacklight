@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// The hero card for a single deployment.
 ///

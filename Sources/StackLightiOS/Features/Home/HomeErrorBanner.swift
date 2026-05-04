@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Collapsible banner summarising per-provider refresh errors. Shared by the
 /// compact `HomeView` and the regular-width `DeploymentGridView`.

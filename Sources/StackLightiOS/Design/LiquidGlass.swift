@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Thin wrappers around iOS 26's native Liquid Glass APIs so the rest of the
 /// app uses one consistent vocabulary. If we ever need to backport to iOS 25

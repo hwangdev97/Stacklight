@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 import WidgetKit
 
 /// `.systemExtraLarge` — iPad-only Home Screen size. Renders up to 12 rows

@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// iPad-style Settings: sidebar + detail inside the settings sheet. Compact
 /// layouts keep using the existing `SettingsView` (nested `NavigationStack`).
