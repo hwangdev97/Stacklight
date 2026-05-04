@@ -7,7 +7,7 @@ import StackLightCore
 /// "why did X vanish from my menu?" without losing their preferences.
 struct ProjectsSettingsDetail: View {
     @EnvironmentObject var appState: AppState
-    @State private var settings: UserSettings = SettingsStore.shared.load()
+    @State private var settings: UserSettings = SettingsStore.shared.settings
     @State private var searchText: String = ""
 
     /// Union of currently-fetched deployments and items that have a saved
@@ -88,7 +88,7 @@ struct ProjectsSettingsDetail: View {
         }
         .formStyle(.grouped)
         .onReceive(NotificationCenter.default.publisher(for: SettingsStore.didChange)) { _ in
-            settings = SettingsStore.shared.load()
+            settings = SettingsStore.shared.settings
         }
     }
 
@@ -96,12 +96,10 @@ struct ProjectsSettingsDetail: View {
     private func projectRow(_ deployment: Deployment) -> some View {
         let current = settings.visibility(for: deployment.key)
         HStack(spacing: 10) {
-            if let providerLogo = deployment.providerID as String? {
-                Text(providerInitial(for: providerLogo))
-                    .font(.caption.weight(.bold))
-                    .frame(width: 22, height: 22)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
-            }
+            Text(providerInitial(for: deployment.providerID))
+                .font(.caption.weight(.bold))
+                .frame(width: 22, height: 22)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
             VStack(alignment: .leading, spacing: 1) {
                 Text(deployment.projectName)
                     .lineLimit(1)
@@ -114,7 +112,7 @@ struct ProjectsSettingsDetail: View {
                 get: { current },
                 set: { newValue in
                     SettingsStore.shared.mutate { $0.setVisibility(newValue, for: deployment.key) }
-                    settings = SettingsStore.shared.load()
+                    settings = SettingsStore.shared.settings
                 }
             )) {
                 ForEach(ItemVisibility.allCases, id: \.self) { state in

@@ -136,7 +136,7 @@ public final class VercelProvider: DeploymentProvider {
             .filter { !$0.isEmpty })
         guard !branches.isEmpty else { return }
 
-        let existing = AppConfig.stringArray(forKey: Self.knownBranchesKey) ?? []
+        let existing = AppConfig.stringArray(forKey: Self.knownBranchesKey)
         let merged = Array(Set(existing).union(branches)).sorted()
         AppConfig.setValue(merged, forKey: Self.knownBranchesKey)
     }

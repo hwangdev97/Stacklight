@@ -46,7 +46,7 @@ public struct SettingsString: DynamicProperty {
     private let key: String
     private let defaultValue: String
 
-    public init(_ key: String, default defaultValue: String = "") {
+    public init(_ key: String, fallback defaultValue: String = "") {
         self.key = key
         self.defaultValue = defaultValue
     }

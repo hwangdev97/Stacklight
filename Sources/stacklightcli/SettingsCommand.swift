@@ -20,7 +20,7 @@ struct SettingsCommand: AsyncParsableCommand {
         var output: OutputOptions
 
         func run() async throws {
-            let settings = SettingsStore.shared.load()
+            let settings = SettingsStore.shared.settings
             switch output.format {
             case .json:
                 try printJSON(settings)

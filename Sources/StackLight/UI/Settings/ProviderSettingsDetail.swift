@@ -265,7 +265,7 @@ struct BranchPickerControl: View {
     private static let customSentinel = "__custom__"
 
     private var knownBranches: [String] {
-        AppConfig.stringArray(forKey: branchesKey) ?? []
+        AppConfig.stringArray(forKey: branchesKey)
     }
 
     private var options: [String] {

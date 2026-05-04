@@ -28,7 +28,7 @@ struct MenuBarContentView: View {
     var onQuit: () -> Void = { NSApp.terminate(nil) }
 
     @Environment(\.openURL) private var openURL
-    @State private var settings: UserSettings = SettingsStore.shared.load()
+    @State private var settings: UserSettings = SettingsStore.shared.settings
 
     private var grouped: [String: [Deployment]] {
         Dictionary(grouping: deployments, by: \.providerID)
@@ -55,7 +55,7 @@ struct MenuBarContentView: View {
         SettingsStore.shared.mutate { settings in
             settings.setVisibility(visibility, for: deployment.key)
         }
-        settings = SettingsStore.shared.load()
+        settings = SettingsStore.shared.settings
     }
 
     var body: some View {

@@ -53,7 +53,7 @@ struct AdvancedSettingsDetail: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .onChange(of: diagnosticsEnabled) { _, value in
+                .onChange(of: diagnosticsEnabled) { value in
                     Task { await DiagnosticsLogger.shared.setEnabled(value) }
                 }
 
@@ -66,7 +66,7 @@ struct AdvancedSettingsDetail: View {
                     }
                 }
                 .disabled(!diagnosticsEnabled)
-                .onChange(of: fileLoggingEnabled) { _, value in
+                .onChange(of: fileLoggingEnabled) { value in
                     Task { await DiagnosticsLogger.shared.setFileLogging(value) }
                 }
 

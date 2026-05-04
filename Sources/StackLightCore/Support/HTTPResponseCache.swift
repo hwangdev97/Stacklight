@@ -118,21 +118,25 @@ public final class HTTPResponseCache: @unchecked Sendable {
 
     public func cached(url: URL) -> PersistentHTTPResponse? {
         let key = Self.key(url: url)
-        return try? queue.read { db in
-            guard let row = try Row.fetchOne(
-                db,
-                sql: "select etag, body, fetched_at from api_responses where key = ? and etag is not null",
-                arguments: [key]
-            ) else { return nil }
-            let etag: String = row["etag"]
-            let body: Data = row["body"]
-            let fetchedAt: Double = row["fetched_at"]
-            return PersistentHTTPResponse(
-                etag: etag,
-                data: body,
-                fetchedAt: Date(timeIntervalSinceReferenceDate: fetchedAt)
-            )
-        } as? PersistentHTTPResponse
+        do {
+            return try queue.read { db -> PersistentHTTPResponse? in
+                guard let row = try Row.fetchOne(
+                    db,
+                    sql: "select etag, body, fetched_at from api_responses where key = ? and etag is not null",
+                    arguments: [key]
+                ) else { return nil }
+                let etag: String = row["etag"]
+                let body: Data = row["body"]
+                let fetchedAt: Double = row["fetched_at"]
+                return PersistentHTTPResponse(
+                    etag: etag,
+                    data: body,
+                    fetchedAt: Date(timeIntervalSinceReferenceDate: fetchedAt)
+                )
+            }
+        } catch {
+            return nil
+        }
     }
 
     /// Cache a 200 response with its ETag so the next request can send

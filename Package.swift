@@ -12,7 +12,7 @@ let package = Package(
         .package(url: "https://github.com/AvdLee/appstoreconnect-swift-sdk.git",
                  .upToNextMajor(from: "4.0.0")),
         .package(url: "https://github.com/groue/GRDB.swift.git",
-                 .upToNextMajor(from: "6.29.0")),
+                 .upToNextMajor(from: "6.0.0")),
         .package(url: "https://github.com/apple/swift-argument-parser.git",
                  .upToNextMajor(from: "1.5.0"))
     ],
@@ -36,7 +36,8 @@ let package = Package(
                 "StackLightCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ],
-            path: "Sources/stacklightcli"
+            path: "Sources/stacklightcli",
+            exclude: ["README.md"]
         ),
         .testTarget(
             name: "StackLightTests",
