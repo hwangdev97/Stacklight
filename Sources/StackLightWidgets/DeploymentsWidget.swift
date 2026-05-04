@@ -1,4 +1,5 @@
 import WidgetKit
+import StackLightCore
 import SwiftUI
 
 struct DeploymentsWidget: Widget {

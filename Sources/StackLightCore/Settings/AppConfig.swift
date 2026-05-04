@@ -5,10 +5,10 @@ import Foundation
 /// processes see the same provider settings. On macOS the App Group isn't
 /// configured; we fall back to `.standard`, which preserves existing behavior
 /// for the menu-bar app.
-enum AppConfig {
-    static let appGroupSuite = SharedStore.suiteName
+public enum AppConfig {
+    public static let appGroupSuite = SharedStore.suiteName
 
-    static var defaults: UserDefaults {
+    public static var defaults: UserDefaults {
         #if os(iOS) || os(watchOS)
         return UserDefaults(suiteName: appGroupSuite) ?? .standard
         #else
@@ -19,7 +19,7 @@ enum AppConfig {
     /// One-shot UserDefaults rename. If `newKey` is empty (or missing) and
     /// `oldKey` has a value, copy it over and remove the old entry. Idempotent
     /// — safe to call from every provider `init()` on every app launch.
-    static func migrateSingleToMulti(oldKey: String, newKey: String) {
+    public static func migrateSingleToMulti(oldKey: String, newKey: String) {
         let existing = (defaults.string(forKey: newKey) ?? "").trimmingCharacters(in: .whitespaces)
         guard existing.isEmpty else { return }
         let legacy = (defaults.string(forKey: oldKey) ?? "").trimmingCharacters(in: .whitespaces)

@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 struct DeploymentDetailView: View {
     let deployment: Deployment

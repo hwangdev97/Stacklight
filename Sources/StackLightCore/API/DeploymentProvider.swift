@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-protocol DeploymentProvider: AnyObject {
+public protocol DeploymentProvider: AnyObject {
     /// Unique identifier, e.g. "vercel", "cloudflare"
     var id: String { get }
 
@@ -42,8 +42,8 @@ protocol DeploymentProvider: AnyObject {
 }
 
 extension DeploymentProvider {
-    var docsURL: URL? { nil }
-    var iconAsset: String? { nil }
-    var dashboardURL: URL? { nil }
-    var color: Color { .blue }
+    public var docsURL: URL? { nil }
+    public var iconAsset: String? { nil }
+    public var dashboardURL: URL? { nil }
+    public var color: Color { .blue }
 }

@@ -1,21 +1,23 @@
 import Foundation
 import SwiftUI
 
-final class CloudflareProvider: DeploymentProvider {
-    let id = "cloudflare"
-    let displayName = "Cloudflare Pages"
-    let iconSymbol = "cloud.fill"
-    let color = Color(red: 0.96, green: 0.50, blue: 0.13)
-    let docsURL = URL(string: "https://dash.cloudflare.com/profile/api-tokens")
+public final class CloudflareProvider: DeploymentProvider {
+    public let id = "cloudflare"
+    public let displayName = "Cloudflare Pages"
+    public let iconSymbol = "cloud.fill"
+    public let color = Color(red: 0.96, green: 0.50, blue: 0.13)
+    public let docsURL = URL(string: "https://dash.cloudflare.com/profile/api-tokens")
 
-    var dashboardURL: URL? {
+    public init() {}
+
+    public var dashboardURL: URL? {
         if let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId"), !accountId.isEmpty {
             return URL(string: "https://dash.cloudflare.com/\(accountId)/workers-and-pages")
         }
         return URL(string: "https://dash.cloudflare.com")
     }
 
-    var isConfigured: Bool {
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
               let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId") else {
             return false
@@ -23,7 +25,7 @@ final class CloudflareProvider: DeploymentProvider {
         return !token.isEmpty && !accountId.isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "cloudflare.token"),
               let accountId = AppConfig.defaults.string(forKey: "cloudflare.accountId") else {
             return .empty
@@ -49,7 +51,7 @@ final class CloudflareProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "cloudflare.token", label: "API Token", isSecret: true, placeholder: "Cloudflare API token"),
             SettingsField(key: "cloudflare.accountId", label: "Account ID", placeholder: "32-character hex string", hint: "Found in your dashboard URL: dash.cloudflare.com/<account-id>"),

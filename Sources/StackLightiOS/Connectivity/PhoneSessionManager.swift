@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 import WatchConnectivity
 
 /// iPhone-side `WCSession` owner. Mirrors `AppState`'s latest snapshot onto

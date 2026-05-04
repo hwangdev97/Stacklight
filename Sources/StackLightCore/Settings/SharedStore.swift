@@ -4,18 +4,18 @@ import Foundation
 /// via the `group.app.yellowplus.StackLight` App Group. The macOS target can
 /// also link this file; on macOS the App Group UserDefaults just falls back to
 /// an in-process suite and nothing reads from it, so it is a no-op.
-enum SharedStore {
-    static let suiteName = "group.app.yellowplus.StackLight"
-    static let snapshotKey = "deployments.snapshot.v1"
-    static let schemaVersion = 1
+public enum SharedStore {
+    public static let suiteName = "group.app.yellowplus.StackLight"
+    public static let snapshotKey = "deployments.snapshot.v1"
+    public static let schemaVersion = 1
 
-    struct Snapshot: Codable {
-        var deployments: [Deployment]
-        var writtenAt: Date
-        var activeBuild: Bool
-        var schemaVersion: Int
+    public struct Snapshot: Codable {
+        public var deployments: [Deployment]
+        public var writtenAt: Date
+        public var activeBuild: Bool
+        public var schemaVersion: Int
 
-        init(deployments: [Deployment], writtenAt: Date = Date()) {
+        public init(deployments: [Deployment], writtenAt: Date = Date()) {
             self.deployments = deployments
             self.writtenAt = writtenAt
             self.activeBuild = deployments.contains {
@@ -29,7 +29,7 @@ enum SharedStore {
         UserDefaults(suiteName: suiteName)
     }
 
-    static func write(_ snapshot: Snapshot) {
+    public static func write(_ snapshot: Snapshot) {
         guard let defaults else { return }
         do {
             let encoder = JSONEncoder()
@@ -41,11 +41,11 @@ enum SharedStore {
         }
     }
 
-    static func write(deployments: [Deployment]) {
+    public static func write(deployments: [Deployment]) {
         write(Snapshot(deployments: deployments))
     }
 
-    static func read() -> Snapshot? {
+    public static func read() -> Snapshot? {
         guard let defaults, let data = defaults.data(forKey: snapshotKey) else {
             return nil
         }
@@ -54,7 +54,7 @@ enum SharedStore {
         return try? decoder.decode(Snapshot.self, from: data)
     }
 
-    static func clear() {
+    public static func clear() {
         defaults?.removeObject(forKey: snapshotKey)
     }
 }

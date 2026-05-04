@@ -4,8 +4,8 @@ import Foundation
 /// shared deadline. Extracted from `PollingManager` so the iOS background
 /// refresh handler can reuse the exact same fetch logic under a tighter
 /// deadline (BGAppRefreshTask gives us roughly 30 seconds).
-enum DeploymentFetcher {
-    static func fetchAll(deadline: TimeInterval) async
+public enum DeploymentFetcher {
+    public static func fetchAll(deadline: TimeInterval) async
         -> (deployments: [Deployment], errors: [(String, Error)])
     {
         let providers = ServiceRegistry.shared.configuredProviders
@@ -70,7 +70,7 @@ extension DeploymentFetchResult {
     /// Fan out an async fetch over a list of items, collecting successes into
     /// `deployments` and per-item failures into `itemErrors`. A single bad
     /// item does not prevent the others from completing.
-    static func collecting<Item>(
+    public static func collecting<Item>(
         _ items: [Item],
         name: @escaping (Item) -> String,
         fetch: @escaping (Item) async throws -> [Deployment]

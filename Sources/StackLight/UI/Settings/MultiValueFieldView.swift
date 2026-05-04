@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 // MARK: - Multi-Value Field (add / remove tags)
 

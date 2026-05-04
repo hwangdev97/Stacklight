@@ -1,19 +1,19 @@
 import Foundation
 import SwiftUI
 
-final class RailwayProvider: DeploymentProvider {
-    let id = "railway"
-    let displayName = "Railway"
-    let iconSymbol = "train.side.front.car"
-    let iconAsset: String? = "railway"
-    let color = Color(red: 0.51, green: 0.47, blue: 0.98)
-    let docsURL = URL(string: "https://docs.railway.com/reference/public-api#creating-a-token")
+public final class RailwayProvider: DeploymentProvider {
+    public let id = "railway"
+    public let displayName = "Railway"
+    public let iconSymbol = "train.side.front.car"
+    public let iconAsset: String? = "railway"
+    public let color = Color(red: 0.51, green: 0.47, blue: 0.98)
+    public let docsURL = URL(string: "https://docs.railway.com/reference/public-api#creating-a-token")
 
-    init() {
+    public init() {
         AppConfig.migrateSingleToMulti(oldKey: "railway.projectId", newKey: "railway.projectIds")
     }
 
-    var dashboardURL: URL? {
+    public var dashboardURL: URL? {
         let ids = parsedProjectIds()
         if ids.count == 1 {
             return URL(string: "https://railway.com/project/\(ids[0])")
@@ -21,12 +21,12 @@ final class RailwayProvider: DeploymentProvider {
         return URL(string: "https://railway.com/dashboard")
     }
 
-    var isConfigured: Bool {
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "railway.token"), !token.isEmpty else { return false }
         return !parsedProjectIds().isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "railway.token") else { return .empty }
 
         let projectIds = parsedProjectIds()
@@ -37,7 +37,7 @@ final class RailwayProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "railway.token", label: "API Token", isSecret: true, placeholder: "Railway API token"),
             SettingsField(key: "railway.projectIds", label: "Project IDs",

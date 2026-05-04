@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// A small glass orb representing a deployment's status. Replaces the flat
 /// `Circle()` status dot used in the original `DeploymentRow`.

@@ -1,26 +1,28 @@
 import Foundation
 import SwiftUI
 
-final class GitHubPRProvider: DeploymentProvider {
-    let id = "githubPRs"
-    let displayName = "GitHub Pull Requests"
-    let iconSymbol = "arrow.triangle.pull"
-    let iconAsset: String? = "github"
-    let color = Color(red: 0.52, green: 0.28, blue: 0.85)
-    let docsURL = URL(string: "https://github.com/settings/tokens")
+public final class GitHubPRProvider: DeploymentProvider {
+    public let id = "githubPRs"
+    public let displayName = "GitHub Pull Requests"
+    public let iconSymbol = "arrow.triangle.pull"
+    public let iconAsset: String? = "github"
+    public let color = Color(red: 0.52, green: 0.28, blue: 0.85)
+    public let docsURL = URL(string: "https://github.com/settings/tokens")
 
-    var dashboardURL: URL? {
+    public init() {}
+
+    public var dashboardURL: URL? {
         // GitHub's aggregated PR inbox across all repos the user is involved in.
         URL(string: "https://github.com/pulls")
     }
 
-    var isConfigured: Bool {
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "github.token"), !token.isEmpty else { return false }
         let repos = AppConfig.defaults.string(forKey: "github.pr.repos") ?? ""
         return !repos.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "github.token") else { return .empty }
 
         let repos = (AppConfig.defaults.string(forKey: "github.pr.repos") ?? "")
@@ -35,7 +37,7 @@ final class GitHubPRProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "github.token", label: "Personal Access Token", isSecret: true, placeholder: "ghp_... (needs repo scope)"),
             SettingsField(key: "github.pr.repos", label: "Repositories", placeholder: "owner/repo", isMultiValue: true,

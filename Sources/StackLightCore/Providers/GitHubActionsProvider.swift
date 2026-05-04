@@ -1,15 +1,17 @@
 import Foundation
 import SwiftUI
 
-final class GitHubActionsProvider: DeploymentProvider {
-    let id = "githubActions"
-    let displayName = "GitHub Actions"
-    let iconSymbol = "gear.badge.checkmark"
-    let iconAsset: String? = "github"
-    let color = Color(red: 0.14, green: 0.16, blue: 0.19)
-    let docsURL = URL(string: "https://github.com/settings/tokens")
+public final class GitHubActionsProvider: DeploymentProvider {
+    public let id = "githubActions"
+    public let displayName = "GitHub Actions"
+    public let iconSymbol = "gear.badge.checkmark"
+    public let iconAsset: String? = "github"
+    public let color = Color(red: 0.14, green: 0.16, blue: 0.19)
+    public let docsURL = URL(string: "https://github.com/settings/tokens")
 
-    var dashboardURL: URL? {
+    public init() {}
+
+    public var dashboardURL: URL? {
         // If a single repo is configured, jump straight to its Actions tab;
         // otherwise open the user's global "recent activity" feed.
         let repos = (AppConfig.defaults.string(forKey: "github.repos") ?? "")
@@ -22,13 +24,13 @@ final class GitHubActionsProvider: DeploymentProvider {
         return URL(string: "https://github.com")
     }
 
-    var isConfigured: Bool {
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "github.token"), !token.isEmpty else { return false }
         let repos = AppConfig.defaults.string(forKey: "github.repos") ?? ""
         return !repos.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "github.token") else { return .empty }
 
         let repos = (AppConfig.defaults.string(forKey: "github.repos") ?? "")
@@ -43,7 +45,7 @@ final class GitHubActionsProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "github.token", label: "Personal Access Token", isSecret: true, placeholder: "ghp_... (needs repo scope)"),
             SettingsField(key: "github.repos", label: "Repositories", placeholder: "owner/repo", isMultiValue: true,

@@ -5,7 +5,7 @@ extension Deployment: Codable {
         case id, providerID, projectName, status, url, createdAt, commitMessage, branch
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let raw = try c.decode(String.self, forKey: .status)
         self.init(
@@ -20,7 +20,7 @@ extension Deployment: Codable {
         )
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id,                     forKey: .id)
         try c.encode(providerID,             forKey: .providerID)

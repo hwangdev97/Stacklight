@@ -1,4 +1,5 @@
 import AppIntents
+import StackLightCore
 
 /// One choice in the provider picker. The special "any" entity means
 /// "show deployments from every configured provider".

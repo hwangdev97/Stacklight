@@ -2,14 +2,14 @@ import Foundation
 
 // MARK: - Public Types
 
-enum FeedbackCategory: String, CaseIterable, Identifiable {
+public enum FeedbackCategory: String, CaseIterable, Identifiable {
     case bug
     case feature
     case question
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .bug:      return "Bug"
         case .feature:  return "Feature Request"
@@ -18,21 +18,27 @@ enum FeedbackCategory: String, CaseIterable, Identifiable {
     }
 
     /// GitHub label slug applied to the created issue.
-    var label: String { rawValue }
+    public var label: String { rawValue }
 }
 
-struct FeedbackPayload {
-    let title: String
-    let category: FeedbackCategory
-    let description: String
+public struct FeedbackPayload {
+    public let title: String
+    public let category: FeedbackCategory
+    public let description: String
+
+    public init(title: String, category: FeedbackCategory, description: String) {
+        self.title = title
+        self.category = category
+        self.description = description
+    }
 }
 
-enum FeedbackError: LocalizedError {
+public enum FeedbackError: LocalizedError {
     case missingToken
     case httpError(status: Int, message: String)
     case invalidResponse
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .missingToken:
             return "No GitHub token found. Set your GitHub Personal Access Token in Settings → GitHub Pull Requests."
@@ -46,12 +52,12 @@ enum FeedbackError: LocalizedError {
 
 // MARK: - Service
 
-enum FeedbackService {
+public enum FeedbackService {
     /// Hardcoded destination for user feedback issues.
-    static let repository = "hwangdev97/stacklight"
+    public static let repository = "hwangdev97/stacklight"
 
     /// Submits feedback as a GitHub issue. Returns the html_url of the new issue.
-    static func submit(_ payload: FeedbackPayload) async throws -> URL {
+    public static func submit(_ payload: FeedbackPayload) async throws -> URL {
         guard let token = KeychainManager.read(key: "github.token"),
               !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw FeedbackError.missingToken

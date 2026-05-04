@@ -1,4 +1,5 @@
 import WidgetKit
+import StackLightCore
 import Foundation
 
 /// Complication timeline provider. The Watch app doesn't talk to providers

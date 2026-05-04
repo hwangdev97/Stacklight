@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 struct HomeView: View {
     @EnvironmentObject var appState: AppState

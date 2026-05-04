@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// A provider's visual "signature" — the tint that drives its shader backdrop,
 /// the brighter accent used for the floating power/status chips, and the outer

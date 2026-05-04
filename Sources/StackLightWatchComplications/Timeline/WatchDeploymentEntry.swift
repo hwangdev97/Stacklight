@@ -1,4 +1,5 @@
 import WidgetKit
+import StackLightCore
 import Foundation
 
 struct WatchDeploymentEntry: TimelineEntry {

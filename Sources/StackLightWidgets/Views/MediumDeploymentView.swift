@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 import WidgetKit
 
 /// `.systemMedium` — top 3 deployments as compact rows.

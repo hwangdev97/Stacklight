@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// SwiftUI replacement for the former AppKit-based NSMenu. Hosted inside a
 /// `MenuBarExtra` with `.menuBarExtraStyle(.window)` so the entire panel is a

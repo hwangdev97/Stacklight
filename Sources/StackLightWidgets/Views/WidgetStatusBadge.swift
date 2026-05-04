@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Widget-safe replacement for the main app's `StatusOrb` — no Metal shader,
 /// just a tinted circle with an optional SF Symbol glyph.

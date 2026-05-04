@@ -4,19 +4,25 @@ import Foundation
 /// TestFlight providers don't trigger three separate Keychain reads on every
 /// poll. Invalidated explicitly from the Settings UI whenever the user saves
 /// or clears a credential field.
-enum ASCCredentialStore {
-    struct Credentials {
-        let issuerID: String
-        let keyID: String
+public enum ASCCredentialStore {
+    public struct Credentials {
+        public let issuerID: String
+        public let keyID: String
         /// Base64 key content with PEM header/footer and whitespace stripped,
         /// ready to hand to `APIConfiguration`.
-        let privateKey: String
+        public let privateKey: String
+
+        public init(issuerID: String, keyID: String, privateKey: String) {
+            self.issuerID = issuerID
+            self.keyID = keyID
+            self.privateKey = privateKey
+        }
     }
 
     private static let lock = NSLock()
     private static var cached: Credentials?
 
-    static func current() -> Credentials? {
+    public static func current() -> Credentials? {
         lock.lock()
         defer { lock.unlock() }
         if let cached {
@@ -38,7 +44,7 @@ enum ASCCredentialStore {
         return credentials
     }
 
-    static func invalidate() {
+    public static func invalidate() {
         lock.lock()
         cached = nil
         lock.unlock()

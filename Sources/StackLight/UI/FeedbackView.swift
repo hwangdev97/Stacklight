@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 struct FeedbackView: View {
     /// Optional callback the host can provide so we can switch the Settings sidebar

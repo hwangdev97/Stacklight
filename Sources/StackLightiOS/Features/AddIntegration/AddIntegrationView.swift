@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Modal picker for adding a new integration. Redesigned as a 2-column grid
 /// of glass tiles, each showing a live shader preview of the provider's

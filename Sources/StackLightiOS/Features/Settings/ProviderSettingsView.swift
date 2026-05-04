@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 struct ProviderSettingsView: View {
     let provider: DeploymentProvider

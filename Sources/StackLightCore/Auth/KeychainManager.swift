@@ -1,19 +1,19 @@
 import Foundation
 import Security
 
-enum KeychainError: Error {
+public enum KeychainError: Error {
     case saveFailed(OSStatus)
     case readFailed(OSStatus)
     case deleteFailed(OSStatus)
 }
 
-enum KeychainManager {
+public enum KeychainManager {
     private static let service = "app.yellowplus.StackLight"
 
     /// Optional keychain access group. When non-nil, all queries include
     /// `kSecAttrAccessGroup` so the host app and extensions can share items.
     /// macOS leaves this nil and keeps its current per-app scope.
-    static var accessGroup: String?
+    public static var accessGroup: String?
 
     private static func baseQuery(key: String) -> [String: Any] {
         var query: [String: Any] = [
@@ -28,7 +28,7 @@ enum KeychainManager {
         return query
     }
 
-    static func save(key: String, value: String) throws {
+    public static func save(key: String, value: String) throws {
         let data = Data(value.utf8)
 
         // Delete existing item first (query without value data)
@@ -45,7 +45,7 @@ enum KeychainManager {
         }
     }
 
-    static func read(key: String) -> String? {
+    public static func read(key: String) -> String? {
         var query = baseQuery(key: key)
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         query[kSecReturnData as String] = true
@@ -58,7 +58,7 @@ enum KeychainManager {
         return String(data: data, encoding: .utf8)
     }
 
-    static func delete(key: String) {
+    public static func delete(key: String) {
         SecItemDelete(baseQuery(key: key) as CFDictionary)
     }
 }

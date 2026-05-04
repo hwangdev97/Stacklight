@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 // MARK: - Provider Detail (System Settings style)
 

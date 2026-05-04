@@ -6,22 +6,22 @@ import Foundation
 /// runs all diff against the same source of truth — a status change shown in
 /// the foreground will not be re-announced when iOS wakes the app in the
 /// background, and vice versa.
-enum NotifiedStateStore {
-    static let key = "deployments.notifiedStates.v1"
+public enum NotifiedStateStore {
+    public static let key = "deployments.notifiedStates.v1"
 
     private static var defaults: UserDefaults? {
         UserDefaults(suiteName: SharedStore.suiteName)
     }
 
-    static func read() -> [String: String] {
+    public static func read() -> [String: String] {
         (defaults?.dictionary(forKey: key) as? [String: String]) ?? [:]
     }
 
-    static func write(_ states: [String: String]) {
+    public static func write(_ states: [String: String]) {
         defaults?.set(states, forKey: key)
     }
 
-    static func key(for deployment: Deployment) -> String {
+    public static func key(for deployment: Deployment) -> String {
         "\(deployment.providerID):\(deployment.id)"
     }
 }

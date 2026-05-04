@@ -12,6 +12,8 @@ packages:
   AppStoreConnect-Swift-SDK:
     url: https://github.com/AvdLee/appstoreconnect-swift-sdk.git
     majorVersion: 4.0.0
+  StackLightCore:
+    path: .
 
 targets:
   StackLight:
@@ -51,13 +53,14 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - package: AppStoreConnect-Swift-SDK
+      - package: StackLightCore
+        product: StackLightCore
 
   StackLightiOS:
     type: application
     platform: iOS
     sources:
       - path: Sources/StackLight/Core
-      - path: Sources/StackLight/Providers
       - path: Sources/StackLight/Assets.xcassets
       - path: Sources/StackLight/AppIcon.icon
       - path: Sources/StackLightiOS
@@ -113,6 +116,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - package: AppStoreConnect-Swift-SDK
+      - package: StackLightCore
+        product: StackLightCore
       - target: StackLightWidgets
         embed: true
         codeSign: true
@@ -124,11 +129,6 @@ targets:
     type: application
     platform: watchOS
     sources:
-      - path: Sources/StackLight/Core/Deployment.swift
-      - path: Sources/StackLight/Core/Deployment+Codable.swift
-      - path: Sources/StackLight/Core/SharedStore.swift
-      - path: Sources/StackLight/Core/AppConfig.swift
-      - path: Sources/StackLight/Core/WidgetRefresh.swift
       - path: Sources/StackLight/AppIcon.icon
       - path: Sources/StackLightWidgets/Views/WidgetStatusBadge.swift
       - path: Sources/StackLightWatch
@@ -161,6 +161,8 @@ targets:
         WATCHOS_DEPLOYMENT_TARGET: "10.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
+      - package: StackLightCore
+        product: StackLightCore
       - target: StackLightWatchComplications
         embed: true
         codeSign: true
@@ -169,10 +171,6 @@ targets:
     type: app-extension
     platform: watchOS
     sources:
-      - path: Sources/StackLight/Core/Deployment.swift
-      - path: Sources/StackLight/Core/Deployment+Codable.swift
-      - path: Sources/StackLight/Core/SharedStore.swift
-      - path: Sources/StackLight/Core/AppConfig.swift
       - path: Sources/StackLightWidgets/Views/WidgetStatusBadge.swift
       - path: Sources/StackLightWatchComplications
         excludes:
@@ -197,13 +195,14 @@ targets:
         TARGETED_DEVICE_FAMILY: "4"
         WATCHOS_DEPLOYMENT_TARGET: "10.0"
         SKIP_INSTALL: YES
+    dependencies:
+      - package: StackLightCore
+        product: StackLightCore
 
   StackLightWidgets:
     type: app-extension
     platform: iOS
     sources:
-      - path: Sources/StackLight/Core
-      - path: Sources/StackLight/Providers
       - path: Sources/StackLightWidgets
         excludes:
           - "Resources/Info.plist"
@@ -229,6 +228,8 @@ targets:
         SKIP_INSTALL: YES
     dependencies:
       - package: AppStoreConnect-Swift-SDK
+      - package: StackLightCore
+        product: StackLightCore
 
   StackLightTests:
     type: bundle.unit-test
@@ -237,6 +238,8 @@ targets:
       - path: Tests/StackLightTests
     dependencies:
       - target: StackLight
+      - package: StackLightCore
+        product: StackLightCore
     settings:
       base:
         SWIFT_VERSION: "5.9"

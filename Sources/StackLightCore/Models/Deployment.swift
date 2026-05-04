@@ -1,20 +1,20 @@
 import Foundation
 
-struct Deployment: Identifiable {
-    let id: String
-    let providerID: String
-    let projectName: String
+public struct Deployment: Identifiable {
+    public let id: String
+    public let providerID: String
+    public let projectName: String
     /// Optional repository identifier shown alongside the project name.
     /// Used by GitHub Actions to disambiguate which configured repo a row
     /// belongs to when multiple repos are being watched.
-    let repository: String?
-    let status: Status
-    let url: URL?
-    let createdAt: Date
-    let commitMessage: String?
-    let branch: String?
+    public let repository: String?
+    public let status: Status
+    public let url: URL?
+    public let createdAt: Date
+    public let commitMessage: String?
+    public let branch: String?
 
-    init(
+    public init(
         id: String,
         providerID: String,
         projectName: String,
@@ -36,7 +36,7 @@ struct Deployment: Identifiable {
         self.branch = branch
     }
 
-    enum Status: String {
+    public enum Status: String {
         case building
         case success
         case failed
@@ -45,7 +45,7 @@ struct Deployment: Identifiable {
         case reviewing // TestFlight review
         case unknown
 
-        var emoji: String {
+        public var emoji: String {
             switch self {
             case .building:  return "◐"
             case .success:   return "●"
@@ -57,7 +57,7 @@ struct Deployment: Identifiable {
             }
         }
 
-        var displayName: String {
+        public var displayName: String {
             switch self {
             case .building:  return "Building"
             case .success:   return "Ready"
@@ -72,7 +72,7 @@ struct Deployment: Identifiable {
 }
 
 extension Deployment {
-    var relativeTime: String {
+    public var relativeTime: String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: createdAt, relativeTo: Date())
@@ -82,16 +82,16 @@ extension Deployment {
 /// Per-fetch result for a single provider. `deployments` holds everything that
 /// was fetched successfully; `itemErrors` collects per-entry failures so one
 /// bad repo/site/app ID doesn't poison the whole batch.
-struct DeploymentFetchResult {
-    let deployments: [Deployment]
+public struct DeploymentFetchResult {
+    public let deployments: [Deployment]
     /// Ordered list of `(entry-identifier, error)`. The identifier is whatever
     /// the provider shows the user for that entry — e.g. `"owner/repo"` for
     /// GitHub, `"12345"` for a TestFlight App ID.
-    let itemErrors: [(item: String, error: Error)]
+    public let itemErrors: [(item: String, error: Error)]
 
-    static let empty = DeploymentFetchResult(deployments: [], itemErrors: [])
+    public static let empty = DeploymentFetchResult(deployments: [], itemErrors: [])
 
-    init(deployments: [Deployment], itemErrors: [(item: String, error: Error)] = []) {
+    public init(deployments: [Deployment], itemErrors: [(item: String, error: Error)] = []) {
         self.deployments = deployments
         self.itemErrors = itemErrors
     }

@@ -1,27 +1,27 @@
 import Foundation
 
-final class ServiceRegistry {
-    static let shared = ServiceRegistry()
+public final class ServiceRegistry {
+    public static let shared = ServiceRegistry()
 
-    private(set) var providers: [DeploymentProvider] = []
+    public private(set) var providers: [DeploymentProvider] = []
 
     private init() {
         registerBuiltInProviders()
     }
 
-    func register(_ provider: DeploymentProvider) {
+    public func register(_ provider: DeploymentProvider) {
         providers.append(provider)
     }
 
-    var configuredProviders: [DeploymentProvider] {
+    public var configuredProviders: [DeploymentProvider] {
         providers.filter { $0.isConfigured }
     }
 
-    func provider(withID id: String) -> DeploymentProvider? {
+    public func provider(withID id: String) -> DeploymentProvider? {
         providers.first { $0.id == id }
     }
 
-    func registerBuiltInProviders() {
+    public func registerBuiltInProviders() {
         guard providers.isEmpty else { return }
         register(VercelProvider())
         register(CloudflareProvider())

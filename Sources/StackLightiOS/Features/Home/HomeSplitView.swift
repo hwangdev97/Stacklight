@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// iPad-only (regular width) home shell. Two-column `NavigationSplitView`:
 /// sidebar = provider filter + setup actions; detail = deployment grid.

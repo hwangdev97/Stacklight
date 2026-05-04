@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 struct DeploymentListView: View {
     @EnvironmentObject private var appState: WatchAppState

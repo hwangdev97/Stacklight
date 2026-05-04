@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 import WidgetKit
 
 /// Timeline entry rendered by every `DeploymentsWidget` family.

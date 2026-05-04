@@ -1,5 +1,6 @@
 import XCTest
 @testable import StackLight
+import StackLightCore
 import AppStoreConnect_Swift_SDK
 
 /// Live integration tests for Xcode Cloud API.

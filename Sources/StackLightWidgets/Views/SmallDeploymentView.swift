@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 import WidgetKit
 
 /// `.systemSmall` — one deployment, hero treatment.

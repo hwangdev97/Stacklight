@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Detail pane of `HomeSplitView`. Renders the deployment list as a 2–3 column
 /// adaptive grid so wide iPad screens aren't wasted on a single column.

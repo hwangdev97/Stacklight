@@ -1,13 +1,13 @@
 import Foundation
 import SwiftUI
 
-final class VercelProvider: DeploymentProvider {
-    let id = "vercel"
-    let displayName = "Vercel"
-    let iconSymbol = "triangleshape.fill"
-    let iconAsset: String? = "vercel"
-    let color = Color.black
-    let docsURL = URL(string: "https://vercel.com/account/tokens")
+public final class VercelProvider: DeploymentProvider {
+    public let id = "vercel"
+    public let displayName = "Vercel"
+    public let iconSymbol = "triangleshape.fill"
+    public let iconAsset: String? = "vercel"
+    public let color = Color.black
+    public let docsURL = URL(string: "https://vercel.com/account/tokens")
 
     /// UserDefaults keys for filter config.
     static let branchFilterKey = "vercel.branchFilter"
@@ -17,19 +17,21 @@ final class VercelProvider: DeploymentProvider {
     /// Sentinel stored in `branchFilterKey` meaning "no filter".
     static let allBranchesSentinel = ""
 
-    var dashboardURL: URL? {
+    public init() {}
+
+    public var dashboardURL: URL? {
         if let teamId = AppConfig.defaults.string(forKey: "vercel.teamId"), !teamId.isEmpty {
             return URL(string: "https://vercel.com/\(teamId)")
         }
         return URL(string: "https://vercel.com/dashboard")
     }
 
-    var isConfigured: Bool {
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "vercel.token") else { return false }
         return !token.isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "vercel.token") else { return .empty }
 
         let projectNames = (AppConfig.defaults.string(forKey: "vercel.projectNames") ?? "")
@@ -96,7 +98,7 @@ final class VercelProvider: DeploymentProvider {
         return DeploymentFetchResult(deployments: Array(filtered))
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "vercel.token", label: "API Token", isSecret: true,
                           placeholder: "Bearer token from Vercel dashboard"),

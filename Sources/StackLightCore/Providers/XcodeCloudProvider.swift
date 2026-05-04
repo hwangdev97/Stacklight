@@ -2,23 +2,25 @@ import Foundation
 import SwiftUI
 import AppStoreConnect_Swift_SDK
 
-final class XcodeCloudProvider: DeploymentProvider {
-    let id = "xcodeCloud"
-    let displayName = "Xcode Cloud"
-    let iconSymbol = "hammer.fill"
-    let iconAsset: String? = "xcode"
-    let color = Color(red: 0.10, green: 0.46, blue: 0.98)
-    let docsURL = URL(string: "https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api")
+public final class XcodeCloudProvider: DeploymentProvider {
+    public let id = "xcodeCloud"
+    public let displayName = "Xcode Cloud"
+    public let iconSymbol = "hammer.fill"
+    public let iconAsset: String? = "xcode"
+    public let color = Color(red: 0.10, green: 0.46, blue: 0.98)
+    public let docsURL = URL(string: "https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api")
 
     // App Store Connect doesn't have a stable per-team dashboard URL without
     // the team ID; land on the apps list which is where Xcode Cloud lives.
-    let dashboardURL = URL(string: "https://appstoreconnect.apple.com/apps")
+    public let dashboardURL: URL? = URL(string: "https://appstoreconnect.apple.com/apps")
 
-    var isConfigured: Bool {
+    public init() {}
+
+    public var isConfigured: Bool {
         ASCCredentialStore.current() != nil
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         let provider = try makeProvider()
 
         let productsRequest = APIEndpoint.v1.ciProducts.get(parameters: .init(limit: 25))
@@ -60,7 +62,7 @@ final class XcodeCloudProvider: DeploymentProvider {
         return DeploymentFetchResult(deployments: deployments, itemErrors: itemErrors)
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "asc.issuerID", label: "Issuer ID", isSecret: true, placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
                           hint: "Users and Access → Integrations → App Store Connect API → Issuer ID (top of page)"),

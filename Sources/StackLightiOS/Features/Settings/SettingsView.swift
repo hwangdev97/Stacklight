@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState

@@ -1,7 +1,7 @@
 import Foundation
 
-struct SettingsField: Identifiable {
-    enum Kind {
+public struct SettingsField: Identifiable {
+    public enum Kind {
         case text
         case toggle
         /// Dropdown whose options include "All", "main", any branches cached at
@@ -9,17 +9,17 @@ struct SettingsField: Identifiable {
         case branchPicker(branchesKey: String)
     }
 
-    let key: String
-    let label: String
-    let isSecret: Bool
-    let placeholder: String
-    let isMultiValue: Bool
-    let hint: String?
-    let kind: Kind
+    public let key: String
+    public let label: String
+    public let isSecret: Bool
+    public let placeholder: String
+    public let isMultiValue: Bool
+    public let hint: String?
+    public let kind: Kind
 
-    var id: String { key }
+    public var id: String { key }
 
-    init(
+    public init(
         key: String,
         label: String,
         isSecret: Bool = false,
@@ -39,17 +39,17 @@ struct SettingsField: Identifiable {
 }
 
 extension SettingsField {
-    var isToggle: Bool {
+    public var isToggle: Bool {
         if case .toggle = kind { return true }
         return false
     }
 
-    var isBranchPicker: Bool {
+    public var isBranchPicker: Bool {
         if case .branchPicker = kind { return true }
         return false
     }
 
-    var isPlainText: Bool {
+    public var isPlainText: Bool {
         if case .text = kind { return true }
         return false
     }

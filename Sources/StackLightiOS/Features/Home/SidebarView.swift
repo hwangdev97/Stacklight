@@ -1,4 +1,5 @@
 import SwiftUI
+import StackLightCore
 
 /// Sidebar used by `HomeSplitView` on iPad. Acts as the provider filter
 /// (replacing the horizontal pill rail from the compact layout) plus the

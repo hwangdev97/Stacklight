@@ -2,18 +2,18 @@ import Foundation
 import SwiftUI
 import AppStoreConnect_Swift_SDK
 
-final class TestFlightProvider: DeploymentProvider {
-    let id = "testFlight"
-    let displayName = "TestFlight"
-    let iconSymbol = "airplane"
-    let color = Color(red: 0.25, green: 0.65, blue: 0.96)
-    let docsURL = URL(string: "https://appstoreconnect.apple.com/apps")
+public final class TestFlightProvider: DeploymentProvider {
+    public let id = "testFlight"
+    public let displayName = "TestFlight"
+    public let iconSymbol = "airplane"
+    public let color = Color(red: 0.25, green: 0.65, blue: 0.96)
+    public let docsURL = URL(string: "https://appstoreconnect.apple.com/apps")
 
-    init() {
+    public init() {
         AppConfig.migrateSingleToMulti(oldKey: "testflight.appId", newKey: "testflight.appIds")
     }
 
-    var dashboardURL: URL? {
+    public var dashboardURL: URL? {
         let ids = parsedAppIds()
         if ids.count == 1 {
             return URL(string: "https://appstoreconnect.apple.com/apps/\(ids[0])/testflight/ios")
@@ -21,12 +21,12 @@ final class TestFlightProvider: DeploymentProvider {
         return URL(string: "https://appstoreconnect.apple.com/apps")
     }
 
-    var isConfigured: Bool {
+    public var isConfigured: Bool {
         guard ASCCredentialStore.current() != nil else { return false }
         return !parsedAppIds().isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         let appIds = parsedAppIds()
         guard !appIds.isEmpty else { return .empty }
 
@@ -42,7 +42,7 @@ final class TestFlightProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(
                 key: "testflight.appIds",

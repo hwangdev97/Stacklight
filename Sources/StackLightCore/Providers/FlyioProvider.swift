@@ -1,23 +1,25 @@
 import Foundation
 import SwiftUI
 
-final class FlyioProvider: DeploymentProvider {
-    let id = "flyio"
-    let displayName = "Fly.io"
-    let iconSymbol = "paperplane.fill"
-    let iconAsset: String? = "flydotio"
-    let color = Color(red: 0.57, green: 0.29, blue: 0.93)
-    let docsURL = URL(string: "https://fly.io/docs/flyctl/tokens-create/")
+public final class FlyioProvider: DeploymentProvider {
+    public let id = "flyio"
+    public let displayName = "Fly.io"
+    public let iconSymbol = "paperplane.fill"
+    public let iconAsset: String? = "flydotio"
+    public let color = Color(red: 0.57, green: 0.29, blue: 0.93)
+    public let docsURL = URL(string: "https://fly.io/docs/flyctl/tokens-create/")
 
-    let dashboardURL = URL(string: "https://fly.io/dashboard")
+    public let dashboardURL: URL? = URL(string: "https://fly.io/dashboard")
 
-    var isConfigured: Bool {
+    public init() {}
+
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "flyio.token"), !token.isEmpty else { return false }
         let apps = AppConfig.defaults.string(forKey: "flyio.apps") ?? ""
         return !apps.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "flyio.token") else { return .empty }
 
         let apps = (AppConfig.defaults.string(forKey: "flyio.apps") ?? "")
@@ -32,7 +34,7 @@ final class FlyioProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "flyio.token", label: "API Token", isSecret: true, placeholder: "Fly.io API token (fly tokens create)"),
             SettingsField(key: "flyio.apps", label: "App Names", placeholder: "Comma-separated: my-app, my-api")

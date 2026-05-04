@@ -1,23 +1,25 @@
 import Foundation
 import SwiftUI
 
-final class NetlifyProvider: DeploymentProvider {
-    let id = "netlify"
-    let displayName = "Netlify"
-    let iconSymbol = "network"
-    let iconAsset: String? = "netlify"
-    let color = Color(red: 0.00, green: 0.78, blue: 0.72)
-    let docsURL = URL(string: "https://app.netlify.com/user/applications#personal-access-tokens")
+public final class NetlifyProvider: DeploymentProvider {
+    public let id = "netlify"
+    public let displayName = "Netlify"
+    public let iconSymbol = "network"
+    public let iconAsset: String? = "netlify"
+    public let color = Color(red: 0.00, green: 0.78, blue: 0.72)
+    public let docsURL = URL(string: "https://app.netlify.com/user/applications#personal-access-tokens")
 
-    let dashboardURL = URL(string: "https://app.netlify.com")
+    public let dashboardURL: URL? = URL(string: "https://app.netlify.com")
 
-    var isConfigured: Bool {
+    public init() {}
+
+    public var isConfigured: Bool {
         guard let token = KeychainManager.read(key: "netlify.token"), !token.isEmpty else { return false }
         let siteIds = AppConfig.defaults.string(forKey: "netlify.siteIds") ?? ""
         return !siteIds.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func fetchDeployments() async throws -> DeploymentFetchResult {
+    public func fetchDeployments() async throws -> DeploymentFetchResult {
         guard let token = KeychainManager.read(key: "netlify.token") else { return .empty }
 
         let siteIds = (AppConfig.defaults.string(forKey: "netlify.siteIds") ?? "")
@@ -32,7 +34,7 @@ final class NetlifyProvider: DeploymentProvider {
         }
     }
 
-    func settingsFields() -> [SettingsField] {
+    public func settingsFields() -> [SettingsField] {
         [
             SettingsField(key: "netlify.token", label: "Personal Access Token", isSecret: true, placeholder: "PAT from Netlify dashboard"),
             SettingsField(key: "netlify.siteIds", label: "Site IDs", placeholder: "Comma-separated site IDs or names")
