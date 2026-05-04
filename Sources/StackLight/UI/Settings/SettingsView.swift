@@ -6,6 +6,7 @@ import StackLightCore
 enum SettingsItem: Hashable {
     case provider(String)
     case general
+    case projects
     case advanced
     case feedback
 }
@@ -24,6 +25,8 @@ struct SettingsView: View {
                 Section {
                     sidebarRow(title: "General", systemImage: "gear", color: .gray, size: 22)
                         .tag(SettingsItem.general)
+                    sidebarRow(title: "Projects", systemImage: "rectangle.stack", color: .gray, size: 22)
+                        .tag(SettingsItem.projects)
                 }
 
                 Section("Services") {
@@ -52,6 +55,8 @@ struct SettingsView: View {
                 }
             case .general:
                 GeneralSettingsDetail()
+            case .projects:
+                ProjectsSettingsDetail()
             case .advanced:
                 AdvancedSettingsDetail()
             case .feedback:
