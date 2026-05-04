@@ -43,7 +43,7 @@ final class FileLogHandler {
         guard let data = line.data(using: .utf8) else { return }
         if let handle = try? FileHandle(forWritingTo: activeURL) {
             defer { try? handle.close() }
-            try? handle.seekToEnd()
+            _ = try? handle.seekToEnd()
             try? handle.write(contentsOf: data)
         } else {
             // File doesn't exist yet — create it.

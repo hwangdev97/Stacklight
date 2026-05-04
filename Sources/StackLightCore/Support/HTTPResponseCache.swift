@@ -86,7 +86,7 @@ public final class HTTPResponseCache: @unchecked Sendable {
     private let path: String
     private let clock: @Sendable () -> Date
 
-    public init(path: String, clock: @escaping @Sendable () -> Date = Date.init) throws {
+    public init(path: String, clock: @escaping @Sendable () -> Date = { Date() }) throws {
         try FileManager.default.createDirectory(
             at: URL(fileURLWithPath: path).deletingLastPathComponent(),
             withIntermediateDirectories: true
@@ -207,6 +207,8 @@ public final class HTTPResponseCache: @unchecked Sendable {
     }
 
     public func rateLimitUntil(resource: String = "core", now: Date = Date()) -> Date? {
+        // Swift 5+ flattens `try? funcReturningOptional` to a single Optional,
+        // so `reset` here is `Double?`, not `Double??`.
         let reset = try? queue.read { db -> Double? in
             try Double.fetchOne(
                 db,
@@ -214,13 +216,13 @@ public final class HTTPResponseCache: @unchecked Sendable {
                 arguments: [resource]
             )
         }
-        guard let value = reset, let reset = value else { return nil }
-        let date = Date(timeIntervalSinceReferenceDate: reset)
+        guard let resetValue = reset else { return nil }
+        let date = Date(timeIntervalSinceReferenceDate: resetValue)
         if date <= now {
             try? queue.write { db in
                 try db.execute(
                     sql: "delete from rate_limits where resource = ? and reset_at = ?",
-                    arguments: [resource, reset]
+                    arguments: [resource, resetValue]
                 )
             }
             return nil

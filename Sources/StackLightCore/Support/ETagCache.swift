@@ -4,7 +4,7 @@ import Foundation
 /// entries so the menu first-paint reads from RAM, with the SQLite store as a
 /// fallback after process restart.
 public actor ETagCache {
-    private static let defaultMaxEntries = 512
+    public static let defaultMaxEntries = 512
 
     private let maxEntries: Int
     private let persistentStore: HTTPResponseCache?
