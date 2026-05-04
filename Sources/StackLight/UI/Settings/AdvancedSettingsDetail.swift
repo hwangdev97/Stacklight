@@ -93,11 +93,39 @@ struct AdvancedSettingsDetail: View {
             }
 
             Section("Cache") {
+                if let stats = cacheStats {
+                    HStack {
+                        Text("API responses cached")
+                        Spacer()
+                        Text("\(stats.apiResponseCount)")
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                    HStack {
+                        Text("Tracked rate limits")
+                        Spacer()
+                        Text("\(stats.rateLimitCount)")
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                    HStack {
+                        Text("Cache file")
+                        Spacer()
+                        Text(stats.databasePath.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
                 Button("Clear HTTP Cache") {
                     Task {
                         await RequestRunner.shared.clear()
-                        // P4.x: also clears persistent SQLite cache once that lands.
-                        await MainActor.run { lastCleared = Date() }
+                        _ = try? PersistentCache.clear()
+                        await MainActor.run {
+                            lastCleared = Date()
+                            refreshCacheStats()
+                        }
                     }
                 }
                 if let lastCleared {
@@ -108,6 +136,13 @@ struct AdvancedSettingsDetail: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear { refreshCacheStats() }
+    }
+
+    @State private var cacheStats: StackLightCacheSummary?
+
+    private func refreshCacheStats() {
+        cacheStats = try? PersistentCache.summary(limit: 0)
     }
 
     private func openLogsFolder() {

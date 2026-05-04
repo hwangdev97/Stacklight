@@ -15,34 +15,61 @@ public actor RequestRunner {
     public static let shared = RequestRunner()
 
     private let backoff: BackoffTracker
+    private let etagCache: ETagCache
     private var lastRateLimitReset: Date?
     private var rateLimitedHostsUntil: [String: Date] = [:]
+    private var cacheHitCount = 0
+    private var requestCount = 0
 
-    public init(backoff: BackoffTracker = BackoffTracker()) {
+    public init(
+        backoff: BackoffTracker = BackoffTracker(),
+        etagCache: ETagCache = ETagCache.persistent()
+    ) {
         self.backoff = backoff
+        self.etagCache = etagCache
     }
 
     // MARK: - High-level helpers
 
-    /// Convenience GET. Throws `ProviderError.http` for non-success status,
-    /// `ProviderError.rateLimited` / `serviceUnavailable` for 429 / 503,
-    /// `ProviderError.unauthorized` for 401.
+    /// Convenience GET with optional ETag-based conditional caching. Throws
+    /// `ProviderError.http` for non-success status, `ProviderError.rateLimited`
+    /// / `serviceUnavailable` for 429 / 503, `ProviderError.unauthorized` for
+    /// 401. When `useETag` is true (default) and the cache holds a prior ETag,
+    /// the request includes `If-None-Match`; on 304 the cached body is
+    /// returned and counts toward the cache-hit metric.
     public func get(
         url: URL,
         token: String? = nil,
         headers: [String: String] = [:],
-        allowedStatuses: Set<Int> = [200]
+        allowedStatuses: Set<Int> = [200],
+        useETag: Bool = true
     ) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
 
+        if useETag, let cached = await etagCache.cached(for: url) {
+            request.setValue(cached.etag, forHTTPHeaderField: "If-None-Match")
+        }
+
         let (data, response) = try await execute(request: request)
         let status = response.statusCode
 
+        if status == 304, useETag, let cached = await etagCache.cached(for: url) {
+            cacheHitCount += 1
+            await DiagnosticsLogger.shared.message(
+                "ETAG-HIT \(url.host ?? "?")\(url.path) (saved \(data.count) bytes)"
+            )
+            return (cached.data, response)
+        }
+
         if !allowedStatuses.contains(status) {
             throw mapStatus(status, response: response, body: data)
+        }
+
+        if useETag, let etag = response.value(forHTTPHeaderField: "ETag") {
+            await etagCache.save(url: url, etag: etag, data: data, response: response)
         }
         return (data, response)
     }
@@ -54,6 +81,7 @@ public actor RequestRunner {
     public func execute(request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         guard let url = request.url else { throw ProviderError.invalidResponse }
         let startedAt = Date()
+        requestCount += 1
 
         if let cooldownUntil = await backoff.cooldown(for: url) {
             await DiagnosticsLogger.shared.message(
@@ -120,10 +148,19 @@ public actor RequestRunner {
         await backoff.snapshot()
     }
 
+    /// `(requests, cache-hits)` counters since process start. Reset only
+    /// when `clear()` is called.
+    public func metrics() -> (requests: Int, cacheHits: Int) {
+        (requestCount, cacheHitCount)
+    }
+
     public func clear() async {
         await backoff.clear()
+        await etagCache.clear()
         lastRateLimitReset = nil
         rateLimitedHostsUntil.removeAll()
+        cacheHitCount = 0
+        requestCount = 0
     }
 
     // MARK: - Status mapping
