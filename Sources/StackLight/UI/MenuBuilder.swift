@@ -165,7 +165,9 @@ struct MenuBarContentView: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let lastRefresh {
-                Text("Updated \(relativeTime(from: lastRefresh))")
+                let configuredCount = providers.count
+                let okCount = max(0, configuredCount - errors.count)
+                Text("Updated \(relativeTime(from: lastRefresh)) · \(okCount)/\(configuredCount) ok")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 12)

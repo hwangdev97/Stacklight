@@ -57,16 +57,16 @@ public final class GitHubActionsProvider: DeploymentProvider {
         var components = URLComponents(string: "https://api.github.com/repos/\(repo)/actions/runs")!
         components.queryItems = [URLQueryItem(name: "per_page", value: "10")]
 
-        var request = URLRequest(url: components.url!)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-
-        let (data, httpResponse) = try await URLSession.shared.data(for: request)
-        if let http = httpResponse as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+        let (data, http) = try await RequestRunner.shared.execute(request: {
+            var request = URLRequest(url: components.url!)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            return request
+        }())
+        if !(200...299).contains(http.statusCode) {
             let message = (try? JSONDecoder().decode(GitHubErrorResponse.self, from: data))?.message
-                ?? "HTTP \(http.statusCode)"
-            throw NSError(domain: "GitHubActions", code: http.statusCode,
-                          userInfo: [NSLocalizedDescriptionKey: message])
+                ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+            throw ProviderError.http(code: http.statusCode, message: message, body: data)
         }
         let response = try JSONDecoder.githubDecoder.decode(GHWorkflowRunsResponse.self, from: data)
         return response.workflow_runs.map { $0.toDeployment(repo: repo) }

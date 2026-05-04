@@ -49,18 +49,22 @@ public final class VercelProvider: DeploymentProvider {
             components.queryItems?.append(URLQueryItem(name: "teamId", value: teamId))
         }
 
+        // execute() lets us read service-specific error bodies before throwing;
+        // RequestRunner still applies backoff + 429/503 cooldowns.
         var request = URLRequest(url: components.url!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, httpResponse) = try await URLSession.shared.data(for: request)
+        let (data, http) = try await RequestRunner.shared.execute(request: request)
 
-        if let http = httpResponse as? HTTPURLResponse, http.statusCode != 200 {
+        if http.statusCode != 200 {
             if let err = try? JSONDecoder().decode(VercelErrorResponse.self, from: data) {
-                throw NSError(domain: "Vercel", code: http.statusCode,
-                              userInfo: [NSLocalizedDescriptionKey: err.error.message])
+                throw ProviderError.http(code: http.statusCode, message: err.error.message, body: data)
             }
-            throw NSError(domain: "Vercel", code: http.statusCode,
-                          userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])
+            throw ProviderError.http(
+                code: http.statusCode,
+                message: HTTPURLResponse.localizedString(forStatusCode: http.statusCode),
+                body: data
+            )
         }
 
         let response = try JSONDecoder().decode(VercelResponse.self, from: data)

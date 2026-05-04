@@ -65,10 +65,10 @@ public final class GitHubPRProvider: DeploymentProvider {
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
 
-        let (data, httpResponse) = try await URLSession.shared.data(for: request)
-        if let http = httpResponse as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+        let (data, http) = try await RequestRunner.shared.execute(request: request)
+        if !(200...299).contains(http.statusCode) {
             let message = (try? JSONDecoder().decode(GitHubErrorResponse.self, from: data))?.message
-                ?? "HTTP \(http.statusCode)"
+                ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
             throw GitHubPRRequestError(statusCode: http.statusCode, apiMessage: message)
         }
         let prs = try JSONDecoder.ghPRDecoder.decode([GHPullRequest].self, from: data)

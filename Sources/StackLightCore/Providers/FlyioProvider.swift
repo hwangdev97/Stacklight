@@ -44,10 +44,7 @@ public final class FlyioProvider: DeploymentProvider {
     private static func fetchMachines(token: String, app: String) async throws -> [Deployment] {
         guard let url = URL(string: "https://api.machines.dev/v1/apps/\(app)/machines") else { return [] }
 
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
         let machines = try JSONDecoder.flyDecoder.decode([FlyMachine].self, from: data)
 
         return machines.map { machine in

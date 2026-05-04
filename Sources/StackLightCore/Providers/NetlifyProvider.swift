@@ -45,10 +45,8 @@ public final class NetlifyProvider: DeploymentProvider {
         var components = URLComponents(string: "https://api.netlify.com/api/v1/sites/\(siteId)/deploys")!
         components.queryItems = [URLQueryItem(name: "per_page", value: "10")]
 
-        var request = URLRequest(url: components.url!)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        let (data, _) = try await URLSession.shared.data(for: request)
+        guard let url = components.url else { return [] }
+        let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
         let deploys = try JSONDecoder.netlifyDecoder.decode([NetlifyDeploy].self, from: data)
         return deploys.map { $0.toDeployment() }
     }

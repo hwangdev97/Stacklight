@@ -88,7 +88,17 @@ public final class RailwayProvider: DeploymentProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        // RequestRunner.execute applies backoff + 429/503 cooldowns. We still
+        // do our own status check below since GraphQL endpoints often return
+        // 200 with `errors` payload rather than HTTP errors.
+        let (data, http) = try await RequestRunner.shared.execute(request: request)
+        guard http.statusCode == 200 else {
+            throw ProviderError.http(
+                code: http.statusCode,
+                message: HTTPURLResponse.localizedString(forStatusCode: http.statusCode),
+                body: data
+            )
+        }
         let response = try JSONDecoder.railwayDecoder.decode(RailwayGraphQLResponse.self, from: data)
 
         return (response.data?.deployments?.edges ?? []).compactMap { edge in

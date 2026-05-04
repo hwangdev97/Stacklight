@@ -64,10 +64,7 @@ public final class CloudflareProvider: DeploymentProvider {
         let urlString = "https://api.cloudflare.com/client/v4/accounts/\(accountId)/pages/projects"
         guard let url = URL(string: urlString) else { return [] }
 
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
         let response = try JSONDecoder().decode(CFProjectsResponse.self, from: data)
         return response.result.map(\.name)
     }
@@ -76,10 +73,7 @@ public final class CloudflareProvider: DeploymentProvider {
         let urlString = "https://api.cloudflare.com/client/v4/accounts/\(accountId)/pages/projects/\(projectName)/deployments"
         guard let url = URL(string: urlString) else { return [] }
 
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
         let response = try JSONDecoder().decode(CFResponse.self, from: data)
         return response.result.prefix(5).map { $0.toDeployment(projectName: projectName) }
     }
