@@ -80,7 +80,7 @@ struct DeploymentCard: View {
     private var topRow: some View {
         HStack(alignment: .top) {
             if let provider {
-                GlassIconChip(provider: provider, tint: theme.accent, size: 36)
+                GlassIconChip(provider: provider, tint: iconTint, size: 36)
             }
             Spacer()
             statusChip
@@ -90,6 +90,10 @@ struct DeploymentCard: View {
     private var primaryTitle: String {
         if let msg = deployment.commitMessage, !msg.isEmpty { return msg }
         return deployment.projectName
+    }
+
+    private var iconTint: Color {
+        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "flyio", "xcodeCloud", "testFlight"].contains(deployment.providerID) ? .white : theme.accent
     }
 
     private var centerRow: some View {

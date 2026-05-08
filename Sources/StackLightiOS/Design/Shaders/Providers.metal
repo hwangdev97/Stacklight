@@ -76,9 +76,80 @@ static inline float2 centered(float2 pos, float2 size) {
     return uv;
 }
 
+static inline float paperHash21(float2 p) {
+    return fract(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453123);
+}
+
+static inline half3 paperHeatmapRamp(float heat) {
+    half h = (half)clamp(heat, 0.0, 1.0);
+    half3 blue0  = half3(0.067h, 0.125h, 0.416h); // #11206a
+    half3 blue1  = half3(0.122h, 0.231h, 0.635h); // #1f3ba2
+    half3 blue2  = half3(0.184h, 0.388h, 0.906h); // #2f63e7
+    half3 cyan   = half3(0.420h, 0.843h, 1.000h); // #6bd7ff
+    half3 yellow = half3(1.000h, 0.902h, 0.475h); // #ffe679
+    half3 orange = half3(1.000h, 0.600h, 0.118h); // #ff991e
+    half3 red    = half3(1.000h, 0.298h, 0.000h); // #ff4c00
+
+    half3 c = mix(blue0, blue1, smoothstep(0.00h, 0.18h, h));
+    c = mix(c, blue2,  smoothstep(0.12h, 0.34h, h));
+    c = mix(c, cyan,   smoothstep(0.28h, 0.52h, h));
+    c = mix(c, yellow, smoothstep(0.46h, 0.70h, h));
+    c = mix(c, orange, smoothstep(0.62h, 0.86h, h));
+    c = mix(c, red,    smoothstep(0.78h, 1.00h, h));
+    return c;
+}
+
+static inline float triangleDistance(float2 p) {
+    float top = 0.30;
+    float bottom = -0.24;
+    float leftEdge = p.x + (top - p.y) * 0.58;
+    float rightEdge = -p.x + (top - p.y) * 0.58;
+    float baseEdge = p.y - bottom;
+    return min(min(leftEdge, rightEdge), baseEdge);
+}
+
+static inline float paperHeatmapTriangleHeat(float2 uv, float2 size, float time, float intensity) {
+    float aspect = size.x / max(size.y, 1.0);
+    float2 p = float2((uv.x - 0.5) * aspect, uv.y - 0.50);
+    float tri = triangleDistance(p);
+    float inside = smoothstep(-0.008, 0.018, tri);
+    float contour = exp(-abs(tri) * 30.0);
+    float innerBlur = inside * exp(-max(tri, 0.0) * 4.2);
+    float outerBlur = (1.0 - inside) * exp(-max(-tri, 0.0) * 5.2);
+
+    float2 animUV = uv - 0.5;
+    float angle = -0.20;
+    float2 waveUV = float2(animUV.x * cos(angle) - animUV.y * sin(angle),
+                           animUV.x * sin(angle) + animUV.y * cos(angle)) + 0.5;
+
+    float t0 = fract(time * 0.10 - 0.30);
+    float t1 = fract(t0 + 1.0 / 3.0);
+    float t2 = fract(t0 + 2.0 / 3.0);
+    float shadow0 = smoothstep(0.30, 0.65, fract(waveUV.y - t0)) * (1.0 - smoothstep(0.65, 1.0, fract(waveUV.y - t0)));
+    float shadow1 = smoothstep(0.30, 0.65, fract(waveUV.y - t1)) * (1.0 - smoothstep(0.65, 1.0, fract(waveUV.y - t1)));
+    float shadow2 = smoothstep(0.30, 0.65, fract(waveUV.y - t2)) * (1.0 - smoothstep(0.65, 1.0, fract(waveUV.y - t2)));
+    float movingShadow = clamp(shadow0 + shadow1 + shadow2, 0.0, 1.0);
+
+    float inner = (0.70 + 0.90 * innerBlur) * 1.10;
+    inner *= 1.0 - 0.72 * movingShadow;
+    inner += 1.00 * contour;
+    inner = min(1.0, pow(inner, 1.2));
+
+    float outerT = fract(time * 0.30 - 0.10);
+    float outerY = fract(waveUV.y - outerT);
+    float outerBand = smoothstep(0.30, 0.65, outerY) * (1.0 - smoothstep(0.65, 1.0, outerY));
+    float outer = 0.90 * pow(outerBlur, 0.8) * (0.5 + outerBand) * 1.25;
+
+    float heat = clamp((inner + outer) * intensity, 0.0, 1.0);
+    heat += 0.025 * (paperHash21(uv * size + time * 17.0) - 0.5);
+    return clamp(heat, 0.0, 1.0);
+}
+
 // ===========================================================================
 // 0 — monoBeam (Vercel)
-// Black tint with a single slow-sweeping white beam, like a phosphor trail.
+// Paper-style heatmap rewritten for SwiftUI/Metal. This keeps the original
+// exported stitchable function name so existing SwiftUI shader binding remains
+// stable, but replaces the white beam with a triangle heat field.
 // ===========================================================================
 [[ stitchable ]]
 half4 monoBeam(float2 pos, half4 /*color*/,
@@ -87,19 +158,9 @@ half4 monoBeam(float2 pos, half4 /*color*/,
                float4 statusAccent, float intensity)
 {
     float2 uv = pos / size;
-    // Rotated coordinate so the beam runs diagonally.
-    float2 p = uv - 0.5;
-    float angle = 0.35 + 0.08 * sin(time * 0.25);
-    float2 r = float2(cos(angle) * p.x - sin(angle) * p.y,
-                      sin(angle) * p.x + cos(angle) * p.y);
-    float beam = exp(-pow(r.y * 7.0, 2.0));
-    float sweep = 0.5 + 0.5 * sin(time * 0.35 + r.x * 1.2);
-    float core  = bloom(uv, float2(0.5 + 0.2 * sin(time * 0.2), 0.55), 0.45);
-
-    half3 c = (half3)tint.rgb;
-    c += half3(accent.rgb) * (half)saturate(beam * sweep * 0.9 * intensity);
-    c += half3(glow.rgb)   * (half)saturate(core * 0.45 * intensity * glow.a);
-    c = applyStatus(c, statusAccent, 0.35);
+    float heat = paperHeatmapTriangleHeat(uv, size, time, intensity);
+    half3 c = paperHeatmapRamp(heat) * (half)smoothstep(0.02, 0.22, heat);
+    c = applyStatus(c, statusAccent, 0.12);
     return half4(c, 1.0);
 }
 
@@ -427,6 +488,79 @@ half4 pixelBeams(float2 pos, half4 /*color*/,
     c *= (half)band;
 
     c = applyStatus(c, statusAccent, 0.30);
+    return half4(c, 1.0);
+}
+
+// ===========================================================================
+// 12 — heatmapTriangle (Vercel)
+// Paper-style heatmap rewritten for SwiftUI/Metal: a triangle SDF replaces
+// Paper's image mask, while contour, inner glow, outer glow, and directional
+// heatwaves are approximated procedurally.
+// ===========================================================================
+[[ stitchable ]]
+half4 heatmapTriangle(float2 pos, half4 /*color*/,
+                      float2 size, float time,
+                      float4 tint, float4 accent, float4 glow,
+                      float4 statusAccent, float intensity)
+{
+    float2 uv = pos / size;
+    float heat = paperHeatmapTriangleHeat(uv, size, time, intensity);
+    half3 c = paperHeatmapRamp(heat) * (half)smoothstep(0.02, 0.22, heat);
+    c = applyStatus(c, statusAccent, 0.12);
+    return half4(c, 1.0);
+}
+
+// ===========================================================================
+// 13 — grainGradientCorners (Cloudflare)
+// Paper GrainGradient translated to SwiftUI/Metal with the supplied preset:
+// colors #fff7a3, #fffcfa, #ff8e61, #ff4800; colorBack #ff6f00;
+// softness 0.5, intensity 0.5, noise 0.25, shape "corners".
+// ===========================================================================
+[[ stitchable ]]
+half4 grainGradientCorners(float2 pos, half4 /*color*/,
+                           float2 size, float time,
+                           float4 tint, float4 accent, float4 glow,
+                           float4 statusAccent, float intensity)
+{
+    float2 uv = pos / size;
+    float aspect = size.x / max(size.y, 1.0);
+    float t = 0.1 * (time + 7.0);
+
+    float2 p = float2((uv.x - 0.5) * aspect, uv.y - 0.5);
+    float2 grainUV = p * size * 0.7;
+    float n0 = valueNoise(grainUV * 0.018 + float2(t * 0.6, -t * 0.35));
+    float n1 = fbm(grainUV * 0.008 - float2(t * 0.7, t * 0.25));
+    float grainDist = (n0 - 0.5) * 0.34 - (n1 - 0.5) * 0.22;
+
+    // Tuned corners preset: two opposing diagonal sheets coming out of the
+    // lower-left and upper-right corners, with noisy distortion between bands.
+    float lowerLine = p.y + 0.30 + 0.34 * p.x + grainDist + 0.035 * sin(3.0 * t);
+    float upperLine = p.y - 0.24 + 0.24 * p.x - grainDist - 0.030 * cos(5.25 * t);
+    float lowerSheet = exp(-pow(lowerLine * 4.3, 2.0)) * (1.0 - smoothstep(-0.20, 0.68, uv.x));
+    float upperSheet = exp(-pow(upperLine * 4.0, 2.0)) * smoothstep(0.28, 0.95, uv.x);
+
+    float cornerBloom = 0.35 * (1.0 - smoothstep(0.10, 0.95, length(p - float2(-0.54 * aspect, 0.56))));
+    cornerBloom += 0.42 * (1.0 - smoothstep(0.08, 1.05, length(p - float2(0.52 * aspect, -0.54))));
+    float shape = clamp(lowerSheet + upperSheet + cornerBloom, 0.0, 1.0);
+    shape += 0.10 * (n0 - 0.5);
+    shape = clamp(shape, 0.0, 1.0);
+
+    half3 back = half3(1.000h, 0.435h, 0.000h);     // #ff6f00
+    half3 orange = half3(1.000h, 0.557h, 0.380h);   // #ff8e61
+    half3 hot = half3(1.000h, 0.282h, 0.000h);      // #ff4800
+    half3 yellow = half3(1.000h, 0.969h, 0.639h);   // #fff7a3
+    half3 white = half3(1.000h, 0.988h, 0.980h);    // #fffcfa
+
+    half3 c = mix(back, orange, (half)smoothstep(0.05, 0.42, shape));
+    c = mix(c, yellow, (half)smoothstep(0.32, 0.68, shape));
+    c = mix(c, white, (half)smoothstep(0.58, 0.95, shape));
+    c = mix(c, hot, (half)(0.28 * smoothstep(0.20, 0.75, n1) * (1.0 - shape)));
+
+    // gl_FragCoord-style grain, deliberately independent from the animated
+    // coordinate field so the texture reads like Paper's static grain overlay.
+    float grain = paperHash21(pos * 1.73);
+    c += half3((half)((grain - 0.5) * 0.028));
+    c = applyStatus(c, statusAccent, 0.12);
     return half4(c, 1.0);
 }
 
