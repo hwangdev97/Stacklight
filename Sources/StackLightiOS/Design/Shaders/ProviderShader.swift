@@ -15,7 +15,7 @@ struct ProviderShaderView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            TimelineView(.animation(minimumInterval: animated ? 1.0/30.0 : nil,
+            TimelineView(.animation(minimumInterval: animated ? 1.0 / 24.0 : nil,
                                     paused: !animated)) { context in
                 let t = Float(context.date.timeIntervalSinceReferenceDate
                               .truncatingRemainder(dividingBy: 1_000))
@@ -58,6 +58,8 @@ struct ProviderShaderView: View {
         case .errorAura:     return "errorAura"
         case .neutral:       return "neutral"
         case .pixelBeams:    return "pixelBeams"
+        case .heatmapTriangle: return "heatmapTriangle"
+        case .grainGradientCorners: return "grainGradientCorners"
         }
     }
 }
@@ -72,7 +74,7 @@ struct StatusOrbShaderView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            TimelineView(.animation(minimumInterval: 1.0/30.0)) { context in
+            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
                 let t = Float(context.date.timeIntervalSinceReferenceDate
                               .truncatingRemainder(dividingBy: 1_000))
                 Rectangle()
@@ -102,7 +104,7 @@ struct LiquidDropletShaderView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            TimelineView(.animation(minimumInterval: 1.0/30.0)) { context in
+            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
                 let t = Float(context.date.timeIntervalSinceReferenceDate
                               .truncatingRemainder(dividingBy: 1_000))
                 Rectangle()

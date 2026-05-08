@@ -20,6 +20,8 @@ struct ProviderTheme: Equatable {
         case errorAura     = 9  // Error banner
         case neutral       = 10 // Fallback / empty state cycle
         case pixelBeams    = 11 // Cloudflare (pixel-beam variant)
+        case heatmapTriangle = 12 // Vercel
+        case grainGradientCorners = 13 // Cloudflare
     }
 
     let tint:   Color
@@ -34,14 +36,14 @@ struct ProviderTheme: Equatable {
             return .init(
                 tint:   Color(red: 0.08, green: 0.09, blue: 0.12),
                 accent: .white,
-                glow:   Color.white.opacity(0.55),
+                glow:   Color(red: 0.18, green: 0.60, blue: 1.00).opacity(0.75),
                 shader: .monoBeam)
         case "cloudflare":
             return .init(
                 tint:   Color(red: 0.98, green: 0.48, blue: 0.12),
                 accent: Color(red: 1.00, green: 0.78, blue: 0.32),
                 glow:   Color(red: 1.00, green: 0.55, blue: 0.18).opacity(0.80),
-                shader: .pixelBeams)
+                shader: .grainGradientCorners)
         case "githubActions":
             return .init(
                 tint:   Color(red: 0.36, green: 0.33, blue: 0.86),

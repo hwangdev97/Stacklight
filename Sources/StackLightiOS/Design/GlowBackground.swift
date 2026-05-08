@@ -19,6 +19,8 @@ struct GlowBackground<S: Shape>: View {
     var statusAccent: Color? = nil
     var intensity: CGFloat = 1.0
     var animated: Bool = true
+    var shaderOpacity: CGFloat = 0.35
+    var shaderBlurRadius: CGFloat = 22
 
     var body: some View {
         shape
@@ -34,8 +36,8 @@ struct GlowBackground<S: Shape>: View {
                         intensity: intensity,
                         animated: animated && !DesignTokens.Motion.reduceMotion
                     )
-                    .blur(radius: 22)
-                    .opacity(0.35)
+                    .blur(radius: shaderBlurRadius)
+                    .opacity(shaderOpacity)
                 }
             }
             .overlay {
