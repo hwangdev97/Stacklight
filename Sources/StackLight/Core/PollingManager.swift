@@ -14,8 +14,8 @@ final class PollingManager {
     var onUpdatePerProvider: (([String: [Deployment]]) -> Void)?
     var onError: ((String, Error) -> Void)?
 
-    func start() {
-        poll()
+    func start(immediate: Bool = true) {
+        if immediate { poll() }
         timer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.poll()

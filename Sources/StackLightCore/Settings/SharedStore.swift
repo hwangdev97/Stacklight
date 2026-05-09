@@ -47,7 +47,9 @@ public enum SharedStore {
         guard let defaults, let data = defaults.data(forKey: snapshotKey) else {
             return nil
         }
-        return try? SharedJSON.snapshotDecoder.decode(Snapshot.self, from: data)
+        guard let snapshot = try? SharedJSON.snapshotDecoder.decode(Snapshot.self, from: data),
+              snapshot.schemaVersion == schemaVersion else { return nil }
+        return snapshot
     }
 
     public static func clear() {

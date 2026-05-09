@@ -24,6 +24,20 @@ final class AppState: ObservableObject {
     /// network, dropped callback) never traps the UI.
     private static let refreshUITimeout: UInt64 = 8_000_000_000 // 8s
 
+    init() {
+        // Cold-start hydration: the App Group snapshot is the same one that
+        // BGAppRefresh, the widget, and the Watch read from. Restoring it here
+        // means Home renders the previous deployments instantly instead of
+        // showing "All Quiet" for the duration of a network round trip.
+        if let snapshot = SharedStore.read() {
+            self.deployments = snapshot.deployments
+            self.lastRefresh = snapshot.writtenAt
+            // Seed the fingerprint so the first publishSnapshot after a no-op
+            // refresh doesn't fire a redundant widget reload / Watch push.
+            self.lastPublishedFingerprint = Self.fingerprint(for: snapshot.deployments)
+        }
+    }
+
     func startPolling() {
         let interval = SettingsStore.shared.pollIntervalSeconds
         pollingManager.pollInterval = interval > 0 ? interval : 60
@@ -58,7 +72,10 @@ final class AppState: ObservableObject {
             self?.errors[providerID] = error.localizedDescription
             self?.finishRefresh()
         }
-        pollingManager.start()
+        // Skip the immediate poll; scenePhase .active fires on cold start and
+        // already triggers refresh(). Two callers would otherwise launch the
+        // same fetch back-to-back.
+        pollingManager.start(immediate: false)
     }
 
     func refresh() {
@@ -139,10 +156,7 @@ final class AppState: ObservableObject {
         SharedStore.write(snapshot)
         PhoneSessionManager.shared.push(snapshot: snapshot)
 
-        let fingerprint = deployments
-            .map { "\($0.providerID):\($0.id):\($0.status.rawValue)" }
-            .sorted()
-            .joined(separator: "|")
+        let fingerprint = Self.fingerprint(for: deployments)
         if fingerprint != lastPublishedFingerprint {
             lastPublishedFingerprint = fingerprint
             WidgetRefresh.reloadAll()
@@ -150,5 +164,12 @@ final class AppState: ObservableObject {
             // complications even if the `applicationContext` is coalesced away.
             PhoneSessionManager.shared.notifyStatusChange(snapshot: snapshot)
         }
+    }
+
+    private static func fingerprint(for deployments: [Deployment]) -> String {
+        deployments
+            .map { "\($0.providerID):\($0.id):\($0.status.rawValue)" }
+            .sorted()
+            .joined(separator: "|")
     }
 }
