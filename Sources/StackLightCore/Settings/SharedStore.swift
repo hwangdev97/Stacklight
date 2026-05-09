@@ -51,7 +51,9 @@ public enum SharedStore {
         }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return try? decoder.decode(Snapshot.self, from: data)
+        guard let snapshot = try? decoder.decode(Snapshot.self, from: data),
+              snapshot.schemaVersion == schemaVersion else { return nil }
+        return snapshot
     }
 
     public static func clear() {
