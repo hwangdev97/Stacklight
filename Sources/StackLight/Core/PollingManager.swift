@@ -27,7 +27,14 @@ final class PollingManager {
     }
 
     private func poll() {
-        guard !ServiceRegistry.shared.configuredProviders.isEmpty else { return }
+        // No-providers short-circuit must still fire onUpdate so any
+        // consumer-side loading state (e.g. AppState.isRefreshing on iOS)
+        // gets reset. Otherwise removing the last provider while a refresh
+        // is pending leaves the Home spinner visible forever.
+        guard !ServiceRegistry.shared.configuredProviders.isEmpty else {
+            onUpdate?([])
+            return
+        }
 
         Task { @MainActor in
             let (sorted, errors) = await DeploymentFetcher.fetchAll(deadline: max(pollInterval, 30))
