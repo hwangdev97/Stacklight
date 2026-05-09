@@ -8,35 +8,37 @@ import MenuBarMock from "../components/MenuBarMock.astro";
   <div class="absolute inset-0 grid-noise opacity-[0.4] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)]"></div>
 
   <div class="relative mx-auto max-w-container px-6 pt-20 pb-24 md:pt-28 md:pb-32">
-    <div class="flex flex-col items-center text-center gap-7 max-w-3xl mx-auto">
-      <span class="inline-flex items-center gap-2 rounded-full border border-hairline bg-white/70 backdrop-blur px-3 py-1 text-xs text-muted">
-        <span class="h-1.5 w-1.5 rounded-full bg-success animate-pulse-slow" aria-hidden="true"></span>
-        Open source · macOS 13+
-      </span>
-      <h1 class="text-display-xl font-semibold tracking-tight text-ink">
-        All your deploys.<br />One menu bar.
-      </h1>
-      <p class="text-lg md:text-xl leading-relaxed text-muted max-w-2xl">
-        StackLight watches every deploy and pull request you ship —
-        across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io,
-        Xcode Cloud, and TestFlight — and lives quietly in your Mac
-        menu bar.
-      </p>
-      <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pt-2">
-        <Button href="https://github.com/hwangdev97/Stacklight/releases">
-          Download for macOS
-        </Button>
-        <Button href="https://github.com/hwangdev97/Stacklight" variant="secondary">
-          View on GitHub
-        </Button>
+    <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <div class="flex flex-col items-center md:items-start text-center md:text-left gap-7">
+        <span class="inline-flex items-center gap-2 rounded-full border border-hairline bg-white/70 backdrop-blur px-3 py-1 text-xs text-muted">
+          <span class="h-1.5 w-1.5 rounded-full bg-success animate-pulse-slow" aria-hidden="true"></span>
+          Open source · macOS 13+
+        </span>
+        <h1 class="text-[clamp(2.5rem,4.5vw,4rem)] leading-[1.05] tracking-tight font-semibold text-ink">
+          All your deploys.<br />One menu bar.
+        </h1>
+        <p class="text-lg leading-relaxed text-muted max-w-xl">
+          StackLight watches every deploy and pull request you ship —
+          across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io,
+          Xcode Cloud, and TestFlight — and lives quietly in your Mac
+          menu bar.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center md:items-start gap-3 sm:gap-4 pt-2">
+          <Button href="https://github.com/hwangdev97/Stacklight/releases">
+            Download for macOS
+          </Button>
+          <Button href="https://github.com/hwangdev97/Stacklight" variant="secondary">
+            View on GitHub
+          </Button>
+        </div>
+        <p class="text-sm text-muted">
+          Free and open source · macOS 13+ · No account required.
+        </p>
       </div>
-      <p class="text-sm text-muted">
-        Free and open source · macOS 13+ · No account required.
-      </p>
-    </div>
 
-    <div class="mt-16 md:mt-20 max-w-xl mx-auto">
-      <MenuBarMock />
+      <div class="md:justify-self-end w-full max-w-[400px] mx-auto md:mx-0">
+        <MenuBarMock />
+      </div>
     </div>
   </div>
 </section>

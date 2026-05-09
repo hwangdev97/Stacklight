@@ -1,61 +1,159 @@
 ---
-const rows = [
-  { provider: "Vercel", target: "stacklight-site", state: "ok", time: "2m ago" },
-  { provider: "Cloudflare", target: "docs", state: "building", time: "now" },
-  { provider: "GitHub Actions", target: "ci · main", state: "fail", time: "12m ago" },
-  { provider: "TestFlight", target: "build 142", state: "ok", time: "1h ago" },
+type State = "ok" | "warn" | "fail";
+
+interface Item {
+  state: State;
+  title: string;
+  meta?: string;
+  meta2?: string;
+  time: string;
+}
+
+interface Section {
+  name: string;
+  logo: string;
+  items?: Item[];
+  empty?: string;
+}
+
+const sections: Section[] = [
+  {
+    name: "Vercel",
+    logo: "/logos/vercel.svg",
+    items: [
+      { state: "ok", title: "slabox-app-landing", meta: "main", time: "11h ago" },
+      { state: "ok", title: "slabox-app-la…", meta: "claude/ios-slider-hap…", time: "11h ago" },
+      { state: "ok", title: "viber-today", meta: "main", time: "1d ago" },
+      { state: "ok", title: "viber-today", meta: "claude/update-viber-mobile…", time: "1d ago" },
+      { state: "ok", title: "viber-today", meta: "main", time: "1d ago" },
+    ],
+  },
+  {
+    name: "Cloudflare Pages",
+    logo: "/logos/cloudflarepages.svg",
+    empty: "No recent deployments",
+  },
+  {
+    name: "GitHub Actions",
+    logo: "/logos/github.svg",
+    items: [
+      { state: "warn", title: "Addressing…", meta: "Stacklight", meta2: "claude/optimi…", time: "3m ago" },
+      { state: "ok", title: "CI", meta: "Stacklight", meta2: "main", time: "39m ago" },
+      { state: "ok", title: "Release", meta: "recappi-mini", meta2: "v1.0.66", time: "1h ago" },
+      { state: "ok", title: "Release", meta: "recappi-mini", meta2: "v1.0.65", time: "3h ago" },
+      { state: "ok", title: "CI", meta: "Stacklight", meta2: "claude/investigate-ios-cac…", time: "8h ago" },
+    ],
+  },
+  {
+    name: "Xcode Cloud",
+    logo: "/logos/xcodecloud.svg",
+    items: [
+      { state: "fail", title: "StackLight", time: "39m ago" },
+      { state: "ok", title: "StackLight", time: "10h ago" },
+      { state: "ok", title: "SlabShelf", time: "11h ago" },
+      { state: "ok", title: "StackLight", time: "21h ago" },
+      { state: "fail", title: "viber-today", time: "1d ago" },
+    ],
+  },
+  {
+    name: "TestFlight",
+    logo: "/logos/testflight.svg",
+    items: [
+      { state: "ok", title: "StackLight v57", time: "19m ago" },
+      { state: "ok", title: "StackLight v56", time: "9h ago" },
+      { state: "ok", title: "StackLight v56", time: "9h ago" },
+      { state: "ok", title: "StackLight v55", time: "21h ago" },
+      { state: "ok", title: "StackLight v55", time: "21h ago" },
+    ],
+  },
 ];
 
-const stateClass = {
-  ok: "bg-success",
-  building: "bg-building animate-pulse-slow",
-  fail: "bg-danger",
+const footerItems: { label: string; shortcut?: string }[] = [
+  { label: "Refresh Now", shortcut: "⌘R" },
+  { label: "Settings…", shortcut: "⌘," },
+  { label: "Send Feedback…" },
+  { label: "Updates via Mac App Store" },
+  { label: "Quit StackLight", shortcut: "⌘Q" },
+];
+
+const dotClass: Record<State, string> = {
+  ok: "bg-[#30d158]",
+  warn: "bg-[#ffd60a]",
+  fail: "bg-[#ff453a]",
 };
 ---
 
-<div class="relative w-full max-w-md mx-auto select-none" role="img" aria-label="StackLight in the macOS menu bar showing four deploys: stacklight-site on Vercel succeeded, docs on Cloudflare is building, ci on GitHub Actions failed, and build 142 on TestFlight succeeded.">
-  <!-- Faux menu bar strip -->
-  <div class="rounded-t-xl bg-white/90 backdrop-blur border border-hairline px-3 h-7 flex items-center gap-3 text-[11px] text-muted">
-    <span class="font-semibold text-ink">Finder</span>
-    <span>File</span>
-    <span>Edit</span>
-    <span>View</span>
-    <span class="ml-auto flex items-center gap-3">
-      <span class="text-soft">100%</span>
-      <span class="text-soft">Tue 9:41</span>
-      <img src="/favicon.png" alt="" class="h-5 w-5 rounded ring-2 ring-accent/40" />
+<div class="relative w-full max-w-[360px] mx-auto select-none font-sans" role="img" aria-label="StackLight macOS menu showing recent deploys across Vercel, Cloudflare Pages, GitHub Actions, Xcode Cloud, and TestFlight.">
+  <!-- Faux menu bar strip with icons (StackLight highlighted) -->
+  <div class="rounded-t-lg bg-neutral-900/80 backdrop-blur-md border border-white/10 px-2 h-6 flex items-center justify-end gap-2.5 text-[10px] text-white/55">
+    {Array.from({ length: 6 }).map(() => (
+      <span class="h-2.5 w-2.5 rounded-sm bg-white/20"></span>
+    ))}
+    <span class="relative h-4 w-4 rounded bg-white/10 ring-1 ring-white/30 flex items-center justify-center">
+      <img src="/menubar-icon.png" alt="StackLight" class="h-3.5 w-3.5 invert opacity-95" />
     </span>
+    {Array.from({ length: 4 }).map(() => (
+      <span class="h-2.5 w-2.5 rounded-sm bg-white/20"></span>
+    ))}
+    <span class="opacity-70">100%</span>
+    <span class="opacity-70">Tue 9:41</span>
   </div>
 
-  <!-- Connector caret -->
-  <div class="absolute right-3 top-7 -mt-0.5">
-    <svg width="14" height="8" viewBox="0 0 14 8" class="text-white"><path fill="currentColor" stroke="#e7e7e7" stroke-width="1" d="M0 8 L7 1 L14 8 Z"/></svg>
-  </div>
+  <!-- Dropdown panel anchored under StackLight icon -->
+  <div class="mt-1 ml-auto w-full rounded-[10px] bg-[rgba(44,44,46,0.92)] backdrop-blur-2xl border border-white/[0.08] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6),0_4px_12px_-2px_rgba(0,0,0,0.3)] overflow-hidden text-[12px] leading-tight text-white/95">
 
-  <!-- Dropdown panel -->
-  <div class="mt-1 ml-auto w-full rounded-2xl bg-white border border-hairline shadow-menu overflow-hidden">
-    <div class="px-4 pt-3 pb-2 flex items-center justify-between">
-      <span class="text-xs font-semibold uppercase tracking-wider text-soft">Deploys</span>
-      <span class="flex items-center gap-1.5 text-[11px] text-muted">
-        <span class="h-1.5 w-1.5 rounded-full bg-success"></span>
-        Live
-      </span>
-    </div>
-    <ul class="divide-y divide-hairline">
-      {rows.map((r) => (
-        <li class="flex items-center gap-3 px-4 py-3">
-          <span class={`h-2 w-2 rounded-full shrink-0 ${stateClass[r.state as keyof typeof stateClass]}`}></span>
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium text-ink truncate">{r.target}</p>
-            <p class="text-xs text-muted truncate">{r.provider}</p>
+    {sections.map((section) => (
+      <div class="px-1 pt-1.5">
+        <!-- Section header -->
+        <div class="flex items-center gap-2 px-2 py-1 text-white">
+          <span class="h-4 w-4 flex items-center justify-center shrink-0">
+            <img src={section.logo} alt="" class="h-4 w-4 object-contain" loading="lazy" />
+          </span>
+          <span class="font-semibold text-[13px] flex-1 truncate">{section.name}</span>
+          <svg class="h-3 w-3 text-white/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17 L17 7" />
+            <path d="M9 7h8v8" />
+          </svg>
+        </div>
+
+        {section.empty ? (
+          <div class="px-2 pb-1.5 pt-0.5 text-white/45 text-[12px]">{section.empty}</div>
+        ) : (
+          <div>
+            {section.items!.map((item) => (
+              <div class="flex items-center gap-2 px-2 py-[5px] rounded-md hover:bg-white/[0.08]">
+                <span class={`h-[7px] w-[7px] rounded-full shrink-0 ${dotClass[item.state]}`}></span>
+                <span class="font-semibold text-white truncate shrink-0 max-w-[40%]">{item.title}</span>
+                {item.meta && (
+                  <span class="text-white/55 truncate shrink min-w-0">{item.meta}</span>
+                )}
+                {item.meta2 && (
+                  <span class="text-white/40 truncate shrink min-w-0 hidden sm:inline">{item.meta2}</span>
+                )}
+                <span class="ml-auto text-white/40 text-[11px] whitespace-nowrap shrink-0 pl-1">{item.time}</span>
+              </div>
+            ))}
           </div>
-          <span class="text-xs text-soft shrink-0">{r.time}</span>
-        </li>
+        )}
+      </div>
+    ))}
+
+    <!-- Status line -->
+    <div class="px-3 pt-2 pb-1 text-[11px] text-white/40">
+      Updated in 0s · 5/5 ok
+    </div>
+
+    <!-- Divider -->
+    <div class="mx-2 h-px bg-white/[0.08]"></div>
+
+    <!-- Footer menu items -->
+    <div class="px-1 py-1">
+      {footerItems.map((item) => (
+        <div class="flex items-center px-2 py-[5px] rounded-md hover:bg-white/[0.08]">
+          <span class="flex-1 text-white/95">{item.label}</span>
+          {item.shortcut && <span class="text-white/45 text-[11px] tracking-wide font-mono">{item.shortcut}</span>}
+        </div>
       ))}
-    </ul>
-    <div class="px-4 py-2.5 bg-surface text-xs text-muted flex items-center justify-between">
-      <span>Last checked just now</span>
-      <span>Settings</span>
     </div>
   </div>
 </div>
