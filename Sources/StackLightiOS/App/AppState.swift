@@ -16,6 +16,12 @@ final class AppState: ObservableObject {
 
     private let pollingManager = PollingManager()
     private var lastPublishedFingerprint: String = ""
+    private var refreshWatchdog: Task<Void, Never>?
+
+    /// Hard cap on how long the Home spinner is allowed to stay visible.
+    /// Independent of the polling deadline so a stalled fetch (slow mobile
+    /// network, dropped callback) never traps the UI.
+    private static let refreshUITimeout: UInt64 = 8_000_000_000 // 8s
 
     func startPolling() {
         let interval = SettingsStore.shared.pollIntervalSeconds
@@ -26,13 +32,13 @@ final class AppState: ObservableObject {
             let old = self.deployments
             self.deployments = newDeployments
             self.lastRefresh = Date()
-            self.isRefreshing = false
+            self.finishRefresh()
             NotificationManager.shared.checkForChangesPersistent(old: old, new: newDeployments)
             self.publishSnapshot(newDeployments)
         }
         pollingManager.onError = { [weak self] providerID, error in
             self?.errors[providerID] = error.localizedDescription
-            self?.isRefreshing = false
+            self?.finishRefresh()
         }
         pollingManager.start()
     }
@@ -43,11 +49,35 @@ final class AppState: ObservableObject {
         // and never fires onUpdate/onError — which would leave isRefreshing
         // stuck at true and the Home spinner visible forever on the empty state.
         guard hasConfiguredProvider else {
-            isRefreshing = false
+            finishRefresh()
             return
         }
         isRefreshing = true
+        armRefreshWatchdog()
         pollingManager.refresh()
+    }
+
+    /// Cancel any in-flight watchdog and clear the spinner. Safe to call
+    /// repeatedly (multiple providers may each fire onError before the final
+    /// onUpdate arrives).
+    private func finishRefresh() {
+        refreshWatchdog?.cancel()
+        refreshWatchdog = nil
+        isRefreshing = false
+    }
+
+    /// Schedule a single-shot watchdog that force-clears `isRefreshing` if the
+    /// polling pipeline never fires its callback (e.g. an unforeseen short
+    /// circuit, a Task cancellation on backgrounding, or a 60s network stall
+    /// that we don't want the user staring at).
+    private func armRefreshWatchdog() {
+        refreshWatchdog?.cancel()
+        refreshWatchdog = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.refreshUITimeout)
+            guard !Task.isCancelled, let self else { return }
+            self.isRefreshing = false
+            self.refreshWatchdog = nil
+        }
     }
 
     func restartPolling() {
