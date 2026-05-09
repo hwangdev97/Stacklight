@@ -45,6 +45,13 @@ const canonical = new URL(Astro.url.pathname, siteUrl).toString();
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content="StackLight — a macOS menu bar app showing live deploy status across nine services." />
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+      defer
+      is:inline
+    ></script>
+    <script src="/scripts/liquidGL.js" defer is:inline></script>
   </head>
   <body>
     <a

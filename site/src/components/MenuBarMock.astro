@@ -99,8 +99,13 @@ const dotClass: Record<State, string> = {
     <span class="opacity-70">Tue 9:41</span>
   </div>
 
-  <!-- Dropdown panel anchored under StackLight icon -->
-  <div class="mt-1 ml-auto w-full rounded-[10px] bg-[rgba(44,44,46,0.92)] backdrop-blur-2xl border border-white/[0.08] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6),0_4px_12px_-2px_rgba(0,0,0,0.3)] overflow-hidden text-[12px] leading-tight text-white/95">
+  <!-- Colorful blob behind the mock so the glass has something to refract -->
+  <div class="absolute -inset-x-10 inset-y-2 -z-10 rounded-[60px] blur-3xl opacity-70 pointer-events-none"
+       style="background: radial-gradient(60% 50% at 30% 20%, #ff6ad5 0%, transparent 60%), radial-gradient(50% 60% at 80% 40%, #6a82fb 0%, transparent 60%), radial-gradient(50% 60% at 60% 90%, #ffd86b 0%, transparent 60%);"
+       aria-hidden="true"></div>
+
+  <!-- Dropdown panel anchored under StackLight icon (liquidGL glass target) -->
+  <div class="liquidGL mt-1 ml-auto w-full rounded-[10px] bg-[rgba(20,20,22,0.78)] border border-white/[0.10] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6),0_4px_12px_-2px_rgba(0,0,0,0.3)] overflow-hidden text-[12px] leading-tight text-white/95">
 
     {sections.map((section) => (
       <div class="px-1 pt-1.5">
@@ -157,3 +162,68 @@ const dotClass: Record<State, string> = {
     </div>
   </div>
 </div>
+
+<style>
+  .liquidGL {
+    opacity: 1 !important;
+  }
+  .liquidGL > * {
+    position: relative;
+    z-index: 10;
+  }
+</style>
+
+<script is:inline>
+  (function initLiquidGL() {
+    function tryInit() {
+      if (typeof window.liquidGL !== "function" || typeof window.html2canvas !== "function") {
+        return false;
+      }
+      window.liquidGL({
+        target: ".liquidGL",
+        resolution: 2,
+        refraction: 0.012,
+        bevelDepth: 6,
+        bevelWidth: 0.04,
+        frost: 0.05,
+        specular: 0.6,
+        shadow: false,
+        reveal: "none",
+        on: {
+          init: function (lens) {
+            window.__liquidGL_initFired = (window.__liquidGL_initFired || 0) + 1;
+            lens.el.style.opacity = "1";
+            if (lens.renderer && lens.renderer.canvas) {
+              lens.renderer.canvas.style.opacity = "1";
+            }
+          },
+        },
+      });
+      // Belt-and-suspenders: keep the canvas visible even if the lib resets it.
+      const r = window.__liquidGLRenderer__;
+      if (r && r.canvas) {
+        const obs = new MutationObserver(() => {
+          if (r.canvas.style.opacity !== "1") r.canvas.style.opacity = "1";
+        });
+        obs.observe(r.canvas, { attributes: true, attributeFilter: ["style"] });
+        r.canvas.style.opacity = "1";
+      }
+      return true;
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        if (!tryInit()) {
+          let tries = 0;
+          const id = setInterval(() => {
+            if (tryInit() || ++tries > 30) clearInterval(id);
+          }, 100);
+        }
+      });
+    } else if (!tryInit()) {
+      let tries = 0;
+      const id = setInterval(() => {
+        if (tryInit() || ++tries > 30) clearInterval(id);
+      }, 100);
+    }
+  })();
+</script>
