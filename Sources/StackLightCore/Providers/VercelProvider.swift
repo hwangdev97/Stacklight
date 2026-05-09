@@ -57,7 +57,7 @@ public final class VercelProvider: DeploymentProvider {
         let (data, http) = try await RequestRunner.shared.execute(request: request)
 
         if http.statusCode != 200 {
-            if let err = try? JSONDecoder().decode(VercelErrorResponse.self, from: data) {
+            if let err = try? SharedJSON.decoder.decode(VercelErrorResponse.self, from: data) {
                 throw ProviderError.http(code: http.statusCode, message: err.error.message, body: data)
             }
             throw ProviderError.http(
@@ -67,7 +67,7 @@ public final class VercelProvider: DeploymentProvider {
             )
         }
 
-        let response = try JSONDecoder().decode(VercelResponse.self, from: data)
+        let response = try SharedJSON.decoder.decode(VercelResponse.self, from: data)
         let rawDeployments = response.deployments
 
         // Remember every branch we've seen so the settings picker has real

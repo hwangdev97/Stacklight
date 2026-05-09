@@ -64,11 +64,11 @@ public final class GitHubActionsProvider: DeploymentProvider {
             return request
         }())
         if !(200...299).contains(http.statusCode) {
-            let message = (try? JSONDecoder().decode(GitHubErrorResponse.self, from: data))?.message
+            let message = (try? SharedJSON.decoder.decode(GitHubErrorResponse.self, from: data))?.message
                 ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
             throw ProviderError.http(code: http.statusCode, message: message, body: data)
         }
-        let response = try JSONDecoder.githubDecoder.decode(GHWorkflowRunsResponse.self, from: data)
+        let response = try SharedJSON.iso8601Decoder.decode(GHWorkflowRunsResponse.self, from: data)
         return response.workflow_runs.map { $0.toDeployment(repo: repo) }
     }
 }
@@ -132,21 +132,4 @@ private struct GHWorkflowRun: Decodable {
     }
 }
 
-// MARK: - JSON Decoder for GitHub API (ISO8601 dates)
-
-private extension JSONDecoder {
-    static let githubDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
-        }
-        return decoder
-    }()
-}
+// JSON decoder for GitHub APIs lives in SharedJSON.iso8601Decoder.

@@ -6,7 +6,6 @@ import StackLightCore
 /// regular SwiftUI view — previewable and easy to iterate on.
 struct MenuBarContentView: View {
     var providers: [DeploymentProvider]
-    var deployments: [Deployment]
     var errors: [String: String]
     var lastRefresh: Date?
     var onRefresh: () -> Void
@@ -27,12 +26,89 @@ struct MenuBarContentView: View {
     }
     var onQuit: () -> Void = { NSApp.terminate(nil) }
 
+    /// Pre-grouped deployments keyed by provider ID. The view used to compute
+    /// `Dictionary(grouping:)` inline on every body call — pushing this work
+    /// up to AppState lets the menu redraw skip the regroup when the data
+    /// hasn't actually changed.
+    private let grouped: [String: [Deployment]]
+
+    /// Convenience init for callers (and previews) that have a flat list and
+    /// don't want to pre-group themselves.
+    init(
+        providers: [DeploymentProvider],
+        deployments: [Deployment],
+        errors: [String: String],
+        lastRefresh: Date?,
+        onRefresh: @escaping () -> Void,
+        onOpenSettings: @escaping () -> Void,
+        onOpenFeedback: @escaping () -> Void,
+        onCheckForUpdates: @escaping () -> Void = {
+            Task {
+                let result: Result<UpdateCheckResult, Error>
+                do {
+                    result = .success(try await UpdateChecker.checkForUpdates())
+                } catch {
+                    result = .failure(error)
+                }
+                await MainActor.run {
+                    UpdateChecker.presentUpdateCheckResult(result)
+                }
+            }
+        },
+        onQuit: @escaping () -> Void = { NSApp.terminate(nil) }
+    ) {
+        self.init(
+            providers: providers,
+            deploymentsByProvider: Dictionary(grouping: deployments, by: \.providerID),
+            errors: errors,
+            lastRefresh: lastRefresh,
+            onRefresh: onRefresh,
+            onOpenSettings: onOpenSettings,
+            onOpenFeedback: onOpenFeedback,
+            onCheckForUpdates: onCheckForUpdates,
+            onQuit: onQuit
+        )
+    }
+
+    /// Hot-path init used by `MenuBarRootView` — accepts the precomputed
+    /// grouped dictionary maintained on AppState so the menu doesn't have to
+    /// regroup the flat array on every redraw.
+    init(
+        providers: [DeploymentProvider],
+        deploymentsByProvider: [String: [Deployment]],
+        errors: [String: String],
+        lastRefresh: Date?,
+        onRefresh: @escaping () -> Void,
+        onOpenSettings: @escaping () -> Void,
+        onOpenFeedback: @escaping () -> Void,
+        onCheckForUpdates: @escaping () -> Void = {
+            Task {
+                let result: Result<UpdateCheckResult, Error>
+                do {
+                    result = .success(try await UpdateChecker.checkForUpdates())
+                } catch {
+                    result = .failure(error)
+                }
+                await MainActor.run {
+                    UpdateChecker.presentUpdateCheckResult(result)
+                }
+            }
+        },
+        onQuit: @escaping () -> Void = { NSApp.terminate(nil) }
+    ) {
+        self.providers = providers
+        self.grouped = deploymentsByProvider
+        self.errors = errors
+        self.lastRefresh = lastRefresh
+        self.onRefresh = onRefresh
+        self.onOpenSettings = onOpenSettings
+        self.onOpenFeedback = onOpenFeedback
+        self.onCheckForUpdates = onCheckForUpdates
+        self.onQuit = onQuit
+    }
+
     @Environment(\.openURL) private var openURL
     @State private var settings: UserSettings = SettingsStore.shared.settings
-
-    private var grouped: [String: [Deployment]] {
-        Dictionary(grouping: deployments, by: \.providerID)
-    }
 
     /// Returns deployments for a provider grouped by visibility:
     /// `(pinned, visible, hidden)`. `hidden` is exposed so the UI can fold it
@@ -127,7 +203,7 @@ struct MenuBarContentView: View {
                     deploymentRow(deployment, isPinned: true)
                 }
                 // Then the normal feed (capped at 5 to keep the menu compact).
-                ForEach(Array(parts.visible.prefix(5)), id: \.id) { deployment in
+                ForEach(parts.visible.prefix(5), id: \.id) { deployment in
                     deploymentRow(deployment, isPinned: false)
                 }
                 // Hidden items collapse into a folded count so the user can
@@ -313,9 +389,7 @@ struct MenuBarContentView: View {
     }
 
     private func relativeTime(from date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
+        SharedFormatters.relativeAbbreviated.localizedString(for: date, relativeTo: Date())
     }
 }
 

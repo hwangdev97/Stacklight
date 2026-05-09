@@ -45,7 +45,7 @@ public final class FlyioProvider: DeploymentProvider {
         guard let url = URL(string: "https://api.machines.dev/v1/apps/\(app)/machines") else { return [] }
 
         let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
-        let machines = try JSONDecoder.flyDecoder.decode([FlyMachine].self, from: data)
+        let machines = try SharedJSON.iso8601FractionalDecoder.decode([FlyMachine].self, from: data)
 
         return machines.map { machine in
             Deployment(
@@ -96,20 +96,4 @@ private struct FlyMachine: Decodable {
     }
 }
 
-private extension JSONDecoder {
-    static let flyDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) { return date }
-            let fallback = ISO8601DateFormatter()
-            fallback.formatOptions = [.withInternetDateTime]
-            if let date = fallback.date(from: dateString) { return date }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
-        }
-        return decoder
-    }()
-}
+// JSON decoder lives in SharedJSON.iso8601FractionalDecoder.

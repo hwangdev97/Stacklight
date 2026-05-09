@@ -47,7 +47,7 @@ public final class NetlifyProvider: DeploymentProvider {
 
         guard let url = components.url else { return [] }
         let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
-        let deploys = try JSONDecoder.netlifyDecoder.decode([NetlifyDeploy].self, from: data)
+        let deploys = try SharedJSON.iso8601FractionalDecoder.decode([NetlifyDeploy].self, from: data)
         return deploys.map { $0.toDeployment() }
     }
 }
@@ -89,27 +89,4 @@ private struct NetlifyDeploy: Decodable {
     }
 }
 
-// MARK: - JSON Decoder for Netlify API (ISO8601 dates)
-
-private extension JSONDecoder {
-    static let netlifyDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-            // Fallback without fractional seconds
-            let fallback = ISO8601DateFormatter()
-            fallback.formatOptions = [.withInternetDateTime]
-            if let date = fallback.date(from: dateString) {
-                return date
-            }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
-        }
-        return decoder
-    }()
-}
+// JSON decoder lives in SharedJSON.iso8601FractionalDecoder.

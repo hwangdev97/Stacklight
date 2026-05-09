@@ -7,10 +7,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Request notification permission (guard against missing bundle)
+        // Set the delegate synchronously so any notification action that
+        // arrives during the same run loop tick has a destination, but defer
+        // the authorization prompt — that call hits the system service and
+        // doesn't need to block the menu bar icon from appearing.
         if Bundle.main.bundleIdentifier != nil {
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
             UNUserNotificationCenter.current().delegate = self
+            Task.detached(priority: .background) {
+                _ = try? await UNUserNotificationCenter.current()
+                    .requestAuthorization(options: [.alert, .sound])
+            }
         }
 
         // Start polling — the MenuBarExtra scene observes `appState` directly,

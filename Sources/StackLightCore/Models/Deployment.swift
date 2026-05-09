@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Deployment: Identifiable {
+public struct Deployment: Identifiable, Equatable, Hashable {
     public let id: String
     public let providerID: String
     public let projectName: String
@@ -36,7 +36,7 @@ public struct Deployment: Identifiable {
         self.branch = branch
     }
 
-    public enum Status: String {
+    public enum Status: String, Equatable, Hashable {
         case building
         case success
         case failed
@@ -73,9 +73,7 @@ public struct Deployment: Identifiable {
 
 extension Deployment {
     public var relativeTime: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: createdAt, relativeTo: Date())
+        SharedFormatters.relativeAbbreviated.localizedString(for: createdAt, relativeTo: Date())
     }
 }
 
