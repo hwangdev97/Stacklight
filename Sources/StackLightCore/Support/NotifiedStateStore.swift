@@ -13,11 +13,39 @@ public enum NotifiedStateStore {
         UserDefaults(suiteName: SharedStore.suiteName)
     }
 
+    /// In-process memo of the persisted dict. The notification path runs on
+    /// every poll — caching here avoids re-deserializing the whole dictionary
+    /// from `UserDefaults` each time, and also lets `write` skip the disk
+    /// hit when nothing changed since the last write. Both processes that
+    /// touch this store (host app + iOS background handler) live in their
+    /// own address spaces, so cross-process staleness is fine: the worst
+    /// case is one duplicated notification on a launch race, which the
+    /// existing diff already tolerates.
+    private static let cacheLock = NSLock()
+    private static var cachedStates: [String: String]?
+
     public static func read() -> [String: String] {
-        (defaults?.dictionary(forKey: key) as? [String: String]) ?? [:]
+        cacheLock.lock()
+        if let cached = cachedStates {
+            cacheLock.unlock()
+            return cached
+        }
+        cacheLock.unlock()
+
+        let loaded = (defaults?.dictionary(forKey: key) as? [String: String]) ?? [:]
+        cacheLock.lock()
+        cachedStates = loaded
+        cacheLock.unlock()
+        return loaded
     }
 
     public static func write(_ states: [String: String]) {
+        cacheLock.lock()
+        let unchanged = (cachedStates == states)
+        cachedStates = states
+        cacheLock.unlock()
+
+        guard !unchanged else { return }
         defaults?.set(states, forKey: key)
     }
 

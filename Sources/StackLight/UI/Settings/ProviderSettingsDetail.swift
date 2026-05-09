@@ -229,18 +229,30 @@ struct ProviderSettingsDetail: View {
     }
 
     private func saveFields() {
-        for field in provider.settingsFields() {
-            let value = (fieldValues[field.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if field.isSecret {
-                if value.isEmpty {
-                    KeychainManager.delete(key: field.key)
+        let fields = provider.settingsFields()
+
+        // Batch every non-secret field into a single SettingsStore.mutate so
+        // saving N fields encodes the envelope and fires didChange once
+        // instead of N times.
+        SettingsStore.shared.mutate { settings in
+            for field in fields where !field.isSecret {
+                let value = (fieldValues[field.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                if field.isToggle {
+                    settings.setBool(value == "1", for: field.key)
                 } else {
-                    try? KeychainManager.save(key: field.key, value: value)
+                    settings.setString(value, for: field.key)
                 }
-            } else if field.isToggle {
-                AppConfig.setValue(value == "1", forKey: field.key)
+            }
+        }
+
+        // Secret fields go to Keychain — separate backing store, must run
+        // outside the settings transaction.
+        for field in fields where field.isSecret {
+            let value = (fieldValues[field.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if value.isEmpty {
+                KeychainManager.delete(key: field.key)
             } else {
-                AppConfig.setValue(value, forKey: field.key)
+                try? KeychainManager.save(key: field.key, value: value)
             }
         }
         ASCCredentialStore.invalidate()
