@@ -26,11 +26,6 @@ let package = Package(
             path: "Sources/StackLightCore"
         ),
         .executableTarget(
-            name: "StackLight",
-            dependencies: ["StackLightCore"],
-            path: "Sources/StackLight"
-        ),
-        .executableTarget(
             name: "stacklightcli",
             dependencies: [
                 "StackLightCore",
@@ -41,7 +36,7 @@ let package = Package(
         ),
         .testTarget(
             name: "StackLightTests",
-            dependencies: ["StackLight", "StackLightCore"]
+            dependencies: ["StackLightCore"]
         ),
         .testTarget(
             name: "StackLightCoreTests",
