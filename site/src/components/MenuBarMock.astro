@@ -12,6 +12,8 @@ interface Item {
 interface Section {
   name: string;
   logo: string;
+  /** Solid brand color used as the radial-gradient base for the icon badge. */
+  brand: string;
   items?: Item[];
   empty?: string;
 }
@@ -20,6 +22,7 @@ const sections: Section[] = [
   {
     name: "Vercel",
     logo: "/logos/vercel.svg",
+    brand: "#1a1a1a",
     items: [
       { state: "ok", title: "slabox-app-landing", meta: "main", time: "11h ago" },
       { state: "ok", title: "slabox-app-la…", meta: "claude/ios-slider-hap…", time: "11h ago" },
@@ -31,11 +34,13 @@ const sections: Section[] = [
   {
     name: "Cloudflare Pages",
     logo: "/logos/cloudflarepages.svg",
+    brand: "#F38020",
     empty: "No recent deployments",
   },
   {
     name: "GitHub Actions",
     logo: "/logos/github.svg",
+    brand: "#24292f",
     items: [
       { state: "warn", title: "Addressing…", meta: "Stacklight", meta2: "claude/optimi…", time: "3m ago" },
       { state: "ok", title: "CI", meta: "Stacklight", meta2: "main", time: "39m ago" },
@@ -47,6 +52,7 @@ const sections: Section[] = [
   {
     name: "Xcode Cloud",
     logo: "/logos/xcodecloud.svg",
+    brand: "#147EFB",
     items: [
       { state: "fail", title: "StackLight", time: "39m ago" },
       { state: "ok", title: "StackLight", time: "10h ago" },
@@ -58,6 +64,7 @@ const sections: Section[] = [
   {
     name: "TestFlight",
     logo: "/logos/testflight.svg",
+    brand: "#0D96F6",
     items: [
       { state: "ok", title: "StackLight v57", time: "19m ago" },
       { state: "ok", title: "StackLight v56", time: "9h ago" },
@@ -129,8 +136,8 @@ const dotClass: Record<State, string> = {
           <div class="px-1 pt-1.5">
             <!-- Section header -->
             <div class="flex items-center gap-2 px-2 py-1 text-white">
-              <span class="h-4 w-4 flex items-center justify-center shrink-0">
-                <img src={section.logo} alt="" class="h-4 w-4 object-contain" loading="lazy" />
+              <span class="icon-badge shrink-0" style={`--brand: ${section.brand};`}>
+                <img src={section.logo} alt="" loading="lazy" />
               </span>
               <span class="font-semibold text-[13px] flex-1 truncate">{section.name}</span>
               <svg class="h-3 w-3 text-white/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -206,6 +213,51 @@ const dotClass: Record<State, string> = {
      so the text still has contrast. */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .menu-bar-strip { background-color: rgba(20, 20, 22, 0.94); }
+  }
+
+  /* Section header icon badge: a small glossy sphere in the brand color
+     (set per section via --brand inline style), with a top highlight arc
+     and a forced-white logo silhouette in the middle. Mimics the macOS
+     "tinted app icon" look. */
+  .icon-badge {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 50% 110%,
+        color-mix(in srgb, var(--brand) 70%, #000) 0%,
+        var(--brand) 60%);
+    box-shadow:
+      inset 0 0.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 1.5px rgba(0, 0, 0, 0.35),
+      0 0.5px 1px rgba(0, 0, 0, 0.35);
+  }
+  /* Glossy top reflection arc */
+  .icon-badge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 60% at 50% -10%,
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.18) 35%,
+        transparent 60%);
+  }
+  .icon-badge img {
+    position: relative;
+    z-index: 1;
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    /* Force any logo to a clean white silhouette so it reads on every brand. */
+    filter: brightness(0) invert(1);
   }
 </style>
 
