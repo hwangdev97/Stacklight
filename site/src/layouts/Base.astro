@@ -46,12 +46,9 @@ const canonical = new URL(Astro.url.pathname, siteUrl).toString();
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content="StackLight — a macOS menu bar app showing live deploy status across nine services." />
 
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
-      defer
-      is:inline
-    ></script>
-    <script src="/scripts/liquidGL.js" defer is:inline></script>
+    <!-- liquid-glass web component (winaviation/liquid-web). Defines the
+         <liquid-glass> custom element used by MenuBarMock.astro. -->
+    <script type="module" src="/scripts/lg-component.js" is:inline></script>
   </head>
   <body>
     <a

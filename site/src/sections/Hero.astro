@@ -3,6 +3,66 @@ import Button from "../components/Button.astro";
 import MenuBarMock from "../components/MenuBarMock.astro";
 ---
 
+<script>
+  // Render paper.design's static mesh gradient shader as the hero wallpaper.
+  // Vector-quality at any DPR, no image asset, no compression artifacts.
+  import {
+    ShaderMount,
+    staticMeshGradientFragmentShader,
+    getShaderColorFromString,
+    ShaderFitOptions,
+  } from "@paper-design/shaders";
+
+  function mountHeroShader() {
+    const host = document.querySelector(".hero-wallpaper-bg");
+    if (!host || host.dataset.shaderMounted === "1") return;
+    host.dataset.shaderMounted = "1";
+
+    const colors = ["#ff3a8c", "#7a1fff", "#ff6ad5", "#ffd1ec"].map(
+      getShaderColorFromString,
+    );
+
+    const uniforms = {
+      u_colors: colors,
+      u_colorsCount: colors.length,
+      u_positions: 2,
+      u_waveX: 1,
+      u_waveXShift: 0.6,
+      u_waveY: 1,
+      u_waveYShift: 0.21,
+      u_mixing: 0.93,
+      u_grainMixer: 0.15,
+      u_grainOverlay: 0.06,
+      // Sizing — fit:cover, neutral transform.
+      u_fit: ShaderFitOptions.cover,
+      u_scale: 1,
+      u_rotation: 270,
+      u_originX: 0.5,
+      u_originY: 0.5,
+      u_offsetX: 0,
+      u_offsetY: 0,
+      u_worldWidth: 0,
+      u_worldHeight: 0,
+    };
+
+    new ShaderMount(
+      host as HTMLElement,
+      staticMeshGradientFragmentShader,
+      uniforms,
+      // preserveDrawingBuffer:true so html2canvas (used by liquidGL) can
+      // read the WebGL canvas pixels for the lens snapshot.
+      { preserveDrawingBuffer: true, antialias: true },
+      0, // speed=0 → static, no rAF loop after first paint
+    );
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountHeroShader);
+  } else {
+    mountHeroShader();
+  }
+</script>
+
 <section class="relative overflow-hidden bg-white h-screen flex items-center">
   <!-- Original soft hero glow + grain backdrop -->
   <div class="absolute inset-0 bg-hero-glow pointer-events-none"></div>
@@ -44,16 +104,10 @@ import MenuBarMock from "../components/MenuBarMock.astro";
            version. -->
       <div class="md:justify-self-end w-full max-w-[400px] mx-auto md:mx-0 relative">
         <div
-          class="hero-wallpaper-bg absolute -inset-y-6 -z-0 pointer-events-none"
+          class="hero-wallpaper-bg absolute -inset-y-6 -z-0 pointer-events-none overflow-hidden"
           aria-hidden="true"
           style="left: -100%;
                  right: -100vw;
-                 background-image: url('/wallpaper.webp');
-                 background-size: cover;
-                 background-position: center;
-                 filter: contrast(1.07) saturate(1.1);
-                 will-change: transform;
-                 transform: translateZ(0);
                  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 28%, black 55%);
                  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 28%, black 55%);"
         ></div>

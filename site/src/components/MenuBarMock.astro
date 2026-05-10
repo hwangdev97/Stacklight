@@ -84,10 +84,9 @@ const dotClass: Record<State, string> = {
 ---
 
 <div class="hero-glass-stage relative w-full max-w-[360px] mx-auto select-none font-sans" role="img" aria-label="StackLight macOS menu showing recent deploys across Vercel, Cloudflare Pages, GitHub Actions, Xcode Cloud, and TestFlight.">
-  <!-- liquidGL snapshots the Hero section's existing .hero-wallpaper-bg
-       directly (see the script below). No second wallpaper element needed. -->
-
-  <!-- Faux menu bar strip with icons (StackLight highlighted) -->
+  <!-- Faux menu bar strip with icons (StackLight highlighted). Stays on plain
+       CSS backdrop-filter — only the dropdown below gets the liquid-glass
+       refraction, matching how macOS actually paints these elements. -->
   <div class="menu-bar-strip relative z-10 rounded-lg border border-white/10 px-2 h-6 flex items-center justify-end gap-2.5 text-[10px] text-white/55">
     {Array.from({ length: 6 }).map(() => (
       <span class="h-2.5 w-2.5 rounded-sm bg-white/20"></span>
@@ -102,196 +101,152 @@ const dotClass: Record<State, string> = {
     <span class="opacity-70">Tue 9:41</span>
   </div>
 
-  <!-- Panel container: holds an empty liquidGL lens (which becomes a refracted
-       wallpaper canvas) and the actual menu content layered on top.
-       overflow-hidden + matching border-radius clips any bevel/refraction
-       artifacts the WebGL canvas might draw past the panel edge. -->
-  <div class="relative mt-1.5 ml-auto w-full rounded-[10px] overflow-hidden">
-    <!-- Lens: liquidGL replaces this with a canvas that refracts/frosts the
-         wallpaper layer behind. Sized to match the panel exactly. -->
-    <div class="liquidGL-lens absolute inset-0 pointer-events-none rounded-[10px]" aria-hidden="true"></div>
+  <!-- Dropdown wrapped in <liquid-glass>. The component refracts whatever's
+       behind it (the hero shader gradient) via SVG displacement maps + native
+       backdrop-filter. JS below sizes the height to match the real content. -->
+  <div class="mt-1.5 ml-auto w-full">
+    <liquid-glass
+      class="dropdown-glass"
+      width="360"
+      height="640"
+      radius="10"
+      type="squircle"
+      surface-type="convex_squircle"
+      bezel-width="14"
+      glass-thickness="60"
+      refraction-scale="1.2"
+      specular-opacity="0.7"
+      blur="6"
+      fallback-blur="22"
+      tint="rgba(20, 20, 24, 0.55)"
+      flex-center="false"
+    >
+      <!-- Slotted content. The component centers slotted content by default
+           via flexbox; flex-center="false" turns that off so we can use our
+           own block layout. -->
+      <div class="dropdown-content w-full text-[12px] leading-tight text-white/95">
+        {sections.map((section) => (
+          <div class="px-1 pt-1.5">
+            <!-- Section header -->
+            <div class="flex items-center gap-2 px-2 py-1 text-white">
+              <span class="h-4 w-4 flex items-center justify-center shrink-0">
+                <img src={section.logo} alt="" class="h-4 w-4 object-contain" loading="lazy" />
+              </span>
+              <span class="font-semibold text-[13px] flex-1 truncate">{section.name}</span>
+              <svg class="h-3 w-3 text-white/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 L17 7" />
+                <path d="M9 7h8v8" />
+              </svg>
+            </div>
 
-  <!-- Dropdown panel — translucent dark tint so the lens shows through, while
-       text stays crisp on the foreground. -->
-  <div class="vibrancy-panel relative z-10 w-full rounded-[10px] border border-white/[0.10] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.55),0_4px_12px_-2px_rgba(0,0,0,0.25)] overflow-hidden text-[12px] leading-tight text-white/95">
-
-    {sections.map((section) => (
-      <div class="px-1 pt-1.5">
-        <!-- Section header -->
-        <div class="flex items-center gap-2 px-2 py-1 text-white">
-          <span class="h-4 w-4 flex items-center justify-center shrink-0">
-            <img src={section.logo} alt="" class="h-4 w-4 object-contain" loading="lazy" />
-          </span>
-          <span class="font-semibold text-[13px] flex-1 truncate">{section.name}</span>
-          <svg class="h-3 w-3 text-white/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 17 L17 7" />
-            <path d="M9 7h8v8" />
-          </svg>
-        </div>
-
-        {section.empty ? (
-          <div class="px-2 pb-1.5 pt-0.5 text-white/45 text-[12px]">{section.empty}</div>
-        ) : (
-          <div>
-            {section.items!.map((item) => (
-              <div class="flex items-center gap-2 px-2 py-[5px] rounded-md hover:bg-white/[0.08]">
-                <span class={`h-[7px] w-[7px] rounded-full shrink-0 ${dotClass[item.state]}`}></span>
-                <span class="font-semibold text-white truncate shrink-0 max-w-[40%]">{item.title}</span>
-                {item.meta && (
-                  <span class="text-white/55 truncate shrink min-w-0">{item.meta}</span>
-                )}
-                {item.meta2 && (
-                  <span class="text-white/40 truncate shrink min-w-0 hidden sm:inline">{item.meta2}</span>
-                )}
-                <span class="ml-auto text-white/40 text-[11px] whitespace-nowrap shrink-0 pl-1">{item.time}</span>
+            {section.empty ? (
+              <div class="px-2 pb-1.5 pt-0.5 text-white/45 text-[12px]">{section.empty}</div>
+            ) : (
+              <div>
+                {section.items!.map((item) => (
+                  <div class="flex items-center gap-2 px-2 py-[5px] rounded-md hover:bg-white/[0.08]">
+                    <span class={`h-[7px] w-[7px] rounded-full shrink-0 ${dotClass[item.state]}`}></span>
+                    <span class="font-semibold text-white truncate shrink-0 max-w-[40%]">{item.title}</span>
+                    {item.meta && (
+                      <span class="text-white/55 truncate shrink min-w-0">{item.meta}</span>
+                    )}
+                    {item.meta2 && (
+                      <span class="text-white/40 truncate shrink min-w-0 hidden sm:inline">{item.meta2}</span>
+                    )}
+                    <span class="ml-auto text-white/40 text-[11px] whitespace-nowrap shrink-0 pl-1">{item.time}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
-    ))}
+        ))}
 
-    <!-- Status line -->
-    <div class="px-3 pt-2 pb-1 text-[11px] text-white/40">
-      Updated in 0s · 5/5 ok
-    </div>
-
-    <!-- Divider -->
-    <div class="mx-2 h-px bg-white/[0.08]"></div>
-
-    <!-- Footer menu items -->
-    <div class="px-1 py-1">
-      {footerItems.map((item) => (
-        <div class="flex items-center px-2 py-[5px] rounded-md hover:bg-white/[0.08]">
-          <span class="flex-1 text-white/95">{item.label}</span>
-          {item.shortcut && <span class="text-white/45 text-[11px] tracking-wide font-mono">{item.shortcut}</span>}
+        <!-- Status line -->
+        <div class="px-3 pt-2 pb-1 text-[11px] text-white/40">
+          Updated in 0s · 5/5 ok
         </div>
-      ))}
-    </div>
-  </div>
+
+        <!-- Divider -->
+        <div class="mx-2 h-px bg-white/[0.08]"></div>
+
+        <!-- Footer menu items -->
+        <div class="px-1 py-1">
+          {footerItems.map((item) => (
+            <div class="flex items-center px-2 py-[5px] rounded-md hover:bg-white/[0.08]">
+              <span class="flex-1 text-white/95">{item.label}</span>
+              {item.shortcut && <span class="text-white/45 text-[11px] tracking-wide font-mono">{item.shortcut}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </liquid-glass>
   </div>
 </div>
 
 <style>
-  /* The strip and panel are translucent dark tints. The liquidGL canvas behind
-     them refracts and frosts the wallpaper layer, giving the real "liquid glass"
-     look. Text stays as crisp HTML on the foreground. */
-
   .menu-bar-strip {
     background-color: rgba(28, 28, 30, 0.55);
-    /* Modest CSS blur as a fallback in case liquidGL hasn't loaded yet. */
     -webkit-backdrop-filter: blur(20px) saturate(170%);
     backdrop-filter: blur(20px) saturate(170%);
   }
 
-  .vibrancy-panel {
-    background-color: rgba(20, 20, 24, 0.7);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
+  /* The liquid-glass element renders as inline-block by default; let it fill
+     the wrapper width-wise. Width attribute still drives the SVG filter math. */
+  liquid-glass.dropdown-glass {
+    display: block;
   }
 
-  /* Subtle top-edge highlight so the panel feels lit. */
-  .vibrancy-panel::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.10) 0%,
-      rgba(255, 255, 255, 0.02) 18%,
-      transparent 40%
-    );
-    z-index: 0;
+  /* The slotted content needs to live in a normal block flow, not centered. */
+  liquid-glass.dropdown-glass .dropdown-content {
+    display: block;
+    width: 100%;
   }
 
-  .vibrancy-panel > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Once liquidGL is wired up, ease the CSS blur out so its native frosting
-     can take over without doubling the blur. */
-  .vibrancy-panel.liquid-ready,
-  .menu-bar-strip.liquid-ready {
-    -webkit-backdrop-filter: saturate(140%);
-    backdrop-filter: saturate(140%);
-  }
-
-  /* The lens div liquidGL replaces with its canvas. Round it so the refracted
-     wallpaper is clipped to the menu shape. */
-  .liquidGL-lens {
-    border-radius: 10px;
-  }
-
-  /* Fallback when backdrop-filter is unsupported (e.g. older Firefox). */
+  /* Fallback in older Firefox without backdrop-filter: a solid-ish dark tint
+     so the text still has contrast. */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .menu-bar-strip { background-color: rgba(20, 20, 22, 0.94); }
-    .vibrancy-panel { background-color: rgba(22, 22, 26, 0.92); }
   }
 </style>
 
 <script is:inline>
   /*
-   * liquidGL setup — the trick that makes this look right (vs. our earlier
-   * broken attempt) is that we point `snapshot` at the wallpaper layer ONLY,
-   * NOT at body. That way html2canvas captures the colorful background but
-   * never the menu text, so refraction can never warp/ghost the UI itself.
-   *
-   * The lens is an empty <div> that the library replaces with a WebGL canvas
-   * showing a refracted/frosted version of the snapshot. The menu panel sits
-   * on top with a translucent dark tint and crisp HTML text.
+   * Auto-size the <liquid-glass> dropdown to match its slotted content height.
+   * The component requires an explicit `height` attribute (it generates SVG
+   * displacement/specular maps at that exact size), but our menu content is
+   * variable height, so we measure after layout and write the height back.
    */
-  (function initLiquidGL() {
-    function tryInit() {
-      if (
-        typeof window.liquidGL !== "function" ||
-        typeof window.html2canvas !== "function"
-      ) {
-        return false;
-      }
-      const lensEl = document.querySelector(".liquidGL-lens");
-      const wallpaperEl = document.querySelector(".hero-wallpaper-bg");
-      if (!lensEl || !wallpaperEl) return true; // nothing to do — don't keep retrying
-      window.liquidGL({
-        snapshot: ".hero-wallpaper-bg",
-        target: ".liquidGL-lens",
-        resolution: 2,
-        refraction: 0.008,
-        bevelDepth: 3,
-        bevelWidth: 0.02,
-        frost: 0.25,
-        specular: 0.4,
-        shadow: false,
-        reveal: "none",
-        on: {
-          init: function (lens) {
-            lens.el.style.opacity = "1";
-            // Tell the panel/strip to dial back their CSS blur so the lens's
-            // own frosting isn't doubled-up.
-            document
-              .querySelectorAll(".vibrancy-panel, .menu-bar-strip")
-              .forEach((el) => el.classList.add("liquid-ready"));
-          },
-        },
-      });
-      return true;
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => {
-        if (!tryInit()) {
-          let tries = 0;
-          const id = setInterval(() => {
-            if (tryInit() || ++tries > 40) clearInterval(id);
-          }, 100);
+  (function () {
+    function fit() {
+      document.querySelectorAll("liquid-glass.dropdown-glass").forEach((el) => {
+        const slot = el.querySelector(".dropdown-content");
+        if (!slot) return;
+        // Render once with the attribute height so the inner box is laid out,
+        // then measure the actual content height (children stack by themselves)
+        // and write it back if it diverges by more than 1px.
+        const measured = Math.ceil(slot.scrollHeight);
+        const current = parseFloat(el.getAttribute("height") || "0");
+        if (Math.abs(measured - current) > 1) {
+          el.setAttribute("height", String(measured));
         }
       });
-    } else if (!tryInit()) {
-      let tries = 0;
-      const id = setInterval(() => {
-        if (tryInit() || ++tries > 40) clearInterval(id);
-      }, 100);
     }
+    function whenReady() {
+      if (customElements.get("liquid-glass")) {
+        // Defer one frame so initial render lands first.
+        requestAnimationFrame(() => requestAnimationFrame(fit));
+      } else {
+        customElements.whenDefined("liquid-glass").then(() => {
+          requestAnimationFrame(() => requestAnimationFrame(fit));
+        });
+      }
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", whenReady);
+    } else {
+      whenReady();
+    }
+    // Re-fit on viewport resize in case fonts/layout shift.
+    window.addEventListener("resize", fit);
   })();
 </script>
