@@ -3,13 +3,33 @@ import Foundation
 /// In-memory LRU layer over `HTTPResponseCache`. Holds the hottest 512 ETag
 /// entries so the menu first-paint reads from RAM, with the SQLite store as a
 /// fallback after process restart.
+///
+/// Implementation: classic doubly-linked list + dictionary. Earlier versions
+/// stored ordering in a `[String]` and called `removeAll { $0 == key }` on
+/// every touch — O(n) per cache hit, which becomes painful when a single poll
+/// resolves dozens of ETag-keyed URLs.
 public actor ETagCache {
     public static let defaultMaxEntries = 512
 
+    private final class Node {
+        let key: String
+        var etag: String
+        var data: Data
+        var prev: Node?
+        var next: Node?
+
+        init(key: String, etag: String, data: Data) {
+            self.key = key
+            self.etag = etag
+            self.data = data
+        }
+    }
+
     private let maxEntries: Int
     private let persistentStore: HTTPResponseCache?
-    private var store: [String: (etag: String, data: Data)] = [:]
-    private var entryOrder: [String] = []
+    private var nodes: [String: Node] = [:]
+    private var head: Node?  // least-recently used
+    private var tail: Node?  // most-recently used
     private var rateLimitedUntil: Date?
 
     public init(maxEntries: Int = ETagCache.defaultMaxEntries, persistentStore: HTTPResponseCache? = nil) {
@@ -23,25 +43,28 @@ public actor ETagCache {
 
     public func cached(for url: URL) -> (etag: String, data: Data)? {
         let key = url.absoluteString
-        if let cached = store[key] {
-            touch(key)
-            return cached
+        if let node = nodes[key] {
+            moveToTail(node)
+            return (node.etag, node.data)
         }
         guard let cached = persistentStore?.cached(url: url) else { return nil }
-        let value = (cached.etag, cached.data)
-        store[key] = value
-        touch(key)
-        evictIfNeeded()
-        return value
+        if maxEntries > 0 {
+            insertNew(key: key, etag: cached.etag, data: cached.data)
+        }
+        return (cached.etag, cached.data)
     }
 
     public func save(url: URL, etag: String?, data: Data, response: HTTPURLResponse? = nil) {
         guard let etag else { return }
         let key = url.absoluteString
         if maxEntries > 0 {
-            store[key] = (etag, data)
-            touch(key)
-            evictIfNeeded()
+            if let existing = nodes[key] {
+                existing.etag = etag
+                existing.data = data
+                moveToTail(existing)
+            } else {
+                insertNew(key: key, etag: etag, data: data)
+            }
         }
         persistentStore?.save(url: url, etag: etag, data: data, response: response)
     }
@@ -67,25 +90,55 @@ public actor ETagCache {
     }
 
     public func clear() {
-        store.removeAll()
-        entryOrder.removeAll()
+        nodes.removeAll()
+        head = nil
+        tail = nil
         rateLimitedUntil = nil
         persistentStore?.clear()
     }
 
     public func count() -> Int {
-        persistentStore?.count() ?? store.count
+        persistentStore?.count() ?? nodes.count
     }
 
-    private func touch(_ key: String) {
-        entryOrder.removeAll { $0 == key }
-        entryOrder.append(key)
+    // MARK: - LRU plumbing
+
+    private func insertNew(key: String, etag: String, data: Data) {
+        let node = Node(key: key, etag: etag, data: data)
+        nodes[key] = node
+        attachAtTail(node)
+        evictIfNeeded()
+    }
+
+    private func moveToTail(_ node: Node) {
+        guard tail !== node else { return }
+        detach(node)
+        attachAtTail(node)
+    }
+
+    private func attachAtTail(_ node: Node) {
+        node.prev = tail
+        node.next = nil
+        tail?.next = node
+        tail = node
+        if head == nil { head = node }
+    }
+
+    private func detach(_ node: Node) {
+        let p = node.prev
+        let n = node.next
+        p?.next = n
+        n?.prev = p
+        if head === node { head = n }
+        if tail === node { tail = p }
+        node.prev = nil
+        node.next = nil
     }
 
     private func evictIfNeeded() {
-        while store.count > maxEntries, let oldest = entryOrder.first {
-            entryOrder.removeFirst()
-            store[oldest] = nil
+        while nodes.count > maxEntries, let oldest = head {
+            detach(oldest)
+            nodes.removeValue(forKey: oldest.key)
         }
     }
 }

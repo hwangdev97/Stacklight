@@ -5,6 +5,7 @@ import Combine
 @MainActor
 final class AppState: ObservableObject {
     @Published var deployments: [Deployment] = []
+    @Published private(set) var deploymentsByProvider: [String: [Deployment]] = [:]
     @Published var errors: [String: String] = [:]
     @Published var lastRefresh: Date?
     @Published var isRefreshing: Bool = false
@@ -41,14 +42,31 @@ final class AppState: ObservableObject {
         let interval = SettingsStore.shared.pollIntervalSeconds
         pollingManager.pollInterval = interval > 0 ? interval : 60
 
-        pollingManager.onUpdate = { [weak self] newDeployments in
+        pollingManager.onUpdatePerProvider = { [weak self] successesByProvider in
             guard let self else { return }
             let old = self.deployments
-            self.deployments = newDeployments
+
+            var merged = self.deploymentsByProvider
+            for (providerID, deployments) in successesByProvider {
+                merged[providerID] = deployments
+            }
+            let configuredIDs = Set(ServiceRegistry.shared.configuredProviders.map(\.id))
+            merged = merged.filter { configuredIDs.contains($0.key) }
+
+            let flat = merged.values
+                .flatMap { $0 }
+                .sorted { $0.createdAt > $1.createdAt }
+
+            if merged != self.deploymentsByProvider {
+                self.deploymentsByProvider = merged
+            }
+            if flat != self.deployments {
+                self.deployments = flat
+            }
             self.lastRefresh = Date()
             self.finishRefresh()
-            NotificationManager.shared.checkForChangesPersistent(old: old, new: newDeployments)
-            self.publishSnapshot(newDeployments)
+            NotificationManager.shared.checkForChangesPersistent(old: old, new: flat)
+            self.publishSnapshot(flat)
         }
         pollingManager.onError = { [weak self] providerID, error in
             self?.errors[providerID] = error.localizedDescription

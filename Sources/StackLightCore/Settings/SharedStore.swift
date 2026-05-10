@@ -32,9 +32,7 @@ public enum SharedStore {
     public static func write(_ snapshot: Snapshot) {
         guard let defaults else { return }
         do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            let data = try encoder.encode(snapshot)
+            let data = try SharedJSON.snapshotEncoder.encode(snapshot)
             defaults.set(data, forKey: snapshotKey)
         } catch {
             // Swallow — a failed snapshot write shouldn't crash the app.
@@ -49,9 +47,7 @@ public enum SharedStore {
         guard let defaults, let data = defaults.data(forKey: snapshotKey) else {
             return nil
         }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        guard let snapshot = try? decoder.decode(Snapshot.self, from: data),
+        guard let snapshot = try? SharedJSON.snapshotDecoder.decode(Snapshot.self, from: data),
               snapshot.schemaVersion == schemaVersion else { return nil }
         return snapshot
     }

@@ -67,11 +67,11 @@ public final class GitHubPRProvider: DeploymentProvider {
 
         let (data, http) = try await RequestRunner.shared.execute(request: request)
         if !(200...299).contains(http.statusCode) {
-            let message = (try? JSONDecoder().decode(GitHubErrorResponse.self, from: data))?.message
+            let message = (try? SharedJSON.decoder.decode(GitHubErrorResponse.self, from: data))?.message
                 ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
             throw GitHubPRRequestError(statusCode: http.statusCode, apiMessage: message)
         }
-        let prs = try JSONDecoder.ghPRDecoder.decode([GHPullRequest].self, from: data)
+        let prs = try SharedJSON.iso8601Decoder.decode([GHPullRequest].self, from: data)
         return prs.map { $0.toDeployment(repo: repo) }
     }
 
@@ -154,21 +154,4 @@ private struct GHPullRequest: Decodable {
     }
 }
 
-// MARK: - JSON Decoder for GitHub API (ISO8601 dates)
-
-private extension JSONDecoder {
-    static let ghPRDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
-        }
-        return decoder
-    }()
-}
+// JSON decoder for GitHub APIs lives in SharedJSON.iso8601Decoder.

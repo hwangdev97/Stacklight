@@ -89,7 +89,7 @@ public enum FeedbackService {
             throw FeedbackError.httpError(status: http.statusCode, message: message)
         }
 
-        let decoded = try JSONDecoder().decode(IssueResponse.self, from: data)
+        let decoded = try SharedJSON.decoder.decode(IssueResponse.self, from: data)
         guard let issueURL = URL(string: decoded.html_url) else {
             throw FeedbackError.invalidResponse
         }

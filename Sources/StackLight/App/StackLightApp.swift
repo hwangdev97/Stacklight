@@ -40,8 +40,8 @@ private struct MenuBarRootView: View {
 
     var body: some View {
         MenuBarContentView(
-            providers: ServiceRegistry.shared.providers.filter { $0.isConfigured },
-            deployments: appState.deployments,
+            providers: ServiceRegistry.shared.configuredProviders,
+            deploymentsByProvider: appState.deploymentsByProvider,
             errors: appState.errors,
             lastRefresh: appState.lastRefresh,
             onRefresh: { appState.refresh() },

@@ -1,4 +1,5 @@
 import Foundation
+import StackLightCore
 
 #if os(macOS)
 import AppKit
@@ -127,7 +128,7 @@ enum UpdateChecker {
             throw URLError(.badServerResponse)
         }
 
-        return try JSONDecoder().decode(GitHubRelease.self, from: data)
+        return try SharedJSON.decoder.decode(GitHubRelease.self, from: data)
     }
 
     private static func normalizedVersion(_ value: String) -> [Int] {

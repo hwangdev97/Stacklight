@@ -14,6 +14,21 @@ import Foundation
 public actor RequestRunner {
     public static let shared = RequestRunner()
 
+    /// Dedicated URLSession used by every provider. We avoid `URLSession.shared`
+    /// because its defaults (4 connections per host, 60s request timeout, no
+    /// network reachability waiting) don't fit a long-running menu bar app
+    /// that fans out across ~9 hosts on every poll.
+    private static let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        config.httpMaximumConnectionsPerHost = 6
+        config.waitsForConnectivity = true
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        config.urlCache = nil // we run our own ETag/HTTP cache
+        return URLSession(configuration: config)
+    }()
+
     private let backoff: BackoffTracker
     private let etagCache: ETagCache
     private var lastRateLimitReset: Date?
@@ -95,7 +110,7 @@ public actor RequestRunner {
 
         let (data, urlResponse): (Data, URLResponse)
         do {
-            (data, urlResponse) = try await URLSession.shared.data(for: request)
+            (data, urlResponse) = try await Self.session.data(for: request)
         } catch {
             await DiagnosticsLogger.shared.message(
                 "HTTP \(request.httpMethod ?? "GET") \(url.path) network-error=\(error.localizedDescription)"

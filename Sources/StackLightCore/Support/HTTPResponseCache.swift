@@ -329,7 +329,7 @@ public final class HTTPResponseCache: @unchecked Sendable {
             guard let key = pair.key as? String else { return }
             result[key] = "\(pair.value)"
         }
-        guard let data = try? JSONEncoder().encode(headers) else { return nil }
+        guard let data = try? SharedJSON.encoder.encode(headers) else { return nil }
         return String(data: data, encoding: .utf8)
     }
 }

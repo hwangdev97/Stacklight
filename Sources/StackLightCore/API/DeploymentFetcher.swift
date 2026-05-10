@@ -5,11 +5,27 @@ import Foundation
 /// refresh handler can reuse the exact same fetch logic under a tighter
 /// deadline (BGAppRefreshTask gives us roughly 30 seconds).
 public enum DeploymentFetcher {
-    public static func fetchAll(deadline: TimeInterval) async
-        -> (deployments: [Deployment], errors: [(String, Error)])
-    {
+    /// Per-provider outcome captured from a single fetch pass. `successes`
+    /// only includes providers whose top-level fetch returned without
+    /// throwing — providers that errored out (or hit the deadline) are
+    /// reported in `errors` and **omitted** from `successes` so the caller
+    /// can decide whether to merge with prior state or wipe the slot.
+    public struct BatchResult {
+        public let successes: [String: [Deployment]]
+        public let errors: [(String, Error)]
+
+        public init(successes: [String: [Deployment]], errors: [(String, Error)]) {
+            self.successes = successes
+            self.errors = errors
+        }
+    }
+
+    /// Per-provider variant. Lets callers (`AppState`) keep last-known-good
+    /// deployments for providers that errored on this pass — a rate-limited
+    /// service no longer wipes its rows from the menu mid-poll.
+    public static func fetchAllPerProvider(deadline: TimeInterval) async -> BatchResult {
         let providers = ServiceRegistry.shared.configuredProviders
-        guard !providers.isEmpty else { return ([], []) }
+        guard !providers.isEmpty else { return BatchResult(successes: [:], errors: []) }
 
         return await withTaskGroup(of: (String, Result<DeploymentFetchResult, Error>).self) { group in
             for provider in providers {
@@ -29,7 +45,7 @@ public enum DeploymentFetcher {
                 return ("__deadline__", .failure(CancellationError()))
             }
 
-            var all: [Deployment] = []
+            var successes: [String: [Deployment]] = [:]
             var errs: [(String, Error)] = []
             for await (providerID, result) in group {
                 if providerID == "__deadline__" {
@@ -38,7 +54,7 @@ public enum DeploymentFetcher {
                 }
                 switch result {
                 case .success(let fetchResult):
-                    all.append(contentsOf: fetchResult.deployments)
+                    successes[providerID] = fetchResult.deployments
                     if !fetchResult.itemErrors.isEmpty {
                         // Collapse per-entry failures into one provider-level
                         // error so existing sidebar/menu logic (keyed by
@@ -54,8 +70,21 @@ public enum DeploymentFetcher {
                     errs.append((providerID, error))
                 }
             }
-            return (all.sorted { $0.createdAt > $1.createdAt }, errs)
+            return BatchResult(successes: successes, errors: errs)
         }
+    }
+
+    /// Flat-list variant kept for callers (iOS background refresh, widget
+    /// timeline) that don't need per-provider granularity.
+    public static func fetchAll(deadline: TimeInterval) async
+        -> (deployments: [Deployment], errors: [(String, Error)])
+    {
+        let batch = await fetchAllPerProvider(deadline: deadline)
+        let flat = batch.successes
+            .values
+            .flatMap { $0 }
+            .sorted { $0.createdAt > $1.createdAt }
+        return (flat, batch.errors)
     }
 }
 

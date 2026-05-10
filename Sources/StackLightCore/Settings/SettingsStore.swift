@@ -134,13 +134,13 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
 
     private static func persist(_ settings: UserSettings, to defaults: UserDefaults) {
         let envelope = SettingsEnvelope(version: currentVersion, settings: settings)
-        guard let data = try? JSONEncoder().encode(envelope) else { return }
+        guard let data = try? SharedJSON.encoder.encode(envelope) else { return }
         defaults.set(data, forKey: storageKey)
     }
 
     private static func loadInitial(defaults: UserDefaults) -> UserSettings {
         if let data = defaults.data(forKey: storageKey),
-           let envelope = try? JSONDecoder().decode(SettingsEnvelope.self, from: data) {
+           let envelope = try? SharedJSON.decoder.decode(SettingsEnvelope.self, from: data) {
             var settings = envelope.settings
             if envelope.version < currentVersion {
                 applyMigrations(to: &settings, fromVersion: envelope.version, defaults: defaults)

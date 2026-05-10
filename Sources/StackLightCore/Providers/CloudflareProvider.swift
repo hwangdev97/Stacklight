@@ -65,7 +65,7 @@ public final class CloudflareProvider: DeploymentProvider {
         guard let url = URL(string: urlString) else { return [] }
 
         let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
-        let response = try JSONDecoder().decode(CFProjectsResponse.self, from: data)
+        let response = try SharedJSON.decoder.decode(CFProjectsResponse.self, from: data)
         return response.result.map(\.name)
     }
 
@@ -74,7 +74,7 @@ public final class CloudflareProvider: DeploymentProvider {
         guard let url = URL(string: urlString) else { return [] }
 
         let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
-        let response = try JSONDecoder().decode(CFResponse.self, from: data)
+        let response = try SharedJSON.decoder.decode(CFResponse.self, from: data)
         return response.result.prefix(5).map { $0.toDeployment(projectName: projectName) }
     }
 }
@@ -115,16 +115,13 @@ private struct CFDeployment: Decodable {
     }
 
     func toDeployment(projectName: String) -> Deployment {
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
         return Deployment(
             id: id,
             providerID: "cloudflare",
             projectName: projectName,
             status: mapStatus(latest_stage?.status),
             url: url.flatMap { URL(string: $0) },
-            createdAt: created_on.flatMap { dateFormatter.date(from: $0) } ?? Date(),
+            createdAt: created_on.flatMap { SharedFormatters.iso8601InternetWithFractional.date(from: $0) } ?? Date(),
             commitMessage: deployment_trigger?.metadata?.commit_message,
             branch: deployment_trigger?.metadata?.branch
         )
