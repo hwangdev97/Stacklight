@@ -87,8 +87,9 @@ const toggles = [
 
       <!-- Stage -->
       <section class="relative overflow-hidden">
-        <!-- Wallpaper background, full bleed -->
-        <div class="absolute inset-0" style="background: url('/wallpaper.webp') center/cover no-repeat;" aria-hidden="true"></div>
+        <!-- Wallpaper background, full bleed. Uses the same .hero-wallpaper-bg
+             class so the MenuBarMock's liquidGL setup snapshots it. -->
+        <div class="hero-wallpaper-bg absolute inset-0" style="background: url('/wallpaper.webp') center/cover no-repeat;" aria-hidden="true"></div>
         <!-- Center the mock -->
         <div class="relative h-full min-h-[calc(100vh-49px)] flex items-start justify-center pt-12 pb-12">
           <div class="w-full max-w-[400px]">
@@ -180,7 +181,7 @@ const toggles = [
       const c = readConfig();
       tearDownLens();
       window.liquidGL({
-        snapshot: ".hero-wallpaper",
+        snapshot: ".hero-wallpaper-bg",
         target: ".liquidGL-lens",
         resolution: c.resolution,
         refraction: c.refraction,
