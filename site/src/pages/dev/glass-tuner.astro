@@ -1,0 +1,290 @@
+---
+import Base from "../../layouts/Base.astro";
+import MenuBarMock from "../../components/MenuBarMock.astro";
+
+// All liquidGL knobs plus a couple of panel-level CSS knobs.
+// Each control declares: storage key, label, min/max/step, default value,
+// and whether changing it requires a full re-init (vs. a live param update).
+const controls = [
+  // — liquidGL params —
+  { key: "refraction", label: "Refraction", min: 0, max: 0.1, step: 0.001, value: 0.008, group: "glass" },
+  { key: "bevelDepth", label: "Bevel depth", min: 0, max: 30, step: 0.5, value: 3, group: "glass" },
+  { key: "bevelWidth", label: "Bevel width", min: 0, max: 0.5, step: 0.005, value: 0.02, group: "glass" },
+  { key: "frost", label: "Frost", min: 0, max: 1, step: 0.01, value: 0.25, group: "glass" },
+  { key: "specular", label: "Specular", min: 0, max: 2, step: 0.05, value: 0.4, group: "glass" },
+  { key: "magnify", label: "Magnify", min: 0.5, max: 2, step: 0.01, value: 1, group: "glass" },
+  { key: "resolution", label: "Resolution (re-init)", min: 0.5, max: 3, step: 0.1, value: 2, group: "perf", reinit: true },
+  { key: "tiltFactor", label: "Tilt factor", min: 0, max: 30, step: 0.5, value: 5, group: "glass" },
+  // — panel CSS —
+  { key: "panelAlpha", label: "Panel bg opacity", min: 0, max: 1, step: 0.01, value: 0.7, group: "panel", css: true },
+  { key: "panelBlur", label: "Panel CSS blur (px)", min: 0, max: 60, step: 1, value: 24, group: "panel", css: true },
+  { key: "panelSat", label: "Panel saturate (%)", min: 100, max: 300, step: 5, value: 180, group: "panel", css: true },
+  { key: "stripAlpha", label: "Strip bg opacity", min: 0, max: 1, step: 0.01, value: 0.55, group: "panel", css: true },
+];
+
+const toggles = [
+  { key: "tilt", label: "Tilt on hover", value: false },
+  { key: "shadow", label: "Drop shadow", value: false },
+];
+---
+
+<Base title="StackLight — Glass Tuner (dev)">
+  <main class="min-h-screen bg-white">
+    <!-- Top header bar -->
+    <header class="border-b border-hairline px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-300 px-2 py-0.5 text-[11px] font-medium text-amber-700">DEV</span>
+        <h1 class="text-base font-semibold text-ink">Glass Tuner</h1>
+        <span class="text-xs text-muted">Live edit liquidGL + panel params on the menu mock</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="copyBtn" class="text-xs rounded-md border border-hairline px-2.5 py-1 hover:bg-surface">Copy config</button>
+        <button id="resetBtn" class="text-xs rounded-md border border-hairline px-2.5 py-1 hover:bg-surface">Reset</button>
+      </div>
+    </header>
+
+    <div class="grid lg:grid-cols-[320px_1fr] min-h-[calc(100vh-49px)]">
+      <!-- Controls sidebar -->
+      <aside class="border-r border-hairline bg-surface p-4 overflow-y-auto max-h-[calc(100vh-49px)] sticky top-0">
+        <form id="tunerForm" class="flex flex-col gap-5">
+          {["glass", "panel", "perf"].map((group) => (
+            <fieldset class="flex flex-col gap-3">
+              <legend class="text-xs font-semibold uppercase tracking-wider text-soft">{group === "glass" ? "WebGL Glass" : group === "panel" ? "Panel CSS" : "Performance"}</legend>
+              {controls.filter((c) => c.group === group).map((c) => (
+                <label class="flex flex-col gap-1">
+                  <div class="flex items-center justify-between text-xs text-ink">
+                    <span>{c.label}</span>
+                    <output data-key={c.key} class="font-mono text-muted">{c.value}</output>
+                  </div>
+                  <input
+                    type="range"
+                    name={c.key}
+                    min={c.min}
+                    max={c.max}
+                    step={c.step}
+                    value={c.value}
+                    data-default={c.value}
+                    data-reinit={c.reinit ? "1" : "0"}
+                    data-css={c.css ? "1" : "0"}
+                    class="h-1 w-full cursor-pointer appearance-none rounded bg-hairline accent-accent"
+                  />
+                </label>
+              ))}
+            </fieldset>
+          ))}
+
+          <fieldset class="flex flex-col gap-2">
+            <legend class="text-xs font-semibold uppercase tracking-wider text-soft">Toggles</legend>
+            {toggles.map((t) => (
+              <label class="flex items-center justify-between gap-2 text-xs text-ink">
+                <span>{t.label}</span>
+                <input type="checkbox" name={t.key} data-default={t.value ? "1" : "0"} checked={t.value} data-reinit="1" class="accent-accent" />
+              </label>
+            ))}
+          </fieldset>
+        </form>
+      </aside>
+
+      <!-- Stage -->
+      <section class="relative overflow-hidden">
+        <!-- Wallpaper background, full bleed -->
+        <div class="absolute inset-0" style="background: url('/wallpaper.jpg') center/cover no-repeat;" aria-hidden="true"></div>
+        <!-- Center the mock -->
+        <div class="relative h-full min-h-[calc(100vh-49px)] flex items-start justify-center pt-12 pb-12">
+          <div class="w-full max-w-[400px]">
+            <MenuBarMock />
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</Base>
+
+<script is:inline>
+  // Wait for liquidGL to be available, then drive it from the form.
+  (function () {
+    const form = document.getElementById("tunerForm");
+    if (!form) return;
+
+    const outputs = form.querySelectorAll("output[data-key]");
+    function syncOutputs() {
+      outputs.forEach((o) => {
+        const key = o.dataset.key;
+        const input = form.querySelector(`input[name="${key}"]`);
+        if (input) o.textContent = input.value;
+      });
+    }
+
+    function readConfig() {
+      const c = {};
+      form.querySelectorAll("input[type=range]").forEach((i) => {
+        c[i.name] = parseFloat(i.value);
+      });
+      form.querySelectorAll("input[type=checkbox]").forEach((i) => {
+        c[i.name] = i.checked;
+      });
+      return c;
+    }
+
+    function applyCssParams(c) {
+      const panel = document.querySelector(".vibrancy-panel");
+      const strip = document.querySelector(".menu-bar-strip");
+      if (panel) {
+        panel.style.backgroundColor = `rgba(20, 20, 24, ${c.panelAlpha})`;
+        panel.style.backdropFilter = `blur(${c.panelBlur}px) saturate(${c.panelSat}%)`;
+        panel.style.webkitBackdropFilter = `blur(${c.panelBlur}px) saturate(${c.panelSat}%)`;
+      }
+      if (strip) {
+        strip.style.backgroundColor = `rgba(28, 28, 30, ${c.stripAlpha})`;
+        strip.style.backdropFilter = `blur(${Math.round(c.panelBlur * 0.85)}px) saturate(${c.panelSat}%)`;
+        strip.style.webkitBackdropFilter = `blur(${Math.round(c.panelBlur * 0.85)}px) saturate(${c.panelSat}%)`;
+      }
+    }
+
+    function applyLiveLensParams(c) {
+      const r = window.__liquidGLRenderer__;
+      const lens = r && r.lenses && r.lenses[0];
+      if (!lens) return;
+      const o = lens.options;
+      o.refraction = c.refraction;
+      o.bevelDepth = c.bevelDepth;
+      o.bevelWidth = c.bevelWidth;
+      o.frost = c.frost;
+      o.specular = c.specular;
+      o.magnify = c.magnify;
+      o.tiltFactor = c.tiltFactor;
+      o.tilt = c.tilt;
+      r.render();
+    }
+
+    function tearDownLens() {
+      const r = window.__liquidGLRenderer__;
+      if (!r) return;
+      try {
+        // Cancel any RAF the lib has running
+        if (r._rafId) cancelAnimationFrame(r._rafId);
+        if (r.canvas && r.canvas.parentNode) r.canvas.parentNode.removeChild(r.canvas);
+        // Restore the lens placeholder so we can re-init against it
+        r.lenses.forEach((ln) => {
+          if (ln.el) {
+            ln.el.style.opacity = "";
+            // Empty out anything the lib injected so re-init starts fresh
+            while (ln.el.firstChild) ln.el.removeChild(ln.el.firstChild);
+          }
+        });
+      } catch (_) {}
+      delete window.__liquidGLRenderer__;
+    }
+
+    function fullReinit() {
+      const c = readConfig();
+      tearDownLens();
+      window.liquidGL({
+        snapshot: ".hero-wallpaper",
+        target: ".liquidGL-lens",
+        resolution: c.resolution,
+        refraction: c.refraction,
+        bevelDepth: c.bevelDepth,
+        bevelWidth: c.bevelWidth,
+        frost: c.frost,
+        specular: c.specular,
+        magnify: c.magnify,
+        tilt: c.tilt,
+        tiltFactor: c.tiltFactor,
+        shadow: c.shadow,
+        reveal: "none",
+        on: {
+          init: function (lens) {
+            lens.el.style.opacity = "1";
+          },
+        },
+      });
+      // Belt-and-suspenders: keep the canvas opacity at 1.
+      setTimeout(() => {
+        const r = window.__liquidGLRenderer__;
+        if (r && r.canvas) r.canvas.style.opacity = "1";
+        applyCssParams(c);
+      }, 50);
+    }
+
+    // Debounced full re-init for params that need a fresh lib instance.
+    let reinitTimer = null;
+    function debouncedReinit() {
+      clearTimeout(reinitTimer);
+      reinitTimer = setTimeout(fullReinit, 120);
+    }
+
+    function onFormChange(e) {
+      const t = e.target;
+      if (!t || !(t.name in readConfig())) return;
+      syncOutputs();
+      const c = readConfig();
+      if (t.dataset.css === "1") {
+        applyCssParams(c);
+        return;
+      }
+      if (t.dataset.reinit === "1") {
+        debouncedReinit();
+        return;
+      }
+      // Live update for non-reinit lens params.
+      applyLiveLensParams(c);
+    }
+
+    form.addEventListener("input", onFormChange);
+    form.addEventListener("change", onFormChange);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      form.querySelectorAll("input[type=range]").forEach((i) => { i.value = i.dataset.default; });
+      form.querySelectorAll("input[type=checkbox]").forEach((i) => { i.checked = i.dataset.default === "1"; });
+      syncOutputs();
+      fullReinit();
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const c = readConfig();
+      const text = JSON.stringify({
+        liquidGL: {
+          resolution: c.resolution, refraction: c.refraction,
+          bevelDepth: c.bevelDepth, bevelWidth: c.bevelWidth,
+          frost: c.frost, specular: c.specular, magnify: c.magnify,
+          tilt: c.tilt, tiltFactor: c.tiltFactor, shadow: c.shadow,
+        },
+        panel: {
+          backgroundColor: `rgba(20, 20, 24, ${c.panelAlpha})`,
+          backdropFilter: `blur(${c.panelBlur}px) saturate(${c.panelSat}%)`,
+        },
+        strip: {
+          backgroundColor: `rgba(28, 28, 30, ${c.stripAlpha})`,
+        },
+      }, null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        const b = document.getElementById("copyBtn");
+        const orig = b.textContent;
+        b.textContent = "Copied ✓";
+        setTimeout(() => (b.textContent = orig), 1200);
+      } catch (_) {
+        alert(text);
+      }
+    });
+
+    // Initial: wait for liquidGL to load and the existing init in MenuBarMock
+    // to run, then apply current form values on top.
+    function whenReady(fn) {
+      let tries = 0;
+      const id = setInterval(() => {
+        if (window.__liquidGLRenderer__ || ++tries > 50) {
+          clearInterval(id);
+          fn();
+        }
+      }, 100);
+    }
+    whenReady(() => {
+      syncOutputs();
+      // Tear down the auto-init from the component and rebuild with our values
+      // so the form is the single source of truth.
+      fullReinit();
+    });
+  })();
+</script>
