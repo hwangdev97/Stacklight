@@ -8,19 +8,6 @@ import MenuBarMock from "../components/MenuBarMock.astro";
   <div class="absolute inset-0 bg-hero-glow pointer-events-none"></div>
   <div class="absolute inset-0 grid-noise opacity-[0.4] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)]"></div>
 
-  <!-- Wallpaper anchored to the right half. Masked left→right so the image
-       fades in from the page background instead of cutting hard against
-       the copy column. -->
-  <div
-    class="hero-wallpaper-bg absolute inset-y-0 right-0 w-[58%] pointer-events-none"
-    aria-hidden="true"
-    style="background-image: url('/wallpaper.jpg');
-           background-size: cover;
-           background-position: center;
-           -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 18%, black 55%);
-           mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 18%, black 55%);"
-  ></div>
-
   <div class="relative mx-auto max-w-container px-6 py-10 md:py-14 w-full">
     <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
       <div class="flex flex-col items-center md:items-start text-center md:text-left gap-7">
@@ -50,8 +37,21 @@ import MenuBarMock from "../components/MenuBarMock.astro";
         </p>
       </div>
 
-      <div class="md:justify-self-end w-full max-w-[400px] mx-auto md:mx-0">
-        <MenuBarMock />
+      <!-- Right column wraps the mock with a tightly scoped wallpaper backdrop
+           that's only slightly taller/wider than the mock itself. -->
+      <div class="md:justify-self-end w-full max-w-[400px] mx-auto md:mx-0 relative">
+        <div
+          class="hero-wallpaper-bg absolute -inset-y-6 -inset-x-10 -z-0 pointer-events-none"
+          aria-hidden="true"
+          style="background-image: url('/wallpaper.jpg');
+                 background-size: cover;
+                 background-position: center;
+                 -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 12%, black 38%);
+                 mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 12%, black 38%);"
+        ></div>
+        <div class="relative z-10">
+          <MenuBarMock />
+        </div>
       </div>
     </div>
   </div>
