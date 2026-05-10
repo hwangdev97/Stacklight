@@ -110,8 +110,10 @@ const dotClass: Record<State, string> = {
   </div>
 
   <!-- Panel container: holds an empty liquidGL lens (which becomes a refracted
-       wallpaper canvas) and the actual menu content layered on top. -->
-  <div class="relative mt-1.5 ml-auto w-full">
+       wallpaper canvas) and the actual menu content layered on top.
+       overflow-hidden + matching border-radius clips any bevel/refraction
+       artifacts the WebGL canvas might draw past the panel edge. -->
+  <div class="relative mt-1.5 ml-auto w-full rounded-[10px] overflow-hidden">
     <!-- Lens: liquidGL replaces this with a canvas that refracts/frosts the
          wallpaper layer behind. Sized to match the panel exactly. -->
     <div class="liquidGL-lens absolute inset-0 pointer-events-none rounded-[10px]" aria-hidden="true"></div>
@@ -263,11 +265,11 @@ const dotClass: Record<State, string> = {
         snapshot: ".hero-wallpaper",
         target: ".liquidGL-lens",
         resolution: 2,
-        refraction: 0.018,
-        bevelDepth: 8,
-        bevelWidth: 0.05,
-        frost: 0.35,
-        specular: 0.5,
+        refraction: 0.008,
+        bevelDepth: 3,
+        bevelWidth: 0.02,
+        frost: 0.25,
+        specular: 0.4,
         shadow: false,
         reveal: "none",
         on: {
