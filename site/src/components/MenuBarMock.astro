@@ -272,14 +272,14 @@ const dotClass: Record<State, string> = {
 
   /* "Flat" variant for icons that already carry their own design (multi-color
      marks, full iOS-style app icons). No brand-tint background, no white
-     filter — render the asset as-is at the same nominal size, with a soft
-     drop shadow + rounded corners so it lines up visually with the badged
-     icons next to it. */
+     filter — render the asset as-is, cropped to a circle to match the badged
+     icons next to it. object-fit:cover so the visual content fills the circle
+     instead of being letter-boxed. */
   .icon-flat {
     width: 20px;
     height: 20px;
-    object-fit: contain;
-    border-radius: 5px;
+    object-fit: cover;
+    border-radius: 9999px;
     filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.35));
   }
 </style>
