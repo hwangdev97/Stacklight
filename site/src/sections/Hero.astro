@@ -1,42 +1,165 @@
 ---
-import Button from "../components/Button.astro";
 import MenuBarMock from "../components/MenuBarMock.astro";
+
+// Default to the user-pinned release tag. Client-side script below upgrades
+// the link to the actual latest release asset URL on page load.
+const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/v0.1.0";
 ---
 
-<section class="relative overflow-hidden">
+<script>
+  // Render paper.design's static mesh gradient shader as the hero wallpaper.
+  // Vector-quality at any DPR, no image asset, no compression artifacts.
+  import {
+    ShaderMount,
+    staticMeshGradientFragmentShader,
+    getShaderColorFromString,
+    ShaderFitOptions,
+  } from "@paper-design/shaders";
+
+  function mountHeroShader() {
+    const host = document.querySelector(".hero-wallpaper-bg");
+    if (!host || host.dataset.shaderMounted === "1") return;
+    host.dataset.shaderMounted = "1";
+
+    const colors = ["#ff3a8c", "#7a1fff", "#ff6ad5", "#ffd1ec"].map(
+      getShaderColorFromString,
+    );
+
+    const uniforms = {
+      u_colors: colors,
+      u_colorsCount: colors.length,
+      u_positions: 2,
+      u_waveX: 1,
+      u_waveXShift: 0.6,
+      u_waveY: 1,
+      u_waveYShift: 0.21,
+      u_mixing: 0.93,
+      u_grainMixer: 0.15,
+      u_grainOverlay: 0.06,
+      // Sizing — fit:cover, neutral transform.
+      u_fit: ShaderFitOptions.cover,
+      u_scale: 1,
+      u_rotation: 270,
+      u_originX: 0.5,
+      u_originY: 0.5,
+      u_offsetX: 0,
+      u_offsetY: 0,
+      u_worldWidth: 0,
+      u_worldHeight: 0,
+    };
+
+    new ShaderMount(
+      host as HTMLElement,
+      staticMeshGradientFragmentShader,
+      uniforms,
+      // preserveDrawingBuffer:true so html2canvas (used by liquidGL) can
+      // read the WebGL canvas pixels for the lens snapshot.
+      { preserveDrawingBuffer: true, antialias: true },
+      0, // speed=0 → static, no rAF loop after first paint
+    );
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountHeroShader);
+  } else {
+    mountHeroShader();
+  }
+
+  // Resolve the download link to the actual latest release asset on page load.
+  // Caches the resolved URL in sessionStorage so we only hit the GitHub API
+  // once per tab and don't burn the unauthenticated 60 req/hr rate limit.
+  function resolveLatestRelease() {
+    const a = document.getElementById("hero-download") as HTMLAnchorElement | null;
+    if (!a) return;
+    const cached = sessionStorage.getItem("stacklight-latest-release");
+    if (cached) {
+      const { href, tag } = JSON.parse(cached);
+      a.href = href;
+      const v = a.querySelector("[data-version]");
+      if (v && tag) v.textContent = tag;
+      return;
+    }
+    fetch("https://api.github.com/repos/hwangdev97/Stacklight/releases/latest", {
+      headers: { Accept: "application/vnd.github+json" },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((release) => {
+        if (!release) return;
+        const dmg = (release.assets || []).find((x: any) =>
+          /\.dmg$/i.test(x.name || "")
+        );
+        const href = dmg?.browser_download_url || release.html_url || a.href;
+        const tag = release.tag_name || "";
+        a.href = href;
+        const v = a.querySelector("[data-version]");
+        if (v && tag) v.textContent = tag;
+        sessionStorage.setItem(
+          "stacklight-latest-release",
+          JSON.stringify({ href, tag })
+        );
+      })
+      .catch(() => {
+        /* keep the fallback href */
+      });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", resolveLatestRelease);
+  } else {
+    resolveLatestRelease();
+  }
+</script>
+
+<section class="relative overflow-hidden bg-white h-screen flex items-center">
+  <!-- Original soft hero glow + grain backdrop -->
   <div class="absolute inset-0 bg-hero-glow pointer-events-none"></div>
   <div class="absolute inset-0 grid-noise opacity-[0.4] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)]"></div>
 
-  <div class="relative mx-auto max-w-container px-6 pt-20 pb-24 md:pt-28 md:pb-32">
-    <div class="flex flex-col items-center text-center gap-7 max-w-3xl mx-auto">
-      <span class="inline-flex items-center gap-2 rounded-full border border-hairline bg-white/70 backdrop-blur px-3 py-1 text-xs text-muted">
-        <span class="h-1.5 w-1.5 rounded-full bg-success animate-pulse-slow" aria-hidden="true"></span>
-        Open source · macOS 13+
-      </span>
-      <h1 class="text-display-xl font-semibold tracking-tight text-ink">
-        All your deploys.<br />One menu bar.
-      </h1>
-      <p class="text-lg md:text-xl leading-relaxed text-muted max-w-2xl">
-        StackLight watches every deploy and pull request you ship —
-        across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io,
-        Xcode Cloud, and TestFlight — and lives quietly in your Mac
-        menu bar.
-      </p>
-      <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pt-2">
-        <Button href="https://github.com/hwangdev97/Stacklight/releases">
-          Download for macOS
-        </Button>
-        <Button href="https://github.com/hwangdev97/Stacklight" variant="secondary">
-          View on GitHub
-        </Button>
+  <div class="relative mx-auto max-w-container px-6 py-10 md:py-14 w-full">
+    <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+      <div class="flex flex-col items-center md:items-start text-center md:text-left gap-7">
+        <h1 class="text-[clamp(2.5rem,4.5vw,4rem)] leading-[1.05] tracking-tight font-semibold text-ink">
+          All your deploys.<br />One menu bar.
+        </h1>
+        <p class="text-lg leading-relaxed text-muted max-w-xl">
+          StackLight watches every deploy and pull request you ship —
+          across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io,
+          Xcode Cloud, and TestFlight — and lives quietly in your Mac
+          menu bar.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center md:items-start gap-3 sm:gap-4 pt-2">
+          <a
+            id="hero-download"
+            href={FALLBACK_RELEASE}
+            data-fallback={FALLBACK_RELEASE}
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-base font-medium px-6 py-3"
+          >
+            Download for macOS
+            <span class="text-white/60 text-sm font-normal" data-version></span>
+          </a>
+        </div>
+        <p class="text-sm text-muted">
+          Free and open source · macOS 13+ · No account required.
+        </p>
       </div>
-      <p class="text-sm text-muted">
-        Free and open source · macOS 13+ · No account required.
-      </p>
-    </div>
 
-    <div class="mt-16 md:mt-20 max-w-xl mx-auto">
-      <MenuBarMock />
+      <!-- Right column wraps the mock with a wallpaper backdrop that bleeds
+           far to the right (clipped by section overflow-hidden) and into the
+           copy column to the left, but stays only slightly taller than the
+           mock vertically. The left→right fade mask matches the earlier
+           version. -->
+      <div class="md:justify-self-end w-full max-w-[400px] mx-auto md:mx-0 relative">
+        <div
+          class="hero-wallpaper-bg absolute -inset-y-6 -z-0 pointer-events-none overflow-hidden"
+          aria-hidden="true"
+          style="left: -100%;
+                 right: -100vw;
+                 -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 28%, black 55%);
+                 mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 28%, black 55%);"
+        ></div>
+        <div class="relative z-10">
+          <MenuBarMock />
+        </div>
+      </div>
     </div>
   </div>
 </section>

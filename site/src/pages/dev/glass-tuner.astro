@@ -1,0 +1,317 @@
+---
+import Base from "../../layouts/Base.astro";
+import MenuBarMock from "../../components/MenuBarMock.astro";
+
+// Each control declares: storage key (matches the liquid-glass attribute name
+// or a special CSS hook), label, min/max/step, default value, and group.
+const controls = [
+  // — liquid-glass refraction & surface —
+  { key: "blur", label: "Blur (Chromium)", min: 0, max: 30, step: 0.5, value: 6, group: "glass" },
+  { key: "fallback-blur", label: "Fallback blur (px)", min: 0, max: 60, step: 1, value: 22, group: "glass" },
+  { key: "bezel-width", label: "Bezel width (px)", min: 0, max: 60, step: 1, value: 14, group: "glass" },
+  { key: "glass-thickness", label: "Glass thickness", min: 0, max: 200, step: 5, value: 60, group: "glass" },
+  { key: "refraction-scale", label: "Refraction scale", min: 0, max: 4, step: 0.05, value: 1.2, group: "glass" },
+  { key: "specular-opacity", label: "Specular opacity", min: 0, max: 1, step: 0.05, value: 0.7, group: "glass" },
+  { key: "radius", label: "Corner radius (px)", min: 0, max: 80, step: 1, value: 10, group: "glass" },
+  // — sizing —
+  { key: "width", label: "Width (px)", min: 200, max: 600, step: 10, value: 360, group: "size" },
+  { key: "height", label: "Height (px)", min: 200, max: 1200, step: 10, value: 640, group: "size" },
+  // — strip —
+  { key: "stripAlpha", label: "Strip bg opacity", min: 0, max: 1, step: 0.01, value: 0.55, group: "strip", css: true },
+  { key: "stripBlur", label: "Strip CSS blur (px)", min: 0, max: 60, step: 1, value: 20, group: "strip", css: true },
+];
+
+const tints: { key: string; label: string; value: string; group: string }[] = [
+  { key: "tint", label: "Tint (rgba)", value: "rgba(20, 20, 24, 0.55)", group: "glass" },
+];
+
+const choices = [
+  {
+    key: "surface-type",
+    label: "Surface type",
+    value: "convex_squircle",
+    options: ["convex_squircle", "convex_circle", "concave", "lip"],
+    group: "glass",
+  },
+  {
+    key: "type",
+    label: "Shape",
+    value: "squircle",
+    options: ["squircle", "circle", "pill"],
+    group: "glass",
+  },
+];
+
+const toggles = [
+  { key: "force-fallback", label: "Force fallback (no SVG filter)", value: false },
+];
+---
+
+<Base title="StackLight — Glass Tuner (dev)">
+  <main class="min-h-screen bg-white">
+    <header class="border-b border-hairline px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-300 px-2 py-0.5 text-[11px] font-medium text-amber-700">DEV</span>
+        <h1 class="text-base font-semibold text-ink">Glass Tuner</h1>
+        <span class="text-xs text-muted">winaviation/liquid-web · live edit dropdown glass</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="copyBtn" class="text-xs rounded-md border border-hairline px-2.5 py-1 hover:bg-surface">Copy attrs</button>
+        <button id="resetBtn" class="text-xs rounded-md border border-hairline px-2.5 py-1 hover:bg-surface">Reset</button>
+      </div>
+    </header>
+
+    <div class="grid lg:grid-cols-[320px_1fr] min-h-[calc(100vh-49px)]">
+      <!-- Controls sidebar -->
+      <aside class="border-r border-hairline bg-surface p-4 overflow-y-auto max-h-[calc(100vh-49px)] sticky top-0">
+        <form id="tunerForm" class="flex flex-col gap-5">
+          {["glass", "size", "strip"].map((group) => (
+            <fieldset class="flex flex-col gap-3">
+              <legend class="text-xs font-semibold uppercase tracking-wider text-soft">
+                {group === "glass" ? "Liquid Glass" : group === "size" ? "Sizing" : "Menu Bar Strip"}
+              </legend>
+
+              {choices.filter((c) => c.group === group).map((c) => (
+                <label class="flex flex-col gap-1">
+                  <span class="text-xs text-ink">{c.label}</span>
+                  <select name={c.key} data-default={c.value} data-attr="1" class="text-xs rounded border border-hairline px-2 py-1 bg-white">
+                    {c.options.map((opt) => (
+                      <option value={opt} selected={opt === c.value}>{opt}</option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+
+              {tints.filter((c) => c.group === group).map((c) => (
+                <label class="flex flex-col gap-1">
+                  <span class="text-xs text-ink">{c.label}</span>
+                  <input type="text" name={c.key} value={c.value} data-default={c.value} data-attr="1" class="text-xs font-mono rounded border border-hairline px-2 py-1 bg-white" />
+                </label>
+              ))}
+
+              {controls.filter((c) => c.group === group).map((c) => (
+                <label class="flex flex-col gap-1">
+                  <div class="flex items-center justify-between text-xs text-ink">
+                    <span>{c.label}</span>
+                    <output data-key={c.key} class="font-mono text-muted">{c.value}</output>
+                  </div>
+                  <input
+                    type="range"
+                    name={c.key}
+                    min={c.min}
+                    max={c.max}
+                    step={c.step}
+                    value={c.value}
+                    data-default={c.value}
+                    data-attr={c.css ? "0" : "1"}
+                    data-css={c.css ? "1" : "0"}
+                    class="h-1 w-full cursor-pointer appearance-none rounded bg-hairline accent-accent"
+                  />
+                </label>
+              ))}
+            </fieldset>
+          ))}
+
+          <fieldset class="flex flex-col gap-2">
+            <legend class="text-xs font-semibold uppercase tracking-wider text-soft">Toggles</legend>
+            {toggles.map((t) => (
+              <label class="flex items-center justify-between gap-2 text-xs text-ink">
+                <span>{t.label}</span>
+                <input type="checkbox" name={t.key} data-default={t.value ? "1" : "0"} checked={t.value} data-attr="1" class="accent-accent" />
+              </label>
+            ))}
+          </fieldset>
+        </form>
+      </aside>
+
+      <!-- Stage -->
+      <section class="relative overflow-hidden">
+        <!-- Use the same .hero-wallpaper-bg class so the existing shader script
+             on the homepage still mounts here too via the same selector. -->
+        <div
+          class="hero-wallpaper-bg absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+        ></div>
+        <div class="relative h-full min-h-[calc(100vh-49px)] flex items-start justify-center pt-12 pb-12">
+          <div class="w-full max-w-[400px]">
+            <MenuBarMock />
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</Base>
+
+<!-- Mount the same paper.design shader as the homepage hero so the dev tuner
+     refracts a real shader gradient, not a solid color. -->
+<script>
+  import {
+    ShaderMount,
+    staticMeshGradientFragmentShader,
+    getShaderColorFromString,
+    ShaderFitOptions,
+  } from "@paper-design/shaders";
+
+  function mountShader() {
+    const host = document.querySelector(".hero-wallpaper-bg");
+    if (!host || (host as HTMLElement).dataset.shaderMounted === "1") return;
+    (host as HTMLElement).dataset.shaderMounted = "1";
+
+    const colors = ["#ff3a8c", "#7a1fff", "#ff6ad5", "#ffd1ec"].map(
+      getShaderColorFromString,
+    );
+
+    new ShaderMount(
+      host as HTMLElement,
+      staticMeshGradientFragmentShader,
+      {
+        u_colors: colors,
+        u_colorsCount: colors.length,
+        u_positions: 2,
+        u_waveX: 1,
+        u_waveXShift: 0.6,
+        u_waveY: 1,
+        u_waveYShift: 0.21,
+        u_mixing: 0.93,
+        u_grainMixer: 0.15,
+        u_grainOverlay: 0.06,
+        u_fit: ShaderFitOptions.cover,
+        u_scale: 1,
+        u_rotation: 270,
+        u_originX: 0.5,
+        u_originY: 0.5,
+        u_offsetX: 0,
+        u_offsetY: 0,
+        u_worldWidth: 0,
+        u_worldHeight: 0,
+      },
+      { antialias: true },
+      0,
+    );
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountShader);
+  } else {
+    mountShader();
+  }
+</script>
+
+<script is:inline>
+  // Drive the <liquid-glass> element's attributes from the form.
+  (function () {
+    const form = document.getElementById("tunerForm");
+    if (!form) return;
+
+    const outputs = form.querySelectorAll("output[data-key]");
+    function syncOutputs() {
+      outputs.forEach((o) => {
+        const key = o.dataset.key;
+        const input = form.querySelector(`[name="${key}"]`);
+        if (input) o.textContent = input.value;
+      });
+    }
+
+    function getGlassEl() {
+      return document.querySelector("liquid-glass.dropdown-glass");
+    }
+
+    function applyAttr(name, value) {
+      const el = getGlassEl();
+      if (!el) return;
+      // Booleans → string-y "true"/"false" since the lib reads via getAttribute.
+      if (typeof value === "boolean") {
+        if (value) el.setAttribute(name, "true");
+        else el.removeAttribute(name);
+        return;
+      }
+      el.setAttribute(name, String(value));
+    }
+
+    function applyCssParams() {
+      const strip = document.querySelector(".menu-bar-strip");
+      if (!strip) return;
+      const stripAlpha = parseFloat(form.querySelector('[name="stripAlpha"]').value);
+      const stripBlur = parseFloat(form.querySelector('[name="stripBlur"]').value);
+      strip.style.backgroundColor = `rgba(28, 28, 30, ${stripAlpha})`;
+      strip.style.backdropFilter = `blur(${stripBlur}px) saturate(170%)`;
+      strip.style.webkitBackdropFilter = `blur(${stripBlur}px) saturate(170%)`;
+    }
+
+    function applyAll() {
+      // Range + select + text inputs that map to attributes.
+      form.querySelectorAll('[data-attr="1"]').forEach((i) => {
+        if (i.type === "checkbox") {
+          applyAttr(i.name, i.checked);
+        } else {
+          applyAttr(i.name, i.value);
+        }
+      });
+      applyCssParams();
+    }
+
+    function onFormChange(e) {
+      const t = e.target;
+      if (!t || !t.name) return;
+      syncOutputs();
+      if (t.dataset.css === "1") {
+        applyCssParams();
+        return;
+      }
+      if (t.dataset.attr === "1") {
+        if (t.type === "checkbox") applyAttr(t.name, t.checked);
+        else applyAttr(t.name, t.value);
+      }
+    }
+
+    form.addEventListener("input", onFormChange);
+    form.addEventListener("change", onFormChange);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      form.querySelectorAll("input[type=range], input[type=text], select").forEach((i) => {
+        i.value = i.dataset.default;
+      });
+      form.querySelectorAll("input[type=checkbox]").forEach((i) => {
+        i.checked = i.dataset.default === "1";
+      });
+      syncOutputs();
+      applyAll();
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const attrs = {};
+      form.querySelectorAll('[data-attr="1"]').forEach((i) => {
+        attrs[i.name] = i.type === "checkbox" ? i.checked : i.value;
+      });
+      const css = {
+        "menu-bar-strip": {
+          "background-color": `rgba(28, 28, 30, ${form.querySelector('[name="stripAlpha"]').value})`,
+          "backdrop-filter": `blur(${form.querySelector('[name="stripBlur"]').value}px) saturate(170%)`,
+        },
+      };
+      const text = JSON.stringify({ liquidGlass: attrs, css }, null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        const b = document.getElementById("copyBtn");
+        const orig = b.textContent;
+        b.textContent = "Copied ✓";
+        setTimeout(() => (b.textContent = orig), 1200);
+      } catch (_) {
+        alert(text);
+      }
+    });
+
+    function whenReady(fn) {
+      if (customElements.get("liquid-glass")) {
+        fn();
+      } else {
+        customElements.whenDefined("liquid-glass").then(fn);
+      }
+    }
+    whenReady(() => {
+      syncOutputs();
+      // Apply once so initial form values match what's on the element.
+      applyAll();
+    });
+  })();
+</script>

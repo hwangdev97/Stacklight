@@ -1,26 +1,14 @@
 ---
 import Base from "../layouts/Base.astro";
-import TopNav from "../components/TopNav.astro";
 import Hero from "../sections/Hero.astro";
-import TabFatigue from "../sections/TabFatigue.astro";
-import ServiceGrid from "../sections/ServiceGrid.astro";
-import AISetup from "../sections/AISetup.astro";
-import Features from "../sections/Features.astro";
-import HowItWorks from "../sections/HowItWorks.astro";
-import Security from "../sections/Security.astro";
-import FinalCTA from "../sections/FinalCTA.astro";
 ---
 
 <Base>
-  <TopNav />
-  <main id="main">
+  <main id="main" class="h-screen">
     <Hero />
-    <TabFatigue />
-    <ServiceGrid />
-    <AISetup />
-    <Features />
-    <HowItWorks />
-    <Security />
-    <FinalCTA />
   </main>
 </Base>
+
+<style is:global>
+  html, body { height: 100%; overflow: hidden; }
+</style>
