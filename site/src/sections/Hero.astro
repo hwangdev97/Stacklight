@@ -3,7 +3,7 @@ import Button from "../components/Button.astro";
 import MenuBarMock from "../components/MenuBarMock.astro";
 ---
 
-<section class="relative overflow-hidden bg-white">
+<section class="relative overflow-hidden bg-white h-screen flex items-center">
   <!-- Original soft hero glow + grain backdrop -->
   <div class="absolute inset-0 bg-hero-glow pointer-events-none"></div>
   <div class="absolute inset-0 grid-noise opacity-[0.4] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)]"></div>
@@ -21,7 +21,7 @@ import MenuBarMock from "../components/MenuBarMock.astro";
            mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 18%, black 55%);"
   ></div>
 
-  <div class="relative mx-auto max-w-container px-6 pt-20 pb-24 md:pt-28 md:pb-32">
+  <div class="relative mx-auto max-w-container px-6 py-10 md:py-14 w-full">
     <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
       <div class="flex flex-col items-center md:items-start text-center md:text-left gap-7">
         <span class="inline-flex items-center gap-2 rounded-full border border-hairline bg-white/70 backdrop-blur px-3 py-1 text-xs text-muted">

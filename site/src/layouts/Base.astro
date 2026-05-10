@@ -61,20 +61,5 @@ const canonical = new URL(Astro.url.pathname, siteUrl).toString();
       Skip to content
     </a>
     <slot />
-    <footer class="border-t border-hairline bg-white">
-      <div class="mx-auto max-w-container px-6 py-12 flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-2 text-ink">
-          <img src="/favicon.png" alt="" class="h-6 w-6" aria-hidden="true" />
-          <span class="text-sm font-semibold">StackLight</span>
-        </div>
-        <p class="text-sm text-muted">
-          Made for developers, designers, and PMs who ship for a living.
-        </p>
-        <p class="text-sm text-muted">
-          MIT licensed ·
-          <a href="https://github.com/hwangdev97/Stacklight" class="text-muted hover:text-ink transition-colors">GitHub</a>
-        </p>
-      </div>
-    </footer>
   </body>
 </html>
