@@ -142,7 +142,11 @@ const dotClass: Record<State, string> = {
             <!-- Section header -->
             <div class="flex items-center gap-2 px-2 py-1 text-white">
               {section.flat ? (
-                <img src={section.logo} alt="" loading="lazy" class="icon-flat shrink-0" />
+                <span
+                  class="icon-flat shrink-0"
+                  style={`background-image: url(${section.logo});`}
+                  aria-hidden="true"
+                ></span>
               ) : (
                 <span class="icon-badge shrink-0" style={`--brand: ${section.brand};`}>
                   <img src={section.logo} alt="" loading="lazy" />
@@ -270,15 +274,19 @@ const dotClass: Record<State, string> = {
   }
 
   /* "Flat" variant for icons that already carry their own design (multi-color
-     marks, full iOS-style app icons). No brand-tint background, no white
-     filter — render the asset as-is, cropped to a circle to match the badged
-     icons next to it. object-fit:cover so the visual content fills the circle
-     instead of being letter-boxed. */
+     marks, full iOS-style app icons). Rendered as a div with background-image
+     so we can zoom past the source's intrinsic padding (e.g. the iOS preview
+     padding around an app icon). background-size > 100% pulls the visible
+     content out to the edge of the circle, eliminating any letterbox between
+     icon and circle border. */
   .icon-flat {
+    display: inline-block;
     width: 20px;
     height: 20px;
-    object-fit: cover;
     border-radius: 9999px;
+    background-size: 150% 150%;
+    background-position: center;
+    background-repeat: no-repeat;
     filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.35));
   }
 </style>
