@@ -83,9 +83,19 @@ const dotClass: Record<State, string> = {
 };
 ---
 
-<div class="relative w-full max-w-[360px] mx-auto select-none font-sans" role="img" aria-label="StackLight macOS menu showing recent deploys across Vercel, Cloudflare Pages, GitHub Actions, Xcode Cloud, and TestFlight.">
+<div class="hero-glass-stage relative w-full max-w-[360px] mx-auto select-none font-sans" role="img" aria-label="StackLight macOS menu showing recent deploys across Vercel, Cloudflare Pages, GitHub Actions, Xcode Cloud, and TestFlight.">
+  <!-- Wallpaper layer — what liquidGL snapshots & refracts. Mirrors the Hero
+       section's desktop wallpaper so the lens looks like it's sitting on top
+       of the real macOS desktop. Stretched beyond the panel so the refraction
+       has fresh pixels to bend at the edges. -->
+  <div class="hero-wallpaper absolute -inset-x-24 -inset-y-16 -z-10 pointer-events-none overflow-hidden"
+       aria-hidden="true"
+       style="background-image: url('/wallpaper.jpg');
+              background-size: cover;
+              background-position: center;"></div>
+
   <!-- Faux menu bar strip with icons (StackLight highlighted) -->
-  <div class="rounded-t-lg bg-neutral-900/80 backdrop-blur-md border border-white/10 px-2 h-6 flex items-center justify-end gap-2.5 text-[10px] text-white/55">
+  <div class="menu-bar-strip relative z-10 rounded-lg border border-white/10 px-2 h-6 flex items-center justify-end gap-2.5 text-[10px] text-white/55">
     {Array.from({ length: 6 }).map(() => (
       <span class="h-2.5 w-2.5 rounded-sm bg-white/20"></span>
     ))}
@@ -99,13 +109,16 @@ const dotClass: Record<State, string> = {
     <span class="opacity-70">Tue 9:41</span>
   </div>
 
-  <!-- Colorful blob behind the mock so the glass has something to refract -->
-  <div class="absolute -inset-x-10 inset-y-2 -z-10 rounded-[60px] blur-3xl opacity-70 pointer-events-none"
-       style="background: radial-gradient(60% 50% at 30% 20%, #ff6ad5 0%, transparent 60%), radial-gradient(50% 60% at 80% 40%, #6a82fb 0%, transparent 60%), radial-gradient(50% 60% at 60% 90%, #ffd86b 0%, transparent 60%);"
-       aria-hidden="true"></div>
+  <!-- Panel container: holds an empty liquidGL lens (which becomes a refracted
+       wallpaper canvas) and the actual menu content layered on top. -->
+  <div class="relative mt-1.5 ml-auto w-full">
+    <!-- Lens: liquidGL replaces this with a canvas that refracts/frosts the
+         wallpaper layer behind. Sized to match the panel exactly. -->
+    <div class="liquidGL-lens absolute inset-0 pointer-events-none rounded-[10px]" aria-hidden="true"></div>
 
-  <!-- Dropdown panel anchored under StackLight icon (liquidGL glass target) -->
-  <div class="liquidGL mt-1 ml-auto w-full rounded-[10px] bg-[rgba(20,20,22,0.78)] border border-white/[0.10] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6),0_4px_12px_-2px_rgba(0,0,0,0.3)] overflow-hidden text-[12px] leading-tight text-white/95">
+  <!-- Dropdown panel — translucent dark tint so the lens shows through, while
+       text stays crisp on the foreground. -->
+  <div class="vibrancy-panel relative z-10 w-full rounded-[10px] border border-white/[0.10] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.55),0_4px_12px_-2px_rgba(0,0,0,0.25)] overflow-hidden text-[12px] leading-tight text-white/95">
 
     {sections.map((section) => (
       <div class="px-1 pt-1.5">
@@ -161,53 +174,113 @@ const dotClass: Record<State, string> = {
       ))}
     </div>
   </div>
+  </div>
 </div>
 
 <style>
-  .liquidGL {
-    opacity: 1 !important;
+  /* The strip and panel are translucent dark tints. The liquidGL canvas behind
+     them refracts and frosts the wallpaper layer, giving the real "liquid glass"
+     look. Text stays as crisp HTML on the foreground. */
+
+  .menu-bar-strip {
+    background-color: rgba(28, 28, 30, 0.55);
+    /* Modest CSS blur as a fallback in case liquidGL hasn't loaded yet. */
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    backdrop-filter: blur(20px) saturate(170%);
   }
-  .liquidGL > * {
+
+  .vibrancy-panel {
+    background-color: rgba(20, 20, 24, 0.45);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* Subtle top-edge highlight so the panel feels lit. */
+  .vibrancy-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.02) 18%,
+      transparent 40%
+    );
+    z-index: 0;
+  }
+
+  .vibrancy-panel > * {
     position: relative;
-    z-index: 10;
+    z-index: 1;
+  }
+
+  /* Once liquidGL is wired up, ease the CSS blur out so its native frosting
+     can take over without doubling the blur. */
+  .vibrancy-panel.liquid-ready,
+  .menu-bar-strip.liquid-ready {
+    -webkit-backdrop-filter: saturate(140%);
+    backdrop-filter: saturate(140%);
+  }
+
+  /* The lens div liquidGL replaces with its canvas. Round it so the refracted
+     wallpaper is clipped to the menu shape. */
+  .liquidGL-lens {
+    border-radius: 10px;
+  }
+
+  /* Fallback when backdrop-filter is unsupported (e.g. older Firefox). */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .menu-bar-strip { background-color: rgba(20, 20, 22, 0.94); }
+    .vibrancy-panel { background-color: rgba(22, 22, 26, 0.92); }
   }
 </style>
 
 <script is:inline>
+  /*
+   * liquidGL setup — the trick that makes this look right (vs. our earlier
+   * broken attempt) is that we point `snapshot` at the wallpaper layer ONLY,
+   * NOT at body. That way html2canvas captures the colorful background but
+   * never the menu text, so refraction can never warp/ghost the UI itself.
+   *
+   * The lens is an empty <div> that the library replaces with a WebGL canvas
+   * showing a refracted/frosted version of the snapshot. The menu panel sits
+   * on top with a translucent dark tint and crisp HTML text.
+   */
   (function initLiquidGL() {
     function tryInit() {
-      if (typeof window.liquidGL !== "function" || typeof window.html2canvas !== "function") {
+      if (
+        typeof window.liquidGL !== "function" ||
+        typeof window.html2canvas !== "function"
+      ) {
         return false;
       }
+      const lensEl = document.querySelector(".liquidGL-lens");
+      const wallpaperEl = document.querySelector(".hero-wallpaper");
+      if (!lensEl || !wallpaperEl) return true; // nothing to do — don't keep retrying
       window.liquidGL({
-        target: ".liquidGL",
+        snapshot: ".hero-wallpaper",
+        target: ".liquidGL-lens",
         resolution: 2,
-        refraction: 0.012,
-        bevelDepth: 6,
-        bevelWidth: 0.04,
-        frost: 0.05,
-        specular: 0.6,
+        refraction: 0.018,
+        bevelDepth: 8,
+        bevelWidth: 0.05,
+        frost: 0.35,
+        specular: 0.5,
         shadow: false,
         reveal: "none",
         on: {
           init: function (lens) {
-            window.__liquidGL_initFired = (window.__liquidGL_initFired || 0) + 1;
             lens.el.style.opacity = "1";
-            if (lens.renderer && lens.renderer.canvas) {
-              lens.renderer.canvas.style.opacity = "1";
-            }
+            // Tell the panel/strip to dial back their CSS blur so the lens's
+            // own frosting isn't doubled-up.
+            document
+              .querySelectorAll(".vibrancy-panel, .menu-bar-strip")
+              .forEach((el) => el.classList.add("liquid-ready"));
           },
         },
       });
-      // Belt-and-suspenders: keep the canvas visible even if the lib resets it.
-      const r = window.__liquidGLRenderer__;
-      if (r && r.canvas) {
-        const obs = new MutationObserver(() => {
-          if (r.canvas.style.opacity !== "1") r.canvas.style.opacity = "1";
-        });
-        obs.observe(r.canvas, { attributes: true, attributeFilter: ["style"] });
-        r.canvas.style.opacity = "1";
-      }
       return true;
     }
     if (document.readyState === "loading") {
@@ -215,14 +288,14 @@ const dotClass: Record<State, string> = {
         if (!tryInit()) {
           let tries = 0;
           const id = setInterval(() => {
-            if (tryInit() || ++tries > 30) clearInterval(id);
+            if (tryInit() || ++tries > 40) clearInterval(id);
           }, 100);
         }
       });
     } else if (!tryInit()) {
       let tries = 0;
       const id = setInterval(() => {
-        if (tryInit() || ++tries > 30) clearInterval(id);
+        if (tryInit() || ++tries > 40) clearInterval(id);
       }, 100);
     }
   })();
