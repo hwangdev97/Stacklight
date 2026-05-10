@@ -25,8 +25,6 @@ struct SettingsView: View {
                 Section {
                     sidebarRow(title: "General", systemImage: "gear", color: .gray, size: 22)
                         .tag(SettingsItem.general)
-                    sidebarRow(title: "Projects", systemImage: "rectangle.stack", color: .gray, size: 22)
-                        .tag(SettingsItem.projects)
                 }
 
                 Section("Services") {
