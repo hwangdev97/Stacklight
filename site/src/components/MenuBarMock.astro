@@ -14,6 +14,10 @@ interface Section {
   logo: string;
   /** Solid brand color used as the radial-gradient base for the icon badge. */
   brand: string;
+  /** Render the logo as-is (no brand-tint, no white silhouette filter). Use
+   *  for icons that already carry their own design — multi-color marks or
+   *  full iOS-style app icons. */
+  flat?: boolean;
   items?: Item[];
   empty?: string;
 }
@@ -35,6 +39,7 @@ const sections: Section[] = [
     name: "Cloudflare Pages",
     logo: "/logos/cloudflarepages.svg",
     brand: "#F38020",
+    flat: true,
     empty: "No recent deployments",
   },
   {
@@ -63,8 +68,9 @@ const sections: Section[] = [
   },
   {
     name: "TestFlight",
-    logo: "/logos/testflight.svg",
+    logo: "/logos/testflight.jpg",
     brand: "#0D96F6",
+    flat: true,
     items: [
       { state: "ok", title: "StackLight v57", time: "19m ago" },
       { state: "ok", title: "StackLight v56", time: "9h ago" },
@@ -136,9 +142,13 @@ const dotClass: Record<State, string> = {
           <div class="px-1 pt-1.5">
             <!-- Section header -->
             <div class="flex items-center gap-2 px-2 py-1 text-white">
-              <span class="icon-badge shrink-0" style={`--brand: ${section.brand};`}>
-                <img src={section.logo} alt="" loading="lazy" />
-              </span>
+              {section.flat ? (
+                <img src={section.logo} alt="" loading="lazy" class="icon-flat shrink-0" />
+              ) : (
+                <span class="icon-badge shrink-0" style={`--brand: ${section.brand};`}>
+                  <img src={section.logo} alt="" loading="lazy" />
+                </span>
+              )}
               <span class="font-semibold text-[13px] flex-1 truncate">{section.name}</span>
               <svg class="h-3 w-3 text-white/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M7 17 L17 7" />
@@ -259,46 +269,68 @@ const dotClass: Record<State, string> = {
     /* Force any logo to a clean white silhouette so it reads on every brand. */
     filter: brightness(0) invert(1);
   }
+
+  /* "Flat" variant for icons that already carry their own design (multi-color
+     marks, full iOS-style app icons). No brand-tint background, no white
+     filter — render the asset as-is at the same nominal size, with a soft
+     drop shadow + rounded corners so it lines up visually with the badged
+     icons next to it. */
+  .icon-flat {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    border-radius: 5px;
+    filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.35));
+  }
 </style>
 
 <script is:inline>
   /*
-   * Auto-size the <liquid-glass> dropdown to match its slotted content height.
-   * The component requires an explicit `height` attribute (it generates SVG
-   * displacement/specular maps at that exact size), but our menu content is
-   * variable height, so we measure after layout and write the height back.
+   * One-shot height-fit for <liquid-glass>. The component needs an explicit
+   * `height` attribute (it generates an SVG displacement map at that exact
+   * size), but our slotted menu content has a content-derived height. We
+   * measure the slotted content once, after fonts + images have settled,
+   * and write the result to the attribute.
+   *
+   * We deliberately do NOT listen to window resize — the lib's own internal
+   * resize observer fires synthetic resize events that would otherwise
+   * trigger a feedback loop and balloon the height.
    */
   (function () {
-    function fit() {
-      document.querySelectorAll("liquid-glass.dropdown-glass").forEach((el) => {
-        const slot = el.querySelector(".dropdown-content");
-        if (!slot) return;
-        // Render once with the attribute height so the inner box is laid out,
-        // then measure the actual content height (children stack by themselves)
-        // and write it back if it diverges by more than 1px.
-        const measured = Math.ceil(slot.scrollHeight);
-        const current = parseFloat(el.getAttribute("height") || "0");
-        if (Math.abs(measured - current) > 1) {
-          el.setAttribute("height", String(measured));
-        }
-      });
-    }
-    function whenReady() {
-      if (customElements.get("liquid-glass")) {
-        // Defer one frame so initial render lands first.
-        requestAnimationFrame(() => requestAnimationFrame(fit));
-      } else {
-        customElements.whenDefined("liquid-glass").then(() => {
-          requestAnimationFrame(() => requestAnimationFrame(fit));
-        });
+    function fitOnce(el) {
+      if (el.dataset.fitDone === "1") return;
+      const slot = el.querySelector(".dropdown-content");
+      if (!slot) return;
+      const measured = Math.ceil(slot.scrollHeight);
+      if (measured > 0) {
+        el.setAttribute("height", String(measured));
+        el.dataset.fitDone = "1";
       }
     }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", whenReady);
-    } else {
-      whenReady();
+    function run() {
+      const els = document.querySelectorAll("liquid-glass.dropdown-glass");
+      // Wait for any <img> children to load so scrollHeight is final.
+      const imgs = Array.from(document.querySelectorAll(".dropdown-content img"));
+      const allLoaded = Promise.all(
+        imgs.map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise((res) => {
+                img.addEventListener("load", res, { once: true });
+                img.addEventListener("error", res, { once: true });
+              })
+        )
+      );
+      allLoaded.then(() => {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          els.forEach(fitOnce);
+        }));
+      });
     }
-    // Re-fit on viewport resize in case fonts/layout shift.
-    window.addEventListener("resize", fit);
+    if (customElements.get("liquid-glass")) {
+      run();
+    } else {
+      customElements.whenDefined("liquid-glass").then(run);
+    }
   })();
 </script>
