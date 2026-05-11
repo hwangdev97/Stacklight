@@ -95,7 +95,7 @@ const dotClass: Record<State, string> = {
 };
 ---
 
-<div class="hero-glass-stage relative w-full max-w-[360px] mx-auto select-none font-sans" role="img" aria-label="StackLight macOS menu showing recent deploys across Vercel, Cloudflare Pages, GitHub Actions, Xcode Cloud, and TestFlight.">
+<div class="hero-glass-stage relative w-full max-w-full sm:max-w-[360px] mx-auto select-none font-sans" role="img" aria-label="StackLight macOS menu showing recent deploys across Vercel, Cloudflare Pages, GitHub Actions, Xcode Cloud, and TestFlight.">
   <!-- Faux menu bar strip with icons (StackLight highlighted). Stays on plain
        CSS backdrop-filter — only the dropdown below gets the liquid-glass
        refraction, matching how macOS actually paints these elements. -->
@@ -214,6 +214,7 @@ const dotClass: Record<State, string> = {
      the wrapper width-wise. Width attribute still drives the SVG filter math. */
   liquid-glass.dropdown-glass {
     display: block;
+    max-width: 100%;
   }
 
   /* The slotted content needs to live in a normal block flow, not centered. */

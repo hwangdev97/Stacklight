@@ -109,18 +109,18 @@ const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/
   }
 </script>
 
-<section class="relative overflow-hidden bg-white h-screen flex items-center">
+<section class="relative overflow-hidden bg-white min-h-screen md:h-screen flex items-center">
   <!-- Original soft hero glow + grain backdrop -->
   <div class="absolute inset-0 bg-hero-glow pointer-events-none"></div>
   <div class="absolute inset-0 grid-noise opacity-[0.4] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)]"></div>
 
-  <div class="relative mx-auto max-w-container px-6 py-10 md:py-14 w-full">
-    <div class="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-      <div class="flex flex-col items-center md:items-start text-center md:text-left gap-7">
-        <h1 class="text-[clamp(2.5rem,4.5vw,4rem)] leading-[1.05] tracking-tight font-semibold text-ink">
+  <div class="relative mx-auto max-w-container px-4 sm:px-6 py-8 md:py-14 w-full">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div class="flex flex-col items-center md:items-start text-center md:text-left gap-5 sm:gap-7">
+        <h1 class="text-[2rem] sm:text-[clamp(2.5rem,4.5vw,4rem)] leading-[1.05] tracking-tight font-semibold text-ink">
           All your deploys.<br />One menu bar.
         </h1>
-        <p class="text-lg leading-relaxed text-muted max-w-xl">
+        <p class="text-base sm:text-lg leading-relaxed text-muted max-w-xl">
           StackLight watches every deploy and pull request you ship —
           across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io,
           Xcode Cloud, and TestFlight — and lives quietly in your Mac
@@ -147,7 +147,7 @@ const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/
            copy column to the left, but stays only slightly taller than the
            mock vertically. The left→right fade mask matches the earlier
            version. -->
-      <div class="md:justify-self-end w-full max-w-[400px] mx-auto md:mx-0 relative">
+      <div class="md:justify-self-end w-full max-w-[340px] sm:max-w-[400px] mx-auto md:mx-0 relative">
         <div
           class="hero-wallpaper-bg absolute -inset-y-6 -z-0 pointer-events-none overflow-hidden"
           aria-hidden="true"
