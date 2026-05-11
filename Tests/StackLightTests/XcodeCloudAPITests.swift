@@ -1,5 +1,4 @@
 import XCTest
-@testable import StackLight
 import StackLightCore
 import AppStoreConnect_Swift_SDK
 

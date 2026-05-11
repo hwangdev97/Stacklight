@@ -47,6 +47,30 @@
       "testAuth": "Bearer ${github.token}",
       "credentialSharedWith": ["githubActions"]
     },
+    "gitlabCI": {
+      "displayName": "GitLab CI",
+      "docs": "https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
+      "fields": [
+        { "key": "gitlab.host",     "label": "Host",                  "secret": false, "required": false, "placeholder": "gitlab.com", "hint": "Leave empty for gitlab.com. For self-hosted, enter the bare hostname (e.g. gitlab.acme.com)." },
+        { "key": "gitlab.token",    "label": "Personal Access Token", "secret": true,  "required": true,  "placeholder": "glpat-... (needs read_api scope)" },
+        { "key": "gitlab.projects", "label": "Projects",              "secret": false, "required": true, "multiValue": true, "placeholder": "group/project", "hint": "Full path. Nested groups OK: group/subgroup/project." }
+      ],
+      "testEndpoint": "https://${gitlab.host}/api/v4/user",
+      "testAuth": "Bearer ${gitlab.token}",
+      "credentialSharedWith": ["gitlabMR"]
+    },
+    "gitlabMR": {
+      "displayName": "GitLab Merge Requests",
+      "docs": "https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
+      "fields": [
+        { "key": "gitlab.host",        "label": "Host",                  "secret": false, "required": false, "placeholder": "gitlab.com" },
+        { "key": "gitlab.token",       "label": "Personal Access Token", "secret": true,  "required": true,  "placeholder": "glpat-... (needs read_api scope)" },
+        { "key": "gitlab.mr.projects", "label": "Projects",              "secret": false, "required": true, "multiValue": true, "placeholder": "group/project", "hint": "Add projects to watch for open MRs" }
+      ],
+      "testEndpoint": "https://${gitlab.host}/api/v4/user",
+      "testAuth": "Bearer ${gitlab.token}",
+      "credentialSharedWith": ["gitlabCI"]
+    },
     "netlify": {
       "displayName": "Netlify",
       "docs": "https://app.netlify.com/user/applications#personal-access-tokens",

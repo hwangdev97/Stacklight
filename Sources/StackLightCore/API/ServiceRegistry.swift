@@ -27,6 +27,8 @@ public final class ServiceRegistry {
         register(CloudflareProvider())
         register(GitHubActionsProvider())
         register(GitHubPRProvider())
+        register(GitLabCIProvider())
+        register(GitLabMRProvider())
         register(NetlifyProvider())
         register(RailwayProvider())
         register(FlyioProvider())

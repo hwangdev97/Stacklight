@@ -81,6 +81,7 @@
 		AEF0AA474073027C39DB13F5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00258267409EE7DFFA82672 /* NotificationManager.swift */; };
 		AFBC208B2A23E99780692CB8 /* WatchRefreshScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE82DAEB74DDB1D090270D2 /* WatchRefreshScheduler.swift */; };
 		B0B8CA0578556FE0CE7B6249 /* StackLightiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5CD41FA0DCF1ECFB2D3569 /* StackLightiOSApp.swift */; };
+		B1B163A7AF3BE97BD5637A70 /* gitlab.svg in Resources */ = {isa = PBXBuildFile; fileRef = CDB60E924E79A13901CD4193 /* gitlab.svg */; };
 		B68E8B867A5AFB50095D16CD /* StackLightCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3FE796CA92D092030133F38D /* StackLightCore */; };
 		B877882FEA432CA5A43102F7 /* MediumDeploymentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0BCD340A7E4BA54EBF64D4B /* MediumDeploymentView.swift */; };
 		BC92543DEA10F16340E8D4FE /* XcodeCloudAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0F1AE9064A2C3D744FDBDA /* XcodeCloudAPITests.swift */; };
@@ -209,8 +210,8 @@
 		358A22799CBD32B98C32197E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		362910104EA6037025650B33 /* ProviderSettingsDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderSettingsDetail.swift; sourceTree = "<group>"; };
 		3B4E8EFF9199C7ABF4A2E27F /* StatusOrb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusOrb.swift; sourceTree = "<group>"; };
-		4AA8A8EAB21F47B514C2938F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4B62ACB207ABDD1D77ACA8E0 /* ShapeBar */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ShapeBar; path = .; sourceTree = SOURCE_ROOT; };
+		4AA8A8EAB21F47B514C2938F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4CDD576E3C7623C851E012D2 /* WatchAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAppState.swift; sourceTree = "<group>"; };
 		500229C4002A1B15EF88B1ED /* StackLightiOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = StackLightiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		517441F7534DD20B77201D5D /* StackLightWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackLightWatchApp.swift; sourceTree = "<group>"; };
@@ -270,6 +271,7 @@
 		C0BCD340A7E4BA54EBF64D4B /* MediumDeploymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediumDeploymentView.swift; sourceTree = "<group>"; };
 		C19B482AE713013FD4D08C5D /* ExtraLargeDeploymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtraLargeDeploymentView.swift; sourceTree = "<group>"; };
 		C6892DA71084B81A63449831 /* GeneralSettingsDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsDetail.swift; sourceTree = "<group>"; };
+		CDB60E924E79A13901CD4193 /* gitlab.svg */ = {isa = PBXFileReference; path = gitlab.svg; sourceTree = "<group>"; };
 		D6A974864B678859F40726F7 /* CloudflareGrainGradientBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudflareGrainGradientBackground.swift; sourceTree = "<group>"; };
 		D9EF6D1114E2079860EC4DFF /* DeploymentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeploymentGridView.swift; sourceTree = "<group>"; };
 		DA9B0D0DA9D19AF24FA77FAC /* vercel.svg */ = {isa = PBXFileReference; path = vercel.svg; sourceTree = "<group>"; };
@@ -351,6 +353,7 @@
 				2DFB6E6EFEE385B476477837 /* cloudflarepages.svg */,
 				6814113716150C1A451CA440 /* flydotio.svg */,
 				B4B91D94E2B70694AED308E2 /* github.svg */,
+				CDB60E924E79A13901CD4193 /* gitlab.svg */,
 				AC2A1B8275DBC3C967A12E8A /* netlify.svg */,
 				7EB06C4B488B113CAC0E952D /* railway.svg */,
 				DA9B0D0DA9D19AF24FA77FAC /* vercel.svg */,
@@ -945,6 +948,7 @@
 				44F9E124EEDDB78F9D2EC382 /* cloudflarepages.svg in Resources */,
 				349EBD0A2A5B6248DD900B8A /* flydotio.svg in Resources */,
 				F3B0CDB7D0D66861F9C6755E /* github.svg in Resources */,
+				B1B163A7AF3BE97BD5637A70 /* gitlab.svg in Resources */,
 				8623CB7D2AB016CC9933FEC1 /* netlify.svg in Resources */,
 				C97342AF0B4148C26C7F7D65 /* railway.svg in Resources */,
 				57ED74C4317467278697B7AE /* vercel.svg in Resources */,

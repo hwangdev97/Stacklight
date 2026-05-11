@@ -89,6 +89,32 @@ case "$provider" in
     done
     ;;
 
+  gitlabCI|gitlabMR)
+    token=$(get "gitlab.token")
+    [[ -z "$token" ]] && { echo "missing gitlab.token" >&2; exit 1; }
+    host=$(get "gitlab.host")
+    # Normalize: trim scheme + trailing slashes; default to gitlab.com.
+    host="${host#https://}"
+    host="${host#http://}"
+    host="${host%%/*}"
+    [[ -z "$host" ]] && host="gitlab.com"
+    http_check "https://$host/api/v4/user" "Bearer $token"
+    if [[ "$provider" == "gitlabCI" ]]; then
+      projects=$(jq -r '."gitlab.projects" | if type=="array" then join(",") else . end' "$config")
+    else
+      projects=$(jq -r '."gitlab.mr.projects" | if type=="array" then join(",") else . end' "$config")
+    fi
+    IFS=',' read -ra list <<<"$projects"
+    for p in "${list[@]}"; do
+      p="$(echo "$p" | xargs)"
+      [[ -z "$p" ]] && continue
+      encoded="${p//\//%2F}"
+      http_check "https://$host/api/v4/projects/$encoded" "Bearer $token" || {
+        echo "project not reachable: $p" >&2; exit 1;
+      }
+    done
+    ;;
+
   netlify)
     token=$(get "netlify.token")
     [[ -z "$token" ]] && { echo "missing netlify.token" >&2; exit 1; }
