@@ -4,8 +4,15 @@ import Combine
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var deployments: [Deployment] = []
+    @Published var deployments: [Deployment] = [] {
+        didSet { sortedDeployments = deployments.sorted { $0.createdAt > $1.createdAt } }
+    }
     @Published private(set) var deploymentsByProvider: [String: [Deployment]] = [:]
+    /// Cached sort of `deployments`. Kept in lockstep via `didSet` so views can
+    /// read a stable, newest-first list from `body` without re-sorting on every
+    /// render. Production write paths already produce sorted arrays, but the
+    /// preview helper assigns arbitrary inputs so the resort is necessary here.
+    @Published private(set) var sortedDeployments: [Deployment] = []
     @Published var errors: [String: String] = [:]
     @Published var lastRefresh: Date?
     @Published var isRefreshing: Bool = false
@@ -31,6 +38,7 @@ final class AppState: ObservableObject {
         // showing "All Quiet" for the duration of a network round trip.
         if let snapshot = SharedStore.read() {
             self.deployments = snapshot.deployments
+            self.sortedDeployments = snapshot.deployments.sorted { $0.createdAt > $1.createdAt }
             self.lastRefresh = snapshot.writtenAt
             // Seed the fingerprint so the first publishSnapshot after a no-op
             // refresh doesn't fire a redundant widget reload / Watch push.
@@ -119,11 +127,6 @@ final class AppState: ObservableObject {
         pollingManager.stop()
         errors.removeAll()
         startPolling()
-    }
-
-    /// Convenience: deployments sorted newest-first across all providers.
-    var sortedDeployments: [Deployment] {
-        deployments.sorted { $0.createdAt > $1.createdAt }
     }
 
     /// Sorted deployments filtered to a single provider, or all of them when
