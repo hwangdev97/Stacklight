@@ -4,11 +4,13 @@ import Hero from "../sections/Hero.astro";
 ---
 
 <Base>
-  <main id="main" class="h-screen">
+  <main id="main" class="min-h-screen md:h-screen">
     <Hero />
   </main>
 </Base>
 
 <style is:global>
-  html, body { height: 100%; overflow: hidden; }
+  @media (min-width: 768px) {
+    html, body { height: 100%; overflow: hidden; }
+  }
 </style>
