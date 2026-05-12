@@ -7,54 +7,62 @@ const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/
 ---
 
 <script>
-  // Render paper.design's static mesh gradient shader as the hero wallpaper.
-  // Vector-quality at any DPR, no image asset, no compression artifacts.
+  // Hero wallpaper rendering.
+  //
+  // Native paper.design mesh-gradient shader on every device. The shader is
+  // static (speed=0): one paint, no rAF loop after.
+  //
+  // The iOS Safari perf trap is *not* the shader itself — it's
+  // `backdrop-filter: blur()` stacked over a WebGL surface that can't be
+  // promoted to a fast-path texture. Two things keep it cheap:
+  //   1. preserveDrawingBuffer:false + antialias:false → Safari can promote
+  //      the canvas to a composited texture, the same fast path it uses for
+  //      <img>. (Old code had both true for an html2canvas snapshot path that
+  //      no longer exists.)
+  //   2. On iOS, MenuBarMock drops its backdrop-filter (see .no-glass below);
+  //      without the backdrop-blur over the canvas, iOS compositing is fine.
   import {
     ShaderMount,
     staticMeshGradientFragmentShader,
     getShaderColorFromString,
     ShaderFitOptions,
   } from "@paper-design/shaders";
+  import { HERO_SHADER_COLORS, HERO_SHADER_PARAMS } from "../shader-uniforms";
+
+  // iPadOS 13+ reports as Mac, so also flag touch + Apple vendor.
+  function isIOSLike(): boolean {
+    const ua = navigator.userAgent;
+    if (/iPad|iPhone|iPod/.test(ua)) return true;
+    return (
+      navigator.maxTouchPoints > 1 &&
+      /Macintosh/.test(ua) &&
+      /Apple/.test(navigator.vendor)
+    );
+  }
 
   function mountHeroShader() {
-    const host = document.querySelector(".hero-wallpaper-bg");
+    // Tag the document on iOS so MenuBarMock can drop its backdrop-filters.
+    // This is what actually fixes the iOS perf — not skipping the shader.
+    if (isIOSLike()) {
+      document.documentElement.classList.add("no-glass");
+    }
+
+    const host = document.querySelector(".hero-wallpaper-bg") as HTMLElement | null;
     if (!host || host.dataset.shaderMounted === "1") return;
     host.dataset.shaderMounted = "1";
 
-    const colors = ["#ff3a8c", "#7a1fff", "#ff6ad5", "#ffd1ec"].map(
-      getShaderColorFromString,
-    );
-
-    const uniforms = {
-      u_colors: colors,
-      u_colorsCount: colors.length,
-      u_positions: 2,
-      u_waveX: 1,
-      u_waveXShift: 0.6,
-      u_waveY: 1,
-      u_waveYShift: 0.21,
-      u_mixing: 0.93,
-      u_grainMixer: 0.15,
-      u_grainOverlay: 0.06,
-      // Sizing — fit:cover, neutral transform.
-      u_fit: ShaderFitOptions.cover,
-      u_scale: 1,
-      u_rotation: 270,
-      u_originX: 0.5,
-      u_originY: 0.5,
-      u_offsetX: 0,
-      u_offsetY: 0,
-      u_worldWidth: 0,
-      u_worldHeight: 0,
-    };
+    const colors = HERO_SHADER_COLORS.map(getShaderColorFromString);
 
     new ShaderMount(
-      host as HTMLElement,
+      host,
       staticMeshGradientFragmentShader,
-      uniforms,
-      // preserveDrawingBuffer:true so html2canvas (used by liquidGL) can
-      // read the WebGL canvas pixels for the lens snapshot.
-      { preserveDrawingBuffer: true, antialias: true },
+      {
+        ...HERO_SHADER_PARAMS,
+        u_colors: colors,
+        u_fit: ShaderFitOptions.cover,
+      },
+      // Drop both flags so Safari can hardware-composite the canvas.
+      { preserveDrawingBuffer: false, antialias: false },
       0, // speed=0 → static, no rAF loop after first paint
     );
   }
