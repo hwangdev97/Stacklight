@@ -149,7 +149,7 @@ const dotClass: Record<State, string> = {
                 ></span>
               ) : (
                 <span class="icon-badge shrink-0" style={`--brand: ${section.brand};`}>
-                  <img src={section.logo} alt="" loading="lazy" />
+                  <img src={section.logo} alt="" loading="eager" decoding="async" />
                 </span>
               )}
               <span class="font-semibold text-[13px] flex-1 truncate">{section.name}</span>
@@ -210,6 +210,24 @@ const dotClass: Record<State, string> = {
     backdrop-filter: blur(20px) saturate(170%);
   }
 
+  /* iOS / reduced-motion path. The Hero script tags <html> with .no-glass when
+     the live WebGL+backdrop-filter pipeline is skipped. We then strip every
+     backdrop-filter in the hero so iOS Safari doesn't re-blur a wide raster
+     on every scroll/repaint, and bump opaque tints to keep contrast. */
+  :global(html.no-glass) .menu-bar-strip {
+    background-color: rgba(28, 28, 30, 0.78);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  :global(html.no-glass) liquid-glass.dropdown-glass {
+    /* Force the fallback-blur radius to zero — the component reads this var
+       from its shadow DOM. Combined with the bumped tint below, the menu
+       renders as a flat dark surface, no live filter. */
+    --fallback-blur: 0px;
+    background-color: rgba(20, 20, 24, 0.86);
+    border-radius: 10px;
+  }
+
   /* The liquid-glass element renders as inline-block by default; let it fill
      the wrapper width-wise. Width attribute still drives the SVG filter math. */
   liquid-glass.dropdown-glass {
@@ -221,6 +239,13 @@ const dotClass: Record<State, string> = {
   liquid-glass.dropdown-glass .dropdown-content {
     display: block;
     width: 100%;
+    contain: layout paint;
+  }
+  /* Scope hover-state repaints to each row so iOS Safari doesn't bubble
+     paint invalidations up to the .glass-inner backdrop-filter region.
+     Targets every row that has a hover state (Tailwind `hover:bg-white/...`). */
+  .dropdown-content [class*="hover:bg-white"] {
+    contain: layout paint;
   }
 
   /* Fallback in older Firefox without backdrop-filter: a solid-ish dark tint
@@ -317,6 +342,11 @@ const dotClass: Record<State, string> = {
     }
     function run() {
       const els = document.querySelectorAll("liquid-glass.dropdown-glass");
+      // On iOS (html.no-glass set by Hero.astro), tag each instance with
+      // .no-blur so the component's shadow CSS strips its backdrop-filter.
+      if (document.documentElement.classList.contains("no-glass")) {
+        els.forEach((el) => el.classList.add("no-blur"));
+      }
       // Wait for any <img> children to load so scrollHeight is final.
       const imgs = Array.from(document.querySelectorAll(".dropdown-content img"));
       const allLoaded = Promise.all(
