@@ -8,6 +8,10 @@ struct MenuBarContentView: View {
     var providers: [DeploymentProvider]
     var errors: [String: String]
     var lastRefresh: Date?
+    /// True while a poll is in flight. Footer swaps "Updated Xm ago" for a
+    /// spinner + "Refreshing…" label so users see that fresher data is on
+    /// the way after they open the menu.
+    var isRefreshing: Bool
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
     var onOpenFeedback: () -> Void
@@ -39,6 +43,7 @@ struct MenuBarContentView: View {
         deployments: [Deployment],
         errors: [String: String],
         lastRefresh: Date?,
+        isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void,
@@ -62,6 +67,7 @@ struct MenuBarContentView: View {
             deploymentsByProvider: Dictionary(grouping: deployments, by: \.providerID),
             errors: errors,
             lastRefresh: lastRefresh,
+            isRefreshing: isRefreshing,
             onRefresh: onRefresh,
             onOpenSettings: onOpenSettings,
             onOpenFeedback: onOpenFeedback,
@@ -78,6 +84,7 @@ struct MenuBarContentView: View {
         deploymentsByProvider: [String: [Deployment]],
         errors: [String: String],
         lastRefresh: Date?,
+        isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void,
@@ -100,6 +107,7 @@ struct MenuBarContentView: View {
         self.grouped = deploymentsByProvider
         self.errors = errors
         self.lastRefresh = lastRefresh
+        self.isRefreshing = isRefreshing
         self.onRefresh = onRefresh
         self.onOpenSettings = onOpenSettings
         self.onOpenFeedback = onOpenFeedback
@@ -319,7 +327,20 @@ struct MenuBarContentView: View {
     @ViewBuilder
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let lastRefresh {
+            if isRefreshing {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .scaleEffect(0.6)
+                        .frame(width: 10, height: 10)
+                    Text("Refreshing…")
+                }
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
+            } else if let lastRefresh {
                 let configuredCount = providers.count
                 let okCount = max(0, configuredCount - errors.count)
                 Text("Updated \(relativeTime(from: lastRefresh)) · \(okCount)/\(configuredCount) ok")
@@ -589,6 +610,20 @@ private enum PreviewFixtures {
         deployments: [],
         errors: [:],
         lastRefresh: Date(),
+        onRefresh: {},
+        onOpenSettings: {},
+        onOpenFeedback: {},
+        onQuit: {}
+    )
+}
+
+#Preview("Menubar — Refreshing") {
+    MenuBarContentView(
+        providers: PreviewFixtures.allProviders,
+        deployments: PreviewFixtures.richDeployments,
+        errors: [:],
+        lastRefresh: Date().addingTimeInterval(-240),
+        isRefreshing: true,
         onRefresh: {},
         onOpenSettings: {},
         onOpenFeedback: {},

@@ -44,6 +44,7 @@ private struct MenuBarRootView: View {
             deploymentsByProvider: appState.deploymentsByProvider,
             errors: appState.errors,
             lastRefresh: appState.lastRefresh,
+            isRefreshing: appState.isRefreshing,
             onRefresh: { appState.refresh() },
             onOpenSettings: {
                 NSApp.activate(ignoringOtherApps: true)
@@ -68,6 +69,11 @@ private struct MenuBarRootView: View {
             },
             onQuit: { NSApp.terminate(nil) }
         )
+        .onAppear {
+            // Refresh whenever the panel opens so the menu reflects current
+            // state, not whatever the last 60s poll happened to land on.
+            appState.refreshIfStale()
+        }
     }
 }
 
