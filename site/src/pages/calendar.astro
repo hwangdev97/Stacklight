@@ -1,0 +1,604 @@
+---
+import "../styles/calendar.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Release Calendar — StackLight</title>
+    <meta
+      name="description"
+      content="Calendar view for every release, deploy, and CI run across your services."
+    />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+  <body>
+    <div class="cal-app" id="app">
+      <aside class="cal-sidebar">
+        <div class="cal-sidebar-head">
+          <div class="cal-sidebar-brand">
+            <span class="dot"></span>
+            <span>StackLight</span>
+          </div>
+          <button class="cal-icon-btn" id="refresh-btn" title="Refresh" aria-label="Refresh">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="cal-mini">
+          <div class="cal-mini-head">
+            <div class="cal-mini-title" id="mini-title"></div>
+            <div class="cal-mini-nav">
+              <button class="cal-icon-btn" id="mini-prev" aria-label="Previous month">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <button class="cal-icon-btn" id="mini-next" aria-label="Next month">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+          <div class="cal-mini-grid" id="mini-grid"></div>
+        </div>
+
+        <div class="cal-agenda" id="agenda"></div>
+      </aside>
+
+      <main class="cal-main">
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="cal-icon-btn" id="prev-btn" aria-label="Previous">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button class="cal-today-btn" id="today-btn">Today</button>
+            <button class="cal-icon-btn" id="next-btn" aria-label="Next">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+          <div class="cal-title" id="cal-title"></div>
+          <div class="cal-view-switch" role="tablist">
+            <button data-view="week" role="tab">Week</button>
+            <button data-view="month" class="active" role="tab">Month</button>
+          </div>
+        </div>
+
+        <div class="cal-grid-wrap" id="grid-wrap"></div>
+      </main>
+    </div>
+
+    <div class="cal-popover hidden" id="popover" role="dialog" aria-modal="false"></div>
+    <div class="cal-status" id="status" role="status" aria-live="polite"></div>
+
+    <script>
+      // ---------- State ----------
+      const state = {
+        view: "month",
+        anchor: new Date(),
+        events: [],
+        loading: false,
+        errors: [],
+        configured: [],
+      };
+
+      // ---------- Date helpers ----------
+      const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const DOW_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const DOW_LONG = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+      const startOfDay = (d) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+      const endOfDay = (d) => { const x = new Date(d); x.setHours(23,59,59,999); return x; };
+      const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+      const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0, 23,59,59,999);
+      const startOfWeek = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - x.getDay()); return x; };
+      const endOfWeek = (d) => { const x = startOfWeek(d); x.setDate(x.getDate() + 6); x.setHours(23,59,59,999); return x; };
+      const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+      const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+      const sameMonth = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+      const fmtTime = (d) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      const fmtIsoDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+      function rangeForView() {
+        if (state.view === "month") {
+          // Cover the whole 6-row month grid so events from leading/trailing
+          // days show up too.
+          const monthStart = startOfMonth(state.anchor);
+          const gridStart = startOfWeek(monthStart);
+          const gridEnd = addDays(gridStart, 41);
+          return { from: gridStart, to: endOfDay(gridEnd) };
+        }
+        return { from: startOfWeek(state.anchor), to: endOfWeek(state.anchor) };
+      }
+
+      // ---------- Fetch ----------
+      const IS_DEMO = new URLSearchParams(location.search).get("demo") === "1";
+      async function loadEvents() {
+        const { from, to } = rangeForView();
+        state.loading = true;
+        showStatus("Loading…");
+        try {
+          const params = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
+          if (IS_DEMO) params.set("demo", "1");
+          const res = await fetch(`/api/events?${params}`);
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          state.events = (data.events || []).map((e) => ({ ...e, _start: new Date(e.startsAt), _end: e.endsAt ? new Date(e.endsAt) : null }));
+          state.errors = data.errors || [];
+          state.configured = data.configuredProviders || [];
+          showStatus(state.events.length === 0 ? "No events in range" : `${state.events.length} events`, 1200);
+        } catch (err) {
+          state.events = [];
+          state.errors = [{ provider: "api", message: String(err) }];
+          showStatus(`Error: ${err.message || err}`, 4000);
+        } finally {
+          state.loading = false;
+          render();
+        }
+      }
+
+      let statusTimer;
+      function showStatus(text, hideAfter) {
+        const el = document.getElementById("status");
+        el.textContent = text;
+        el.classList.add("show");
+        if (statusTimer) clearTimeout(statusTimer);
+        if (hideAfter) statusTimer = setTimeout(() => el.classList.remove("show"), hideAfter);
+      }
+
+      // ---------- Render ----------
+      function render() {
+        renderToolbar();
+        renderMini();
+        renderAgenda();
+        const wrap = document.getElementById("grid-wrap");
+        wrap.innerHTML = "";
+        if (state.view === "month") wrap.appendChild(renderMonth());
+        else wrap.appendChild(renderWeek());
+
+        // No data + nothing configured → friendly empty state.
+        if (state.events.length === 0 && state.configured.every((p) => !isConfigured(p))) {
+          wrap.appendChild(renderEmpty());
+        }
+      }
+
+      function isConfigured() {
+        // Server already filters to configured providers in `errors` and events;
+        // for the empty-state heuristic we just check whether anything came back.
+        return state.events.length > 0 || state.errors.length > 0;
+      }
+
+      function renderToolbar() {
+        const title = state.view === "month"
+          ? `${MONTHS[state.anchor.getMonth()]} ${state.anchor.getFullYear()}`
+          : (() => {
+              const s = startOfWeek(state.anchor), e = endOfWeek(state.anchor);
+              if (sameMonth(s, e)) return `${MONTHS[s.getMonth()]} ${s.getDate()} – ${e.getDate()}, ${s.getFullYear()}`;
+              return `${MONTHS[s.getMonth()].slice(0,3)} ${s.getDate()} – ${MONTHS[e.getMonth()].slice(0,3)} ${e.getDate()}, ${e.getFullYear()}`;
+            })();
+        document.getElementById("cal-title").textContent = title;
+
+        for (const btn of document.querySelectorAll(".cal-view-switch button")) {
+          btn.classList.toggle("active", btn.dataset.view === state.view);
+        }
+      }
+
+      function renderMini() {
+        const title = document.getElementById("mini-title");
+        const a = state.anchor;
+        title.innerHTML = `${MONTHS[a.getMonth()]}<span class="yr">${a.getFullYear()}</span>`;
+
+        const grid = document.getElementById("mini-grid");
+        grid.innerHTML = "";
+        for (const d of ["S","M","T","W","T","F","S"]) {
+          const el = document.createElement("div");
+          el.className = "cal-mini-dow";
+          el.textContent = d;
+          grid.appendChild(el);
+        }
+        const start = startOfWeek(startOfMonth(a));
+        const today = new Date();
+        const eventsByDate = bucketByDay(state.events);
+        for (let i = 0; i < 42; i++) {
+          const d = addDays(start, i);
+          const cell = document.createElement("div");
+          cell.className = "cal-mini-day";
+          if (!sameMonth(d, a)) cell.classList.add("other");
+          if (sameDay(d, today)) cell.classList.add("today");
+          if (sameDay(d, state.anchor) && !sameDay(d, today)) cell.classList.add("selected");
+          cell.textContent = d.getDate();
+          if (eventsByDate.get(fmtIsoDate(d))?.length) {
+            const dot = document.createElement("span");
+            dot.className = "dot";
+            cell.appendChild(dot);
+          }
+          cell.addEventListener("click", () => {
+            state.anchor = d;
+            if (state.view === "week") loadEvents(); else render();
+          });
+          grid.appendChild(cell);
+        }
+      }
+
+      function bucketByDay(events) {
+        const map = new Map();
+        for (const ev of events) {
+          const key = fmtIsoDate(ev._start);
+          if (!map.has(key)) map.set(key, []);
+          map.get(key).push(ev);
+        }
+        return map;
+      }
+
+      function renderAgenda() {
+        const agenda = document.getElementById("agenda");
+        agenda.innerHTML = "";
+        const today = startOfDay(new Date());
+        const upcoming = state.events
+          .filter((e) => e._start >= today)
+          .slice(0, 30);
+
+        if (upcoming.length === 0) {
+          // Fall back to most recent past events so the sidebar isn't empty.
+          const past = [...state.events].sort((a, b) => b._start - a._start).slice(0, 8);
+          if (past.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "cal-agenda-empty";
+            empty.textContent = state.errors.length
+              ? "No data — check your API tokens."
+              : "Nothing scheduled in this range.";
+            agenda.appendChild(empty);
+            return;
+          }
+          renderAgendaGroup(agenda, "Recent", past);
+          return;
+        }
+
+        const byDay = bucketByDay(upcoming);
+        const tomorrow = addDays(today, 1);
+        for (const [iso, group] of byDay) {
+          const d = new Date(iso + "T00:00:00");
+          let label;
+          if (sameDay(d, today)) label = "Today";
+          else if (sameDay(d, tomorrow)) label = "Tomorrow";
+          else label = DOW_LONG[d.getDay()];
+          renderAgendaGroup(agenda, label, group, d, sameDay(d, today));
+        }
+      }
+
+      function renderAgendaGroup(parent, label, events, date, isToday) {
+        const dayEl = document.createElement("div");
+        dayEl.className = "cal-agenda-day";
+        const head = document.createElement("div");
+        head.className = "cal-agenda-head" + (isToday ? " today" : "");
+        head.innerHTML = `<span>${label}</span>${date ? `<span class="date">${date.getMonth()+1}/${date.getDate()}</span>` : ""}`;
+        dayEl.appendChild(head);
+        for (const ev of events) {
+          const a = document.createElement("a");
+          a.href = ev.url || "#";
+          if (ev.url) a.target = "_blank";
+          a.rel = "noopener";
+          a.className = "cal-agenda-item";
+          a.innerHTML = `
+            <span class="swatch" style="background:${ev.color}"></span>
+            <div class="body">
+              <div class="time">${fmtTime(ev._start)} · ${escapeHtml(ev.providerLabel)}</div>
+              <div class="title">${escapeHtml(ev.title)}</div>
+              ${ev.subtitle ? `<div class="sub">${escapeHtml(ev.subtitle)}</div>` : ""}
+            </div>
+          `;
+          a.addEventListener("click", (e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            e.preventDefault();
+            openPopover(ev, a);
+          });
+          dayEl.appendChild(a);
+        }
+        parent.appendChild(dayEl);
+      }
+
+      function renderMonth() {
+        const root = document.createElement("div");
+        root.className = "cal-month";
+
+        const dowRow = document.createElement("div");
+        dowRow.className = "cal-month-dow";
+        for (const d of DOW_SHORT) {
+          const el = document.createElement("div");
+          el.textContent = d;
+          dowRow.appendChild(el);
+        }
+        root.appendChild(dowRow);
+
+        const grid = document.createElement("div");
+        grid.className = "cal-month-grid";
+
+        const monthStart = startOfMonth(state.anchor);
+        const gridStart = startOfWeek(monthStart);
+        const today = new Date();
+        const byDay = bucketByDay(state.events);
+
+        for (let i = 0; i < 42; i++) {
+          const d = addDays(gridStart, i);
+          const cell = document.createElement("div");
+          cell.className = "cal-day";
+          if (!sameMonth(d, state.anchor)) cell.classList.add("other");
+          if (sameDay(d, today)) cell.classList.add("today");
+          if (d.getDate() === 1) {
+            cell.classList.add("first-of-month");
+          }
+          const num = document.createElement("div");
+          num.className = "cal-day-num";
+          if (d.getDate() === 1) {
+            num.dataset.month = MONTHS[d.getMonth()].slice(0,3);
+          }
+          num.textContent = d.getDate();
+          cell.appendChild(num);
+
+          const dayEvents = byDay.get(fmtIsoDate(d)) || [];
+          const visible = dayEvents.slice(0, 3);
+          for (const ev of visible) {
+            const link = document.createElement("a");
+            link.href = ev.url || "#";
+            if (ev.url) link.target = "_blank";
+            link.rel = "noopener";
+            link.className = `cal-event kind-${ev.kind} status-${ev.status}`;
+            link.innerHTML = `
+              <span class="ev-time">${fmtTime(ev._start)}</span>
+              <span class="ev-title">${escapeHtml(ev.title)}</span>
+            `;
+            link.addEventListener("click", (e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+              e.preventDefault();
+              openPopover(ev, link);
+            });
+            cell.appendChild(link);
+          }
+          if (dayEvents.length > visible.length) {
+            const more = document.createElement("div");
+            more.className = "cal-more";
+            more.textContent = `${dayEvents.length - visible.length} more…`;
+            more.addEventListener("click", () => {
+              state.anchor = d;
+              state.view = "week";
+              loadEvents();
+            });
+            cell.appendChild(more);
+          }
+          cell.addEventListener("dblclick", () => {
+            state.anchor = d;
+            state.view = "week";
+            loadEvents();
+          });
+
+          grid.appendChild(cell);
+        }
+        root.appendChild(grid);
+        return root;
+      }
+
+      function renderWeek() {
+        const root = document.createElement("div");
+        root.className = "cal-week";
+
+        const weekStart = startOfWeek(state.anchor);
+        const today = new Date();
+
+        // Header row
+        const head = document.createElement("div");
+        head.className = "cal-week-head";
+        const corner = document.createElement("div");
+        corner.className = "cal-week-corner";
+        head.appendChild(corner);
+        for (let i = 0; i < 7; i++) {
+          const d = addDays(weekStart, i);
+          const col = document.createElement("div");
+          col.className = "cal-week-day-head" + (sameDay(d, today) ? " today" : "");
+          col.innerHTML = `<span class="dow">${DOW_SHORT[d.getDay()]}</span><span class="num">${d.getDate()}</span>`;
+          head.appendChild(col);
+        }
+        root.appendChild(head);
+
+        // Body
+        const body = document.createElement("div");
+        body.className = "cal-week-body";
+
+        const hours = document.createElement("div");
+        hours.className = "cal-week-hours";
+        for (let h = 0; h < 24; h++) {
+          const el = document.createElement("div");
+          el.className = "cal-week-hour";
+          el.textContent = h === 0 ? "" : (h < 12 ? `${h} AM` : (h === 12 ? "12 PM" : `${h-12} PM`));
+          hours.appendChild(el);
+        }
+        body.appendChild(hours);
+
+        const HOUR_PX = 48;
+        for (let i = 0; i < 7; i++) {
+          const d = addDays(weekStart, i);
+          const col = document.createElement("div");
+          col.className = "cal-week-col";
+          const bg = document.createElement("div");
+          bg.className = "cal-week-col-bg";
+          bg.style.height = `${24 * HOUR_PX}px`;
+          col.appendChild(bg);
+          col.style.height = `${24 * HOUR_PX}px`;
+
+          const dayEvents = state.events.filter((e) => sameDay(e._start, d));
+          for (const ev of dayEvents) {
+            const start = ev._start;
+            const end = ev._end && ev._end > start ? ev._end : new Date(start.getTime() + 30 * 60 * 1000);
+            const top = (start.getHours() + start.getMinutes() / 60) * HOUR_PX;
+            const dur = Math.max(0.4, (end - start) / (1000 * 60 * 60));
+            const height = dur * HOUR_PX;
+            const block = document.createElement("a");
+            block.href = ev.url || "#";
+            if (ev.url) block.target = "_blank";
+            block.rel = "noopener";
+            block.className = `cal-week-event kind-${ev.kind} status-${ev.status}`;
+            block.style.top = `${top}px`;
+            block.style.height = `${height}px`;
+            block.innerHTML = `
+              <div class="ev-time">${fmtTime(start)}</div>
+              <div class="ev-title">${escapeHtml(ev.title)}</div>
+            `;
+            block.addEventListener("click", (e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+              e.preventDefault();
+              openPopover(ev, block);
+            });
+            col.appendChild(block);
+          }
+
+          if (sameDay(d, today)) {
+            const now = new Date();
+            const top = (now.getHours() + now.getMinutes() / 60) * HOUR_PX;
+            const line = document.createElement("div");
+            line.className = "cal-now-line";
+            line.style.top = `${top}px`;
+            col.appendChild(line);
+          }
+
+          body.appendChild(col);
+        }
+
+        root.appendChild(body);
+
+        // Scroll to a reasonable hour after mount.
+        requestAnimationFrame(() => {
+          const wrap = document.getElementById("grid-wrap");
+          const targetHour = sameDay(weekStart, today) || (today >= weekStart && today <= addDays(weekStart, 6))
+            ? Math.max(0, today.getHours() - 2)
+            : 7;
+          wrap.scrollTop = targetHour * HOUR_PX;
+        });
+
+        return root;
+      }
+
+      function renderEmpty() {
+        const el = document.createElement("div");
+        el.className = "cal-empty";
+        el.innerHTML = `
+          <h2>No providers configured</h2>
+          <p>Add credentials to start tracking releases.</p>
+          <p style="margin-top:14px;font-size:12px">
+            Set <code>GITHUB_TOKEN</code> + <code>GITHUB_REPOS</code>, <code>VERCEL_TOKEN</code>,
+            or <code>NETLIFY_TOKEN</code> + <code>NETLIFY_SITES</code> as environment variables.
+          </p>
+        `;
+        return el;
+      }
+
+      // ---------- Popover ----------
+      function openPopover(ev, anchor) {
+        const pop = document.getElementById("popover");
+        const start = ev._start;
+        const end = ev._end;
+        const dateStr = start.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+        const timeStr = end && end > start
+          ? `${fmtTime(start)} – ${fmtTime(end)}`
+          : fmtTime(start);
+        pop.innerHTML = `
+          <div class="meta">
+            <span class="badge" style="background:${ev.color}20;color:${ev.color}">${escapeHtml(ev.providerLabel)}</span>
+            <span>${escapeHtml(ev.kind)}</span>
+            <span>·</span>
+            <span>${escapeHtml(ev.status)}</span>
+          </div>
+          <h3>${escapeHtml(ev.title)}</h3>
+          ${ev.subtitle ? `<div style="color:var(--cal-muted);font-size:12px;margin-bottom:6px">${escapeHtml(ev.subtitle)}</div>` : ""}
+          <div class="pop-row"><div class="k">When</div><div>${dateStr}<br/>${timeStr}</div></div>
+          ${ev.tag ? `<div class="pop-row"><div class="k">Tag</div><div>${escapeHtml(ev.tag)}</div></div>` : ""}
+          ${ev.branch ? `<div class="pop-row"><div class="k">Branch</div><div>${escapeHtml(ev.branch)}</div></div>` : ""}
+          ${ev.commit ? `<div class="pop-row"><div class="k">Commit</div><div>${escapeHtml(truncate(ev.commit, 80))}</div></div>` : ""}
+          ${ev.url ? `<a class="pop-link" href="${ev.url}" target="_blank" rel="noopener">Open ↗</a>` : ""}
+        `;
+        pop.classList.remove("hidden");
+
+        // Position near the anchor element.
+        const rect = anchor.getBoundingClientRect();
+        const popRect = pop.getBoundingClientRect();
+        const margin = 8;
+        let left = rect.right + margin;
+        let top = rect.top;
+        if (left + popRect.width > window.innerWidth - margin) {
+          left = Math.max(margin, rect.left - popRect.width - margin);
+        }
+        if (top + popRect.height > window.innerHeight - margin) {
+          top = Math.max(margin, window.innerHeight - popRect.height - margin);
+        }
+        pop.style.left = `${left}px`;
+        pop.style.top = `${top}px`;
+      }
+      function closePopover() {
+        document.getElementById("popover").classList.add("hidden");
+      }
+      document.addEventListener("click", (e) => {
+        const pop = document.getElementById("popover");
+        if (pop.classList.contains("hidden")) return;
+        if (pop.contains(e.target)) return;
+        if (e.target.closest(".cal-event, .cal-week-event, .cal-agenda-item")) return;
+        closePopover();
+      });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePopover(); });
+
+      // ---------- Helpers ----------
+      function escapeHtml(s) {
+        if (s == null) return "";
+        return String(s)
+          .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+          .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+      }
+      function truncate(s, n) {
+        const one = String(s).split(/\r?\n/)[0];
+        return one.length > n ? one.slice(0, n - 1) + "…" : one;
+      }
+
+      // ---------- Wire up ----------
+      function step(delta) {
+        if (state.view === "month") {
+          state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth() + delta, 1);
+        } else {
+          state.anchor = addDays(state.anchor, delta * 7);
+        }
+        loadEvents();
+      }
+      document.getElementById("prev-btn").addEventListener("click", () => step(-1));
+      document.getElementById("next-btn").addEventListener("click", () => step(1));
+      document.getElementById("today-btn").addEventListener("click", () => {
+        state.anchor = new Date();
+        loadEvents();
+      });
+      document.getElementById("mini-prev").addEventListener("click", () => {
+        state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth() - 1, 1);
+        loadEvents();
+      });
+      document.getElementById("mini-next").addEventListener("click", () => {
+        state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth() + 1, 1);
+        loadEvents();
+      });
+      document.getElementById("refresh-btn").addEventListener("click", () => loadEvents());
+      for (const btn of document.querySelectorAll(".cal-view-switch button")) {
+        btn.addEventListener("click", () => {
+          if (btn.dataset.view === state.view) return;
+          state.view = btn.dataset.view;
+          loadEvents();
+        });
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.target.matches("input, textarea")) return;
+        if (e.key === "ArrowLeft") step(-1);
+        else if (e.key === "ArrowRight") step(1);
+        else if (e.key.toLowerCase() === "t") { state.anchor = new Date(); loadEvents(); }
+        else if (e.key.toLowerCase() === "m") { state.view = "month"; loadEvents(); }
+        else if (e.key.toLowerCase() === "w") { state.view = "week"; loadEvents(); }
+      });
+
+      loadEvents();
+    </script>
+  </body>
+</html>
