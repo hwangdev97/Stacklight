@@ -7,5 +7,9 @@ export default defineConfig({
   site: "https://stacklight.pages.dev",
   integrations: [tailwind({ applyBaseStyles: false })],
   output: "hybrid",
-  adapter: cloudflare()
+  adapter: cloudflare({
+    platformProxy: {
+      enabled: true,
+    },
+  }),
 });
