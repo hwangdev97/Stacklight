@@ -10,6 +10,10 @@ final class AppState: ObservableObject {
     @Published private(set) var deploymentsByProvider: [String: [Deployment]] = [:]
     @Published var errors: [String: String] = [:] // providerID -> error message
     @Published var lastRefresh: Date?
+    /// True while a poll is in flight. Drives the menu's "Refreshing…" footer
+    /// so opening the menu after a long pause shows progress instead of stale
+    /// timestamps with no hint that fresh data is on its way.
+    @Published var isRefreshing: Bool = false
     /// Most recent batch outcome for the menu header line. `nil` until first
     /// poll completes.
     @Published var lastRefreshSummary: RefreshSummary?
@@ -18,6 +22,15 @@ final class AppState: ObservableObject {
     var openFeedbackWindow: (() -> Void)?
 
     private let pollingManager = PollingManager()
+    private var refreshWatchdog: Task<Void, Never>?
+
+    /// Hard cap on how long the menu spinner is allowed to stay visible.
+    /// Mirrors the iOS watchdog so a stalled fetch never traps the UI.
+    private static let refreshUITimeout: UInt64 = 8_000_000_000 // 8s
+
+    /// Minimum age before opening the menu triggers a fresh poll. Avoids
+    /// hammering the providers when the user opens/closes the menu rapidly.
+    private static let menuOpenStaleThreshold: TimeInterval = 5
 
     init() {
         // Replay diagnostics toggle into the singleton on cold launch so logs
@@ -67,6 +80,7 @@ final class AppState: ObservableObject {
                 self.deployments = flat
             }
             self.lastRefresh = Date()
+            self.finishRefresh()
             self.recomputeRefreshSummary()
             NotificationManager.shared.checkForChangesPersistent(old: oldDeployments, new: flat)
         }
@@ -79,7 +93,43 @@ final class AppState: ObservableObject {
 
     func refresh() {
         errors.removeAll()
+        guard !ServiceRegistry.shared.configuredProviders.isEmpty else {
+            // Nothing to fetch — PollingManager would short-circuit anyway,
+            // but clearing the flag locally avoids a brief flicker.
+            isRefreshing = false
+            return
+        }
+        isRefreshing = true
+        armRefreshWatchdog()
         pollingManager.refresh()
+    }
+
+    /// Called when the menu bar panel opens. Triggers a refresh if the last
+    /// poll is older than `menuOpenStaleThreshold` so the user sees current
+    /// data instead of whatever was cached at the previous poll tick.
+    func refreshIfStale() {
+        if isRefreshing { return }
+        if let last = lastRefresh,
+           Date().timeIntervalSince(last) < Self.menuOpenStaleThreshold {
+            return
+        }
+        refresh()
+    }
+
+    private func finishRefresh() {
+        refreshWatchdog?.cancel()
+        refreshWatchdog = nil
+        isRefreshing = false
+    }
+
+    private func armRefreshWatchdog() {
+        refreshWatchdog?.cancel()
+        refreshWatchdog = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.refreshUITimeout)
+            guard !Task.isCancelled, let self else { return }
+            self.isRefreshing = false
+            self.refreshWatchdog = nil
+        }
     }
 
     func restartPolling() {
