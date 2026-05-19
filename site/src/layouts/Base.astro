@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import Analytics from "../components/Analytics.astro";
 
 interface Props {
   title?: string;
@@ -49,6 +50,8 @@ const canonical = new URL(Astro.url.pathname, siteUrl).toString();
     <!-- liquid-glass web component (winaviation/liquid-web). Defines the
          <liquid-glass> custom element used by MenuBarMock.astro. -->
     <script type="module" src="/scripts/lg-component.js" is:inline></script>
+
+    <Analytics />
   </head>
   <body>
     <a
