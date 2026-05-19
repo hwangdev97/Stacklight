@@ -115,6 +115,80 @@ const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/
   } else {
     resolveLatestRelease();
   }
+
+  // Mobile CTA. Below the md breakpoint we show a "macOS only — copy link"
+  // affordance instead of the .dmg download button (phones/tablets can't
+  // actually install a Mac app). Viewport-based swap is done in markup via
+  // `hidden md:flex` / `flex md:hidden`; the JS here only:
+  //   1. Wires the clipboard handler on the mobile button.
+  //   2. Forces the mobile CTA on iPadOS-as-Mac (which reports a desktop
+  //      viewport but can't install .dmgs).
+  function isMobilePlatform(): boolean {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPod|Android/i.test(ua)) return true;
+    if (/iPad/.test(ua)) return true;
+    // iPadOS 13+ reports as Mac; disambiguate via touch + Apple vendor.
+    return (
+      navigator.maxTouchPoints > 1 &&
+      /Macintosh/.test(ua) &&
+      /Apple/.test(navigator.vendor)
+    );
+  }
+
+  function setupMobileCTA() {
+    const desktop = document.getElementById("cta-desktop");
+    const mobile = document.getElementById("cta-mobile");
+    if (!desktop || !mobile) return;
+
+    if (isMobilePlatform()) {
+      // Override the viewport-based default — force mobile CTA regardless of
+      // current width (iPad landscape would otherwise hit the desktop branch).
+      desktop.classList.add("!hidden");
+      mobile.classList.remove("md:hidden");
+      mobile.classList.add("!flex");
+    }
+
+    const copyBtn = document.getElementById("hero-copy-link") as HTMLButtonElement | null;
+    if (!copyBtn) return;
+    const labelEl = copyBtn.querySelector("[data-copy-label]") as HTMLElement | null;
+    const defaultLabel = labelEl?.textContent ?? "Copy link";
+
+    copyBtn.addEventListener("click", async () => {
+      const link = window.location.href;
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(link);
+        ok = true;
+      } catch {
+        // Older iOS Safari / non-secure context fallback.
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          ok = document.execCommand("copy");
+        } catch {
+          ok = false;
+        }
+        document.body.removeChild(ta);
+      }
+      if (labelEl) {
+        labelEl.textContent = ok ? "Link copied — open on Mac" : "Copy failed — long-press the URL";
+        window.setTimeout(() => {
+          labelEl.textContent = defaultLabel;
+        }, 2400);
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupMobileCTA);
+  } else {
+    setupMobileCTA();
+  }
 </script>
 
 <section class="relative overflow-hidden bg-white min-h-screen md:h-screen flex items-center">
@@ -134,7 +208,10 @@ const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/
           Xcode Cloud, and TestFlight — and lives quietly in your Mac
           menu bar.
         </p>
-        <div class="flex flex-col sm:flex-row items-center md:items-start gap-3 sm:gap-4 pt-2">
+        <div
+          id="cta-desktop"
+          class="hidden md:flex flex-col sm:flex-row items-center md:items-start gap-3 sm:gap-4 pt-2"
+        >
           <a
             id="hero-download"
             href={FALLBACK_RELEASE}
@@ -145,7 +222,28 @@ const FALLBACK_RELEASE = "https://github.com/hwangdev97/Stacklight/releases/tag/
             <span class="text-white/60 text-sm font-normal" data-version></span>
           </a>
         </div>
-        <p class="text-sm text-muted">
+
+        <div
+          id="cta-mobile"
+          class="flex md:hidden flex-col items-center gap-3 pt-2 w-full"
+        >
+          <button
+            id="hero-copy-link"
+            type="button"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-base font-medium px-6 py-3 w-full sm:w-auto"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="11" height="11" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+            </svg>
+            <span data-copy-label>Copy link to send to Mac</span>
+          </button>
+          <p class="text-[13px] text-muted text-center md:text-left">
+            StackLight is macOS only — copy this link and open it on your Mac to download.
+          </p>
+        </div>
+
+        <p class="text-sm text-muted hidden md:block">
           Free and open source · macOS 13+ · No account required.
         </p>
       </div>
