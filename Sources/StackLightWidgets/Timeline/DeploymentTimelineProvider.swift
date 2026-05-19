@@ -25,12 +25,13 @@ struct DeploymentTimelineProvider: AppIntentTimelineProvider {
 
     func snapshot(for configuration: DeploymentWidgetIntent,
                   in context: Context) async -> DeploymentEntry {
-        let filtered = filterDeployments(currentDeployments(), using: configuration)
+        let snapshot = SharedStore.read()
+        let filtered = filterDeployments(snapshot?.deployments ?? [], using: configuration)
         return DeploymentEntry(
             date: Date(),
             deployments: filtered,
             activeBuild: filtered.contains { $0.status == .building || $0.status == .queued },
-            writtenAt: SharedStore.read()?.writtenAt,
+            writtenAt: snapshot?.writtenAt,
             configuration: configuration
         )
     }
@@ -63,10 +64,6 @@ struct DeploymentTimelineProvider: AppIntentTimelineProvider {
     }
 
     // MARK: - Data loading
-
-    private func currentDeployments() -> [Deployment] {
-        SharedStore.read()?.deployments ?? []
-    }
 
     /// Returns the freshest available set of deployments along with the
     /// snapshot write time (if the data came from the shared snapshot).
@@ -106,9 +103,13 @@ struct DeploymentTimelineProvider: AppIntentTimelineProvider {
 
     // MARK: - Filtering
 
+    /// Callers are required to pass deployments already sorted newest-first.
+    /// `loadDeployments` and `fetchDirectly` both produce sorted output, and
+    /// snapshots written by AppState preserve that ordering, so re-sorting here
+    /// would be pure waste on the widget's CPU-constrained timeline path.
     private func filterDeployments(_ deployments: [Deployment],
                                    using configuration: DeploymentWidgetIntent) -> [Deployment] {
-        var result = deployments.sorted { $0.createdAt > $1.createdAt }
+        var result = deployments
         if let providerID = configuration.provider?.id, providerID != ProviderEntity.anyID {
             result = result.filter { $0.providerID == providerID }
         }
