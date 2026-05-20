@@ -29,9 +29,11 @@ public enum KeychainManager {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecUseDataProtectionKeychain as String: true
+            kSecAttrAccount as String: key
         ]
+        #if !os(macOS)
+        query[kSecUseDataProtectionKeychain as String] = true
+        #endif
         if let group = accessGroup {
             query[kSecAttrAccessGroup as String] = group
         }
@@ -44,8 +46,9 @@ public enum KeychainManager {
         // Delete existing item first (query without value data)
         SecItemDelete(baseQuery(key: key) as CFDictionary)
 
-        // Add new item. Data Protection Keychain + AfterFirstUnlock gives us
-        // per-app scoped storage with no ACL prompts on read.
+        // Add new item. iOS/watchOS use the Data Protection Keychain; macOS
+        // uses the login keychain so unsigned/local builds don't require
+        // Keychain Sharing entitlements.
         var addQuery = baseQuery(key: key)
         addQuery[kSecValueData as String] = data
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
