@@ -75,6 +75,16 @@ extension Deployment {
     public var relativeTime: String {
         SharedFormatters.relativeAbbreviated.localizedString(for: createdAt, relativeTo: Date())
     }
+
+    /// Cross-platform "group by project" key: prefer the git repository
+    /// (last path segment, lowercased) so a repo's CI/PRs/previews collapse
+    /// together; fall back to a normalized project name otherwise.
+    public var projectGroupingKey: String {
+        if let repo = repository, !repo.isEmpty {
+            return (repo.split(separator: "/").last.map(String.init) ?? repo).lowercased()
+        }
+        return projectName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
 }
 
 /// Per-fetch result for a single provider. `deployments` holds everything that

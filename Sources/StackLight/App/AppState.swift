@@ -8,6 +8,11 @@ final class AppState: ObservableObject {
     /// lockstep with `deployments` so the menu UI doesn't have to call
     /// `Dictionary(grouping:)` on every body re-evaluation.
     @Published private(set) var deploymentsByProvider: [String: [Deployment]] = [:]
+    /// Pre-grouped view of `deployments` keyed by `projectGroupingKey` (repo or
+    /// normalized project name). Drives the menu's "Group by project" mode.
+    /// Maintained in lockstep with `deployments` for the same redraw-skip reason
+    /// as `deploymentsByProvider`.
+    @Published private(set) var deploymentsByProject: [String: [Deployment]] = [:]
     @Published var errors: [String: String] = [:] // providerID -> error message
     @Published var lastRefresh: Date?
     /// True while a poll is in flight. Drives the menu's "Refreshing…" footer
@@ -70,11 +75,18 @@ final class AppState: ObservableObject {
                 .flatMap { $0 }
                 .sorted { $0.createdAt > $1.createdAt }
 
+            // `flat` is already createdAt-desc, so each project group inherits
+            // that ordering (group.first is the most recent in the group).
+            let byProject = Dictionary(grouping: flat, by: \.projectGroupingKey)
+
             // Skip the @Published assignment when nothing changed — avoids
             // triggering objectWillChange (which forces a SwiftUI rebuild
             // tree-wide) on identical poll results, the common steady-state.
             if merged != self.deploymentsByProvider {
                 self.deploymentsByProvider = merged
+            }
+            if byProject != self.deploymentsByProject {
+                self.deploymentsByProject = byProject
             }
             if flat != self.deployments {
                 self.deployments = flat

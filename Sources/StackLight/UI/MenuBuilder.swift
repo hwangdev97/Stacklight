@@ -36,6 +36,14 @@ struct MenuBarContentView: View {
     /// hasn't actually changed.
     private let grouped: [String: [Deployment]]
 
+    /// Pre-grouped deployments keyed by `projectGroupingKey`, used when
+    /// "Group by project" is enabled.
+    private let deploymentsByProject: [String: [Deployment]]
+
+    /// Provider lookup by ID so project-mode platform sub-headers can resolve a
+    /// row's provider without a linear scan of the registry.
+    private let providersByID: [String: DeploymentProvider]
+
     /// Convenience init for callers (and previews) that have a flat list and
     /// don't want to pre-group themselves.
     init(
@@ -65,6 +73,8 @@ struct MenuBarContentView: View {
         self.init(
             providers: providers,
             deploymentsByProvider: Dictionary(grouping: deployments, by: \.providerID),
+            deploymentsByProject: Dictionary(grouping: deployments, by: \.projectGroupingKey),
+            providersByID: Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) }),
             errors: errors,
             lastRefresh: lastRefresh,
             isRefreshing: isRefreshing,
@@ -82,6 +92,8 @@ struct MenuBarContentView: View {
     init(
         providers: [DeploymentProvider],
         deploymentsByProvider: [String: [Deployment]],
+        deploymentsByProject: [String: [Deployment]] = [:],
+        providersByID: [String: DeploymentProvider] = [:],
         errors: [String: String],
         lastRefresh: Date?,
         isRefreshing: Bool = false,
@@ -105,6 +117,10 @@ struct MenuBarContentView: View {
     ) {
         self.providers = providers
         self.grouped = deploymentsByProvider
+        self.deploymentsByProject = deploymentsByProject
+        self.providersByID = providersByID.isEmpty
+            ? Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) })
+            : providersByID
         self.errors = errors
         self.lastRefresh = lastRefresh
         self.isRefreshing = isRefreshing
@@ -116,7 +132,11 @@ struct MenuBarContentView: View {
     }
 
     @Environment(\.openURL) private var openURL
-    @State private var settings: UserSettings = SettingsStore.shared.settings
+    /// Observing the store (rather than snapshotting once) makes the menu react
+    /// live to settings changes — the "Group by project" toggle and pin/hide
+    /// edits redraw the open panel immediately.
+    @ObservedObject private var settingsStore = SettingsStore.shared
+    private var settings: UserSettings { settingsStore.settings }
 
     /// Returns deployments for a provider grouped by visibility:
     /// `(pinned, visible, hidden)`. `hidden` is exposed so the UI can fold it
@@ -139,13 +159,14 @@ struct MenuBarContentView: View {
         SettingsStore.shared.mutate { settings in
             settings.setVisibility(visibility, for: deployment.key)
         }
-        settings = SettingsStore.shared.settings
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if providers.isEmpty {
                 emptyState
+            } else if settings.groupByProject {
+                projectModeBody
             } else {
                 ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
                     if idx > 0 {
@@ -161,6 +182,35 @@ struct MenuBarContentView: View {
         }
         .padding(.vertical, 6)
         .frame(width: 320)
+    }
+
+    /// Project keys ordered by most-recent deployment first. `deploymentsByProject`
+    /// values inherit the flat array's createdAt-desc order, so the first item
+    /// in each group is its most recent.
+    private var orderedProjectKeys: [String] {
+        deploymentsByProject.keys.sorted { lhs, rhs in
+            let l = deploymentsByProject[lhs]?.first?.createdAt ?? .distantPast
+            let r = deploymentsByProject[rhs]?.first?.createdAt ?? .distantPast
+            return l > r
+        }
+    }
+
+    @ViewBuilder
+    private var projectModeBody: some View {
+        if orderedProjectKeys.isEmpty {
+            Text("No recent deployments")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+        } else {
+            ForEach(Array(orderedProjectKeys.enumerated()), id: \.element) { idx, key in
+                if idx > 0 {
+                    Divider().padding(.horizontal, 10)
+                }
+                projectSection(key)
+            }
+        }
     }
 
     // MARK: - States
@@ -205,36 +255,96 @@ struct MenuBarContentView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
             } else {
-                let parts = partitioned(list)
-                // Pinned rows go first (already labeled with a pin glyph).
-                ForEach(parts.pinned, id: \.id) { deployment in
-                    deploymentRow(deployment, isPinned: true)
-                }
-                // Then the normal feed (capped at 5 to keep the menu compact).
-                ForEach(parts.visible.prefix(5), id: \.id) { deployment in
-                    deploymentRow(deployment, isPinned: false)
-                }
-                // Hidden items collapse into a folded count so the user can
-                // unhide without opening Settings.
-                if !parts.hidden.isEmpty {
-                    Menu {
-                        ForEach(parts.hidden, id: \.id) { deployment in
-                            Button("Show \(deployment.projectName)") {
-                                updateVisibility(.visible, for: deployment)
-                            }
-                        }
-                    } label: {
-                        Text("Hidden (\(parts.hidden.count))")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .menuStyle(.borderlessButton)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 2)
-                }
+                rowsBlock(for: list)
             }
         }
         .padding(.vertical, 2)
+    }
+
+    /// Shared row block: pinned rows first, then the visible feed (capped at 5),
+    /// then a folded "Hidden (N)" submenu. Used by both the provider and project
+    /// layouts so they stay in sync.
+    @ViewBuilder
+    private func rowsBlock(for list: [Deployment]) -> some View {
+        let parts = partitioned(list)
+        // Pinned rows go first (already labeled with a pin glyph).
+        ForEach(parts.pinned, id: \.id) { deployment in
+            deploymentRow(deployment, isPinned: true)
+        }
+        // Then the normal feed (capped at 5 to keep the menu compact).
+        ForEach(parts.visible.prefix(5), id: \.id) { deployment in
+            deploymentRow(deployment, isPinned: false)
+        }
+        // Hidden items collapse into a folded count so the user can unhide
+        // without opening Settings.
+        if !parts.hidden.isEmpty {
+            Menu {
+                ForEach(parts.hidden, id: \.id) { deployment in
+                    Button("Show \(deployment.projectName)") {
+                        updateVisibility(.visible, for: deployment)
+                    }
+                }
+            } label: {
+                Text("Hidden (\(parts.hidden.count))")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .menuStyle(.borderlessButton)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 2)
+        }
+    }
+
+    // MARK: - Project mode
+
+    @ViewBuilder
+    private func projectSection(_ key: String) -> some View {
+        let items = deploymentsByProject[key] ?? []
+        VStack(alignment: .leading, spacing: 0) {
+            projectHeader(for: items)
+
+            // Sub-group the project's deployments by platform, ordered by the
+            // most-recent deployment in each platform (items are already
+            // createdAt-desc, so first wins).
+            let byProvider = Dictionary(grouping: items, by: \.providerID)
+            let orderedProviderIDs = byProvider.keys.sorted { lhs, rhs in
+                let l = byProvider[lhs]?.first?.createdAt ?? .distantPast
+                let r = byProvider[rhs]?.first?.createdAt ?? .distantPast
+                return l > r
+            }
+            ForEach(orderedProviderIDs, id: \.self) { providerID in
+                if let provider = providersByID[providerID] {
+                    providerHeader(provider)
+                }
+                rowsBlock(for: byProvider[providerID] ?? [])
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    /// Non-clickable project header. A project can span platforms, so unlike a
+    /// provider header there's no single dashboard to open. Display name is the
+    /// most-recent item's repository when known, else its project name.
+    @ViewBuilder
+    private func projectHeader(for items: [Deployment]) -> some View {
+        let representative = items.first
+        let name: String = {
+            if let repo = representative?.repository, !repo.isEmpty { return repo }
+            if let project = representative?.projectName, !project.isEmpty { return project }
+            return "Other"
+        }()
+        HStack(spacing: 8) {
+            Image(systemName: "folder")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(name)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
     }
 
     // MARK: - Rows

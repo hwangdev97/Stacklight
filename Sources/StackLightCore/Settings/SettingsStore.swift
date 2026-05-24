@@ -96,6 +96,11 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
         set { mutate { $0.loggingVerbosity = newValue } }
     }
 
+    public var groupByProject: Bool {
+        get { settings.groupByProject }
+        set { mutate { $0.groupByProject = newValue } }
+    }
+
     // MARK: - Provider config (free-form)
 
     public func string(for key: String) -> String? {

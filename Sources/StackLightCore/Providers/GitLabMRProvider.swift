@@ -100,10 +100,12 @@ private struct GLMergeRequest: Decodable {
     }
 
     func toDeployment(project: String) -> Deployment {
-        Deployment(
+        let shortProject = project.split(separator: "/").last.map(String.init) ?? project
+        return Deployment(
             id: "gl-mr-\(project)-\(iid)",
             providerID: "gitlabMR",
             projectName: "\(project)!\(iid)",
+            repository: shortProject,
             status: mapStatus(),
             url: web_url.flatMap { URL(string: $0) },
             createdAt: updated_at ?? created_at ?? Date(),
