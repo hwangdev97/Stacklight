@@ -131,10 +131,12 @@ private struct GHPullRequest: Decodable {
     }
 
     func toDeployment(repo: String) -> Deployment {
-        Deployment(
+        let shortRepo = repo.split(separator: "/").last.map(String.init) ?? repo
+        return Deployment(
             id: "pr-\(repo)-\(number)",
             providerID: "githubPRs",
             projectName: "\(repo)#\(number)",
+            repository: shortRepo,
             status: mapStatus(),
             url: html_url.flatMap { URL(string: $0) },
             createdAt: updated_at ?? created_at ?? Date(),

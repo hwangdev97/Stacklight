@@ -7,6 +7,7 @@ import StackLightCore
 struct GeneralSettingsDetail: View {
     @SettingsValue(\.pollIntervalSeconds) private var pollInterval: Double
     @SettingsValue(\.notificationsEnabled) private var notificationsEnabled: Bool
+    @SettingsValue(\.groupByProject) private var groupByProject: Bool
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginError: String?
 
@@ -44,6 +45,15 @@ struct GeneralSettingsDetail: View {
             Section {
                 Toggle(isOn: $notificationsEnabled) {
                     Label("Notify on status changes", systemImage: "bell.badge")
+                }
+
+                Toggle(isOn: $groupByProject) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label("Group by project", systemImage: "folder")
+                        Text("Combine deployments across platforms under one project instead of grouping by service.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Toggle(isOn: $launchAtLogin) {

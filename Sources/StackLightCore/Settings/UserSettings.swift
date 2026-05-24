@@ -26,6 +26,9 @@ public struct UserSettings: Equatable, Codable, Sendable {
     public var diagnosticsEnabled: Bool
     public var fileLoggingEnabled: Bool
     public var loggingVerbosity: String
+    /// When true, the menubar combines deployments across platforms under a
+    /// single project header instead of grouping them by provider.
+    public var groupByProject: Bool
 
     // MARK: - Provider config (free-form)
 
@@ -42,6 +45,7 @@ public struct UserSettings: Equatable, Codable, Sendable {
         diagnosticsEnabled: Bool = false,
         fileLoggingEnabled: Bool = false,
         loggingVerbosity: String = "info",
+        groupByProject: Bool = false,
         providerStrings: [String: String] = [:],
         providerBools: [String: Bool] = [:],
         providerStringArrays: [String: [String]] = [:]
@@ -54,6 +58,7 @@ public struct UserSettings: Equatable, Codable, Sendable {
         self.diagnosticsEnabled = diagnosticsEnabled
         self.fileLoggingEnabled = fileLoggingEnabled
         self.loggingVerbosity = loggingVerbosity
+        self.groupByProject = groupByProject
         self.providerStrings = providerStrings
         self.providerBools = providerBools
         self.providerStringArrays = providerStringArrays
@@ -74,6 +79,7 @@ public struct UserSettings: Equatable, Codable, Sendable {
             diagnosticsEnabled: try c.decodeIfPresent(Bool.self, forKey: .diagnosticsEnabled) ?? false,
             fileLoggingEnabled: try c.decodeIfPresent(Bool.self, forKey: .fileLoggingEnabled) ?? false,
             loggingVerbosity: try c.decodeIfPresent(String.self, forKey: .loggingVerbosity) ?? "info",
+            groupByProject: try c.decodeIfPresent(Bool.self, forKey: .groupByProject) ?? false,
             providerStrings: try c.decodeIfPresent([String: String].self, forKey: .providerStrings) ?? [:],
             providerBools: try c.decodeIfPresent([String: Bool].self, forKey: .providerBools) ?? [:],
             providerStringArrays: try c.decodeIfPresent([String: [String]].self, forKey: .providerStringArrays) ?? [:]

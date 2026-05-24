@@ -42,6 +42,10 @@ private struct MenuBarRootView: View {
         MenuBarContentView(
             providers: ServiceRegistry.shared.configuredProviders,
             deploymentsByProvider: appState.deploymentsByProvider,
+            deploymentsByProject: appState.deploymentsByProject,
+            providersByID: Dictionary(
+                uniqueKeysWithValues: ServiceRegistry.shared.providers.map { ($0.id, $0) }
+            ),
             errors: appState.errors,
             lastRefresh: appState.lastRefresh,
             isRefreshing: appState.isRefreshing,
