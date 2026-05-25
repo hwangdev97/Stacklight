@@ -143,6 +143,15 @@ struct MenuBarContentView: View {
     @ObservedObject private var settingsStore = SettingsStore.shared
     private var settings: UserSettings { settingsStore.settings }
 
+    /// Measured height of the scrollable region's content. Drives the scroll
+    /// frame so a short list sizes the window to its content (no empty space)
+    /// while a long list is capped and scrolls instead of growing off-screen.
+    @State private var contentHeight: CGFloat = 0
+
+    /// Upper bound on the scrollable region. Roughly one screenful; the footer
+    /// lives outside the scroll so Refresh/Settings/Quit stay reachable.
+    private let maxScrollHeight: CGFloat = 420
+
     /// Returns deployments for a provider grouped by visibility:
     /// `(pinned, visible, hidden)`. `hidden` is exposed so the UI can fold it
     /// into a collapsible "Hidden (N)" submenu instead of dropping items.
@@ -168,24 +177,36 @@ struct MenuBarContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if providers.isEmpty {
-                emptyState
-            } else if settings.groupByProject {
-                projectModeBody
-            } else {
-                ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
-                    if idx > 0 {
-                        Divider().padding(.horizontal, 10)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if providers.isEmpty {
+                        emptyState
+                    } else if settings.groupByProject {
+                        projectModeBody
+                    } else {
+                        ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
+                            if idx > 0 {
+                                Divider().padding(.horizontal, 10)
+                            }
+                            providerSection(provider)
+                        }
                     }
-                    providerSection(provider)
                 }
+                .padding(.top, 6)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(key: ContentHeightKey.self, value: proxy.size.height)
+                    }
+                )
             }
+            .frame(height: min(contentHeight, maxScrollHeight))
+            .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
 
             Divider().padding(.horizontal, 10)
 
             footer
+                .padding(.bottom, 6)
         }
-        .padding(.vertical, 6)
         .frame(width: 320)
     }
 
@@ -566,6 +587,17 @@ struct MenuBarContentView: View {
 
     private func relativeTime(from date: Date) -> String {
         SharedFormatters.relativeAbbreviated.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// MARK: - Layout measurement
+
+/// Reports the scrollable region's content height up to the body so the
+/// ScrollView can size itself to `min(content, cap)`.
+private struct ContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
