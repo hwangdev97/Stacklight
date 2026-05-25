@@ -14,6 +14,7 @@ struct MenuBarContentView: View {
     var isRefreshing: Bool
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
+    var onOpenCalendar: () -> Void
     var onOpenFeedback: () -> Void
     var onCheckForUpdates: () -> Void = {
         Task {
@@ -54,6 +55,7 @@ struct MenuBarContentView: View {
         isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
+        onOpenCalendar: @escaping () -> Void = {},
         onOpenFeedback: @escaping () -> Void,
         onCheckForUpdates: @escaping () -> Void = {
             Task {
@@ -80,6 +82,7 @@ struct MenuBarContentView: View {
             isRefreshing: isRefreshing,
             onRefresh: onRefresh,
             onOpenSettings: onOpenSettings,
+            onOpenCalendar: onOpenCalendar,
             onOpenFeedback: onOpenFeedback,
             onCheckForUpdates: onCheckForUpdates,
             onQuit: onQuit
@@ -99,6 +102,7 @@ struct MenuBarContentView: View {
         isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
+        onOpenCalendar: @escaping () -> Void = {},
         onOpenFeedback: @escaping () -> Void,
         onCheckForUpdates: @escaping () -> Void = {
             Task {
@@ -126,6 +130,7 @@ struct MenuBarContentView: View {
         self.isRefreshing = isRefreshing
         self.onRefresh = onRefresh
         self.onOpenSettings = onOpenSettings
+        self.onOpenCalendar = onOpenCalendar
         self.onOpenFeedback = onOpenFeedback
         self.onCheckForUpdates = onCheckForUpdates
         self.onQuit = onQuit
@@ -506,6 +511,9 @@ struct MenuBarContentView: View {
 
             MenuRow(action: onOpenSettings) {
                 menuItemLabel("Settings…", shortcut: "⌘,")
+            }
+            MenuRow(action: onOpenCalendar) {
+                menuItemLabel("Calendar…")
             }
             MenuRow(action: onOpenFeedback) {
                 menuItemLabel("Send Feedback…")

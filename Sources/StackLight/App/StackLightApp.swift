@@ -22,6 +22,13 @@ struct StackLightApp: App {
         .defaultSize(width: 660, height: 500)
         .windowResizability(.contentSize)
 
+        Window("Calendar", id: "calendar") {
+            CalendarWindow()
+                .environmentObject(appDelegate.appState)
+        }
+        .defaultSize(width: 980, height: 680)
+        .windowToolbarStyle(.unified(showsTitle: false))
+
         Window("Send Feedback", id: "feedback") {
             FeedbackWindowContent()
                 .environmentObject(appDelegate.appState)
@@ -54,6 +61,10 @@ private struct MenuBarRootView: View {
                 NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "settings")
             },
+            onOpenCalendar: {
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "calendar")
+            },
             onOpenFeedback: {
                 NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "feedback")
@@ -85,6 +96,8 @@ private struct MenuBarRootView: View {
 /// recent deployment failed, matching the old `updateStatusIcon()` behavior.
 private struct MenuBarLabel: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.openWindow) private var openWindow
+    @State private var handledLaunchArguments = false
 
     private var hasProblem: Bool {
         !appState.errors.isEmpty || appState.deployments.contains { $0.status == .failed }
@@ -94,6 +107,14 @@ private struct MenuBarLabel: View {
         Image("MenubarIcon")
             .renderingMode(.template)
             .foregroundStyle(hasProblem ? Color.red : Color.primary)
+            .onAppear {
+                guard !handledLaunchArguments else { return }
+                handledLaunchArguments = true
+                if ProcessInfo.processInfo.arguments.contains("--open-calendar") {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(id: "calendar")
+                }
+            }
     }
 }
 
