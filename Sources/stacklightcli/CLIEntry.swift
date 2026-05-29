@@ -18,7 +18,8 @@ struct StackLightCLI: AsyncParsableCommand {
             ProvidersCommand.self,
             CacheCommand.self,
             RateLimitsCommand.self,
-            SettingsCommand.self
+            SettingsCommand.self,
+            AIPromptCommand.self
         ]
     )
 }

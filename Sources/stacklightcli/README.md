@@ -32,12 +32,19 @@ stacklight cache status [--limit N]      # SQLite cache summary
 stacklight cache clear                   # wipe persistent + in-memory caches
 stacklight rate-limits                   # active cooldowns + cache hits
 stacklight settings show
+stacklight settings export --output ~/Desktop/stacklight-settings.json
+stacklight settings import ~/Desktop/stacklight-settings.json
 stacklight settings pin    <provider:item>
 stacklight settings hide   <provider:item>
 stacklight settings reset  <provider:item>
 ```
 
 Every command supports `--json` for machine-readable output.
+
+`settings export` writes the non-secret `UserSettings` JSON: general app
+preferences, provider IDs/project lists, and pinned/hidden state. API tokens
+stay in Keychain and are not exported, so re-enter credentials on the target
+device after importing.
 
 ## Sharing state with the GUI
 

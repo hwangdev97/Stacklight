@@ -14,6 +14,7 @@ struct MenuBarContentView: View {
     var isRefreshing: Bool
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
+    var onOpenCalendar: () -> Void
     var onOpenFeedback: () -> Void
     var onCheckForUpdates: () -> Void = {
         Task {
@@ -54,6 +55,7 @@ struct MenuBarContentView: View {
         isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
+        onOpenCalendar: @escaping () -> Void = {},
         onOpenFeedback: @escaping () -> Void,
         onCheckForUpdates: @escaping () -> Void = {
             Task {
@@ -80,6 +82,7 @@ struct MenuBarContentView: View {
             isRefreshing: isRefreshing,
             onRefresh: onRefresh,
             onOpenSettings: onOpenSettings,
+            onOpenCalendar: onOpenCalendar,
             onOpenFeedback: onOpenFeedback,
             onCheckForUpdates: onCheckForUpdates,
             onQuit: onQuit
@@ -99,6 +102,7 @@ struct MenuBarContentView: View {
         isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
+        onOpenCalendar: @escaping () -> Void = {},
         onOpenFeedback: @escaping () -> Void,
         onCheckForUpdates: @escaping () -> Void = {
             Task {
@@ -126,6 +130,7 @@ struct MenuBarContentView: View {
         self.isRefreshing = isRefreshing
         self.onRefresh = onRefresh
         self.onOpenSettings = onOpenSettings
+        self.onOpenCalendar = onOpenCalendar
         self.onOpenFeedback = onOpenFeedback
         self.onCheckForUpdates = onCheckForUpdates
         self.onQuit = onQuit
@@ -137,6 +142,15 @@ struct MenuBarContentView: View {
     /// edits redraw the open panel immediately.
     @ObservedObject private var settingsStore = SettingsStore.shared
     private var settings: UserSettings { settingsStore.settings }
+
+    /// Measured height of the scrollable region's content. Drives the scroll
+    /// frame so a short list sizes the window to its content (no empty space)
+    /// while a long list is capped and scrolls instead of growing off-screen.
+    @State private var contentHeight: CGFloat = 0
+
+    /// Upper bound on the scrollable region. Roughly one screenful; the footer
+    /// lives outside the scroll so Refresh/Settings/Quit stay reachable.
+    private let maxScrollHeight: CGFloat = 420
 
     /// Returns deployments for a provider grouped by visibility:
     /// `(pinned, visible, hidden)`. `hidden` is exposed so the UI can fold it
@@ -163,24 +177,36 @@ struct MenuBarContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if providers.isEmpty {
-                emptyState
-            } else if settings.groupByProject {
-                projectModeBody
-            } else {
-                ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
-                    if idx > 0 {
-                        Divider().padding(.horizontal, 10)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if providers.isEmpty {
+                        emptyState
+                    } else if settings.groupByProject {
+                        projectModeBody
+                    } else {
+                        ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
+                            if idx > 0 {
+                                Divider().padding(.horizontal, 10)
+                            }
+                            providerSection(provider)
+                        }
                     }
-                    providerSection(provider)
                 }
+                .padding(.top, 6)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(key: ContentHeightKey.self, value: proxy.size.height)
+                    }
+                )
             }
+            .frame(height: min(contentHeight, maxScrollHeight))
+            .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
 
             Divider().padding(.horizontal, 10)
 
             footer
+                .padding(.bottom, 6)
         }
-        .padding(.vertical, 6)
         .frame(width: 320)
     }
 
@@ -314,7 +340,7 @@ struct MenuBarContentView: View {
             }
             ForEach(orderedProviderIDs, id: \.self) { providerID in
                 if let provider = providersByID[providerID] {
-                    providerHeader(provider)
+                    providerHeader(provider, compact: true)
                 }
                 rowsBlock(for: byProvider[providerID] ?? [])
             }
@@ -324,7 +350,10 @@ struct MenuBarContentView: View {
 
     /// Non-clickable project header. A project can span platforms, so unlike a
     /// provider header there's no single dashboard to open. Display name is the
-    /// most-recent item's repository when known, else its project name.
+    /// most-recent item's repository when known, else its project name. The
+    /// group is the top-level unit in this mode, so it carries the prominent
+    /// filled badge (brand-colored, from the most-recent deployment's provider)
+    /// while the per-platform sub-headers below it are rendered plain.
     @ViewBuilder
     private func projectHeader(for items: [Deployment]) -> some View {
         let representative = items.first
@@ -334,12 +363,19 @@ struct MenuBarContentView: View {
             return "Other"
         }()
         HStack(spacing: 8) {
-            Image(systemName: "folder")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            if let providerID = representative?.providerID,
+               let provider = providersByID[providerID] {
+                ProviderIconView(provider: provider, size: 18)
+            } else {
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 18, height: 18)
+                    .background(Color.secondary.gradient, in: Circle())
+            }
             Text(name)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(.primary)
                 .lineLimit(1)
             Spacer()
         }
@@ -349,14 +385,21 @@ struct MenuBarContentView: View {
 
     // MARK: - Rows
 
+    /// `compact` is used for the per-platform sub-headers inside a project
+    /// group: the group already owns the prominent filled badge, so here we
+    /// drop the brand-colored circle and show just a small monochrome glyph.
     @ViewBuilder
-    private func providerHeader(_ provider: DeploymentProvider) -> some View {
+    private func providerHeader(_ provider: DeploymentProvider, compact: Bool = false) -> some View {
         let hasDashboard = provider.dashboardURL != nil
         MenuRow(isEnabled: hasDashboard) {
             if let url = provider.dashboardURL { openURL(url) }
         } label: {
             HStack(spacing: 8) {
-                ProviderIconView(provider: provider, size: 18)
+                if compact {
+                    providerGlyph(provider)
+                } else {
+                    ProviderIconView(provider: provider, size: 18)
+                }
                 Text(provider.displayName)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -368,6 +411,26 @@ struct MenuBarContentView: View {
                 }
             }
         }
+    }
+
+    /// Plain (no filled circle) provider glyph used for compact sub-headers.
+    /// Tinted `.secondary` so it stays legible in both light and dark menus —
+    /// some brand colors (Vercel, GitHub) are near-black and would vanish.
+    @ViewBuilder
+    private func providerGlyph(_ provider: DeploymentProvider) -> some View {
+        Group {
+            if let asset = provider.iconAsset {
+                Image(asset)
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: provider.iconSymbol)
+                    .font(.system(size: 11, weight: .medium))
+            }
+        }
+        .frame(width: 14, height: 14)
+        .foregroundStyle(.secondary)
     }
 
     @ViewBuilder
@@ -470,6 +533,9 @@ struct MenuBarContentView: View {
             MenuRow(action: onOpenSettings) {
                 menuItemLabel("Settings…", shortcut: "⌘,")
             }
+            MenuRow(action: onOpenCalendar) {
+                menuItemLabel("Calendar…")
+            }
             MenuRow(action: onOpenFeedback) {
                 menuItemLabel("Send Feedback…")
             }
@@ -521,6 +587,17 @@ struct MenuBarContentView: View {
 
     private func relativeTime(from date: Date) -> String {
         SharedFormatters.relativeAbbreviated.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// MARK: - Layout measurement
+
+/// Reports the scrollable region's content height up to the body so the
+/// ScrollView can size itself to `min(content, cap)`.
+private struct ContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

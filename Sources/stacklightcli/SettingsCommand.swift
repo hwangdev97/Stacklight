@@ -5,8 +5,8 @@ import StackLightCore
 struct SettingsCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "settings",
-        abstract: "Inspect or mutate pinned/hidden state from the terminal.",
-        subcommands: [Show.self, Pin.self, Hide.self, Reset.self],
+        abstract: "Inspect, migrate, or mutate StackLight settings from the terminal.",
+        subcommands: [Show.self, Export.self, Import.self, Pin.self, Hide.self, Reset.self],
         defaultSubcommand: Show.self
     )
 
@@ -34,6 +34,53 @@ struct SettingsCommand: AsyncParsableCommand {
                     for item in settings.hiddenProviders.sorted() { print("  · \(item)") }
                 }
             }
+        }
+    }
+
+    struct Export: AsyncParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "export",
+            abstract: "Export non-secret settings to a JSON file."
+        )
+
+        @Option(name: [.short, .long], help: "Destination JSON file. Defaults to stdout.")
+        var output: String?
+
+        func run() async throws {
+            let data = try SettingsStore.shared.exportData()
+
+            guard let output else {
+                if let text = String(data: data, encoding: .utf8) {
+                    print(text)
+                }
+                return
+            }
+
+            let url = fileURL(from: output)
+            if let parent = url.deletingLastPathComponent().path.nilIfEmpty {
+                try FileManager.default.createDirectory(atPath: parent, withIntermediateDirectories: true)
+            }
+            try data.write(to: url, options: .atomic)
+            print("Exported settings to \(url.path)")
+            print("Secrets are not included. Re-enter API tokens on the new device.")
+        }
+    }
+
+    struct Import: AsyncParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "import",
+            abstract: "Import non-secret settings from a JSON file."
+        )
+
+        @Argument(help: "Path to a JSON file created by 'stacklight settings export'.")
+        var path: String
+
+        func run() async throws {
+            let url = fileURL(from: path)
+            let data = try Data(contentsOf: url)
+            try SettingsStore.shared.importData(data)
+            print("Imported settings from \(url.path)")
+            print("Secrets are not included. Re-enter API tokens on this device.")
         }
     }
 
@@ -89,5 +136,15 @@ struct SettingsCommand: AsyncParsableCommand {
             SettingsStore.shared.mutate { $0.setVisibility(.visible, for: parsed) }
             print("Reset \(parsed.rawValue)")
         }
+    }
+}
+
+private func fileURL(from path: String) -> URL {
+    URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

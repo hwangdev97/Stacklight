@@ -12,7 +12,7 @@
 All your deploys. One menu bar.
 
 **Subhead**
-StackLight watches every deploy and pull request you ship — across Vercel, GitHub, Cloudflare, Netlify, Railway, Fly.io, Xcode Cloud, and TestFlight — and lives quietly in your Mac menu bar.
+StackLight watches every deploy and pull request you ship — across Vercel, GitHub, Cloudflare, Netlify, Railway, Zeabur, Fly.io, Xcode Cloud, and TestFlight — and lives quietly in your Mac menu bar.
 
 **Primary CTA**
 Download for macOS
@@ -47,6 +47,7 @@ Nine services. One place.
 | Cloudflare Pages | Deploy status |
 | Netlify | Deploy status |
 | Railway | Deploy status |
+| Zeabur | Deploy status |
 | Fly.io | Machine deploys |
 | GitHub Actions | Workflow runs |
 | GitHub Pull Requests | Open PRs across repos |
