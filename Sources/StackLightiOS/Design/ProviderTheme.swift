@@ -68,6 +68,12 @@ struct ProviderTheme: Equatable {
                 accent: Color(red: 0.40, green: 0.96, blue: 0.72),
                 glow:   Color(red: 0.22, green: 0.84, blue: 0.58).opacity(0.75),
                 shader: .motionStreaks)
+        case "supabase":
+            return .init(
+                tint:   Color(red: 0.06, green: 0.46, blue: 0.30),
+                accent: Color(red: 0.36, green: 0.95, blue: 0.62),
+                glow:   Color(red: 0.22, green: 0.82, blue: 0.48).opacity(0.78),
+                shader: .neutral)
         case "flyio":
             return .init(
                 tint:   Color(red: 0.92, green: 0.28, blue: 0.60),
