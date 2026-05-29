@@ -174,6 +174,7 @@ private struct ProviderTile: View {
         case "githubPRs":     return "Open pull requests"
         case "netlify":       return "Deployments"
         case "railway":       return "Deployments"
+        case "supabase":      return "Project health & branches"
         case "zeabur":        return "Deployments"
         case "flyio":         return "Machine deployments"
         case "xcodeCloud":    return "Build results"
