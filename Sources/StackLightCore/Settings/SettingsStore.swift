@@ -254,6 +254,8 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
         "github.repos", "github.pr.repos",
         "netlify.siteIds",
         "railway.projectIds",
+        "zeabur.ownerId",
+        "zeabur.projectIds",
         "flyio.apps",
         "testflight.appIds",
         "xcodeCloud.productIds"

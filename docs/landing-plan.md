@@ -203,7 +203,7 @@ End-to-end checklist before merging M5:
 - [ ] Lighthouse ≥ 95 on all four categories on the deployed preview.
 - [ ] Page renders correctly on iOS Safari (often the harshest reviewer of a "Mac app" landing page).
 - [ ] Every CTA in the copy resolves to a real URL — no `href="#"` leftovers.
-- [ ] The 9 service tiles in section 3 match `Sources/StackLight/Core/ServiceRegistry.swift`. If a provider has been added or removed since `docs/landing-copy.md` was written, update both files in the same PR.
+- [ ] The service tiles in section 3 match `Sources/StackLight/Core/ServiceRegistry.swift`. If a provider has been added or removed since `docs/landing-copy.md` was written, update both files in the same PR.
 - [ ] OG image renders correctly when the URL is pasted into Slack, Twitter/X, and iMessage.
 - [ ] No tracking scripts, no analytics, no third-party fonts — keeps the "no analytics, no accounts, no tracking" claim in section 7 honest.
 

@@ -163,7 +163,7 @@ private struct ProviderTile: View {
     }
 
     private var iconTint: Color {
-        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
+        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "zeabur", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
     }
 
     private var subtitle: String {
@@ -174,6 +174,7 @@ private struct ProviderTile: View {
         case "githubPRs":     return "Open pull requests"
         case "netlify":       return "Deployments"
         case "railway":       return "Deployments"
+        case "zeabur":        return "Deployments"
         case "flyio":         return "Machine deployments"
         case "xcodeCloud":    return "Build results"
         case "testFlight":    return "Build processing & review"

@@ -61,6 +61,8 @@ Currently `currentVersion = 2`:
 2. Read with `AppConfig.string(forKey: "foo.bar")` etc.
 3. Optionally add the key to `legacyProviderStringKeys` in `SettingsStore.applyMigrations` if existing users have it stored under the old `.standard` UserDefaults regime.
 
+Zeabur is intentionally token-first: `zeabur.projectIds` is optional and acts as a filter. When it is empty, the provider discovers projects through Zeabur's GraphQL `projects(ownerID:)` query, using `zeabur.ownerId` only for team-owned resources.
+
 ## Cross-process notes
 
 - iOS host + widget extension share the App Group suite so the envelope is one file. Widget reads pull the same JSON.

@@ -40,10 +40,18 @@ final class ProviderTests: XCTestCase {
         XCTAssertEqual(provider.id, "cloudflare")
     }
 
+    func testZeaburSettingsSupportAutoDiscoveryAndFiltering() {
+        let fields = ZeaburProvider().settingsFields()
+        XCTAssertTrue(fields.contains { $0.key == "zeabur.token" && $0.isSecret })
+        XCTAssertTrue(fields.contains { $0.key == "zeabur.ownerId" })
+        XCTAssertTrue(fields.contains { $0.key == "zeabur.projectIds" && $0.isMultiValue })
+    }
+
     func testSettingsFieldsAreNonEmpty() {
         let providers: [DeploymentProvider] = [
             VercelProvider(),
             CloudflareProvider(),
+            ZeaburProvider(),
             XcodeCloudProvider(),
             TestFlightProvider()
         ]
