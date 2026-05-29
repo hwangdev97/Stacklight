@@ -353,7 +353,7 @@ struct ProviderSettingsView: View {
     }
 
     private var iconTint: Color {
-        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
+        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "zeabur", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
     }
 
     private func loadFields() {
