@@ -1,16 +1,19 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 import StackLightCore
 
 /// Advanced / diagnostics pane. Mirrors RepoBar's DebugSettingsView — gives
 /// power users (and bug-reporters) a one-click way to capture HTTP traces,
 /// inspect cache state, and clear caches without dropping into the CLI.
 struct AdvancedSettingsDetail: View {
+    @EnvironmentObject var appState: AppState
     @SettingsValue(\.diagnosticsEnabled) private var diagnosticsEnabled: Bool
     @SettingsValue(\.fileLoggingEnabled) private var fileLoggingEnabled: Bool
     @SettingsValue(\.loggingVerbosity) private var verbosityRaw: String
     @State private var lastCleared: Date?
     @State private var cacheStats: StackLightCacheSummary?
+    @State private var migrationNotice: MigrationNotice?
 
     enum LogVerbosity: String, CaseIterable, Identifiable {
         case debug, info, warning
@@ -135,9 +138,30 @@ struct AdvancedSettingsDetail: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            Section("Configuration") {
+                Button("Export Settings…") {
+                    exportSettings()
+                }
+
+                Button("Import Settings…") {
+                    importSettings()
+                }
+
+                Text("Exports app preferences, provider project lists, and pinned/hidden state. API tokens stay in Keychain and must be re-entered on the target device.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .onAppear { refreshCacheStats() }
+        .alert(item: $migrationNotice) { notice in
+            Alert(
+                title: Text(notice.title),
+                message: Text(notice.message),
+                dismissButton: .default(Text("OK"))
+            )
+        }
     }
 
     private func refreshCacheStats() {
@@ -158,4 +182,59 @@ struct AdvancedSettingsDetail: View {
             NSWorkspace.shared.open(consoleURL)
         }
     }
+
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+        panel.nameFieldStringValue = "stacklight-settings.json"
+        panel.title = "Export StackLight Settings"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try SettingsStore.shared.exportData()
+            try data.write(to: url, options: .atomic)
+            migrationNotice = MigrationNotice(
+                title: "Settings Exported",
+                message: "Secrets are not included. Re-enter API tokens on the target device."
+            )
+        } catch {
+            migrationNotice = MigrationNotice(
+                title: "Export Failed",
+                message: error.localizedDescription
+            )
+        }
+    }
+
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.title = "Import StackLight Settings"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            try SettingsStore.shared.importData(data)
+            appState.restartPolling()
+            migrationNotice = MigrationNotice(
+                title: "Settings Imported",
+                message: "Secrets are not included. Re-enter API tokens on this device."
+            )
+        } catch {
+            migrationNotice = MigrationNotice(
+                title: "Import Failed",
+                message: error.localizedDescription
+            )
+        }
+    }
+}
+
+private struct MigrationNotice: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
 }
