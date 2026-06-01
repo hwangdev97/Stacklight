@@ -30,6 +30,8 @@ targets:
       properties:
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleName: StackLight
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleIconName: AppIcon
         CFBundleIconFile: AppIcon
         ITSAppUsesNonExemptEncryption: false
@@ -43,7 +45,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight
         STACKLIGHT_DISTRIBUTION_CHANNEL: mac-app-store
         MARKETING_VERSION: "0.1.1"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLight/StackLight.entitlements
@@ -74,6 +76,8 @@ targets:
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleName: StackLight
         CFBundleDisplayName: StackLight
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleIconName: AppIcon
         CFBundleURLTypes:
           - CFBundleURLName: app.yellowplus.StackLight
@@ -104,7 +108,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight
         MARKETING_VERSION: "0.1.1"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightiOS/Resources/StackLightiOS.entitlements
@@ -142,6 +146,8 @@ targets:
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleName: StackLight
         CFBundleDisplayName: StackLight
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         WKApplication: true
         WKCompanionAppBundleIdentifier: app.yellowplus.StackLight
@@ -152,7 +158,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.watchkitapp
         MARKETING_VERSION: "0.1.1"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightWatch/Resources/StackLightWatch.entitlements
@@ -181,13 +187,15 @@ targets:
       path: Sources/StackLightWatchComplications/Resources/Info.plist
       properties:
         CFBundleDisplayName: StackLight
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.watchkitapp.complications
         MARKETING_VERSION: "0.1.1"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightWatchComplications/Resources/StackLightWatchComplications.entitlements
@@ -212,13 +220,15 @@ targets:
       path: Sources/StackLightWidgets/Resources/Info.plist
       properties:
         CFBundleDisplayName: StackLight
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yellowplus.StackLight.widgets
         MARKETING_VERSION: "0.1.1"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: QDJ93ZUQ9B
         CODE_SIGN_ENTITLEMENTS: Sources/StackLightWidgets/Resources/StackLightWidgets.entitlements
