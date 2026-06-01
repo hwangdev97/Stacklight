@@ -88,10 +88,6 @@ struct CalendarWindow: View {
                 .frame(width: 150)
             }
         }
-        .popover(item: $viewModel.selectedEvent, arrowEdge: .trailing) { event in
-            CalendarEventPopover(event: event)
-                .frame(width: 300)
-        }
     }
 
     private var title: String {

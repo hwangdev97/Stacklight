@@ -51,9 +51,7 @@ struct MonthCalendarView: View {
             }
 
             ForEach(visible) { event in
-                CalendarEventPill(event: event, compact: true) {
-                    viewModel.selectedEvent = event
-                }
+                CalendarEventPill(event: event, compact: true, selectedEvent: $viewModel.selectedEvent)
             }
 
             if dayEvents.count > visible.count {
@@ -93,10 +91,25 @@ struct MonthCalendarView: View {
 struct CalendarEventPill: View {
     let event: CalendarEvent
     var compact: Bool = false
-    let action: () -> Void
+    @Binding var selectedEvent: CalendarEvent?
+
+    private var isPresented: Binding<Bool> {
+        Binding(
+            get: { selectedEvent?.id == event.id },
+            set: { presented in
+                if presented {
+                    selectedEvent = event
+                } else if selectedEvent?.id == event.id {
+                    selectedEvent = nil
+                }
+            }
+        )
+    }
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            selectedEvent = event
+        } label: {
             HStack(spacing: 4) {
                 Circle()
                     .fill(event.providerColor)
@@ -117,6 +130,10 @@ struct CalendarEventPill: View {
         }
         .buttonStyle(.plain)
         .help(event.subtitle ?? event.providerLabel)
+        .popover(isPresented: isPresented, arrowEdge: .trailing) {
+            CalendarEventPopover(event: event)
+                .frame(width: 300)
+        }
     }
 
     private var statusBackground: Color {
