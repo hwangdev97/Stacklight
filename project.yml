@@ -24,6 +24,7 @@ targets:
         excludes:
           - "Info.plist"
           - "StackLight.entitlements"
+          - "AppIcon.icon"
     info:
       path: Sources/StackLight/Info.plist
       properties:
@@ -62,7 +63,7 @@ targets:
     sources:
       - path: Sources/StackLight/Core
       - path: Sources/StackLight/Assets.xcassets
-      - path: Sources/StackLight/AppIcon.icon
+      - path: Sources/StackLightiOS/Resources/Assets.xcassets
       - path: Sources/StackLightiOS
         excludes:
           - "Resources/Info.plist"
@@ -129,7 +130,7 @@ targets:
     type: application
     platform: watchOS
     sources:
-      - path: Sources/StackLight/AppIcon.icon
+      - path: Sources/StackLightWatch/Resources/Assets.xcassets
       - path: Sources/StackLightWidgets/Views/WidgetStatusBadge.swift
       - path: Sources/StackLightWatch
         excludes:
