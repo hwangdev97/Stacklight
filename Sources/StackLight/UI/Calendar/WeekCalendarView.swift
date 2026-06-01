@@ -86,12 +86,10 @@ struct WeekCalendarView: View {
         let top = eventTop(event.startsAt)
         let height: CGFloat = 34
 
-        return CalendarEventPill(event: event) {
-            viewModel.selectedEvent = event
-        }
-        .padding(.horizontal, 4)
-        .frame(height: height)
-        .offset(y: top)
+        return CalendarEventPill(event: event, selectedEvent: $viewModel.selectedEvent)
+            .padding(.horizontal, 4)
+            .frame(height: height)
+            .offset(y: top)
     }
 
     private var nowLine: some View {

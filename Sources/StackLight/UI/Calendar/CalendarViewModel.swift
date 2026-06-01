@@ -12,6 +12,7 @@ final class CalendarViewModel: ObservableObject {
     @Published var anchorDate: Date
     @Published var mode: Mode = .month
     @Published var selectedEvent: CalendarEvent?
+    @Published var selectedAgendaEvent: CalendarEvent?
 
     let calendar: Calendar
 

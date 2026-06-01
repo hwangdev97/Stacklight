@@ -186,7 +186,7 @@ struct AgendaSidebarView: View {
 
             ForEach(group.events) { event in
                 Button {
-                    viewModel.selectedEvent = event
+                    viewModel.selectedAgendaEvent = event
                 } label: {
                     HStack(alignment: .top, spacing: 8) {
                         Circle()
@@ -211,8 +211,25 @@ struct AgendaSidebarView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .popover(isPresented: popoverBinding(for: event), arrowEdge: .trailing) {
+                    CalendarEventPopover(event: event)
+                        .frame(width: 300)
+                }
             }
         }
+    }
+
+    private func popoverBinding(for event: CalendarEvent) -> Binding<Bool> {
+        Binding(
+            get: { viewModel.selectedAgendaEvent?.id == event.id },
+            set: { presented in
+                if presented {
+                    viewModel.selectedAgendaEvent = event
+                } else if viewModel.selectedAgendaEvent?.id == event.id {
+                    viewModel.selectedAgendaEvent = nil
+                }
+            }
+        )
     }
 
     private var footer: some View {
