@@ -94,6 +94,13 @@ struct ProviderSettingsDetail: View {
                     }
                     .keyboardShortcut(.defaultAction)
 
+                    Button {
+                        copyConfigurationPrompt()
+                    } label: {
+                        Label("Copy Prompt", systemImage: "sparkles")
+                    }
+                    .help("Copy a prompt you can paste into an AI assistant (Claude, Codex, …) to get step-by-step help configuring \(provider.displayName).")
+
                     if saved {
                         Label("Saved", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
@@ -310,6 +317,29 @@ struct ProviderSettingsDetail: View {
             }
         }
         ASCCredentialStore.invalidate()
+    }
+
+    private func copyConfigurationPrompt() {
+        let prompt = ProviderSetupPrompt.prompt(for: ProviderSetupContext(
+            providerID: provider.id,
+            providerName: provider.displayName,
+            isConfigured: provider.isConfigured,
+            docsURL: provider.docsURL?.absoluteString,
+            fields: provider.settingsFields().map { field in
+                ProviderSetupField(
+                    key: field.key,
+                    label: field.label,
+                    isSecret: field.isSecret,
+                    isMultiValue: field.isMultiValue,
+                    isPresent: isFieldPresent(field),
+                    kind: handoffKindName(for: field),
+                    placeholder: field.placeholder,
+                    hint: field.hint
+                )
+            }
+        ))
+        copyToPasteboard(prompt)
+        setAIHandoffStatus("Copied setup prompt")
     }
 
     private func copyAIHandoffPrompt() {
