@@ -30,8 +30,8 @@ public struct ProviderSetupField: Sendable, Equatable {
         self.isMultiValue = isMultiValue
         self.isPresent = isPresent
         self.kind = kind
-        self.placeholder = placeholder?.nilIfBlank
-        self.hint = hint?.nilIfBlank
+        self.placeholder = placeholder.nilIfBlank
+        self.hint = hint.nilIfBlank
     }
 }
 
@@ -52,7 +52,7 @@ public struct ProviderSetupContext: Sendable, Equatable {
         self.providerID = providerID
         self.providerName = providerName
         self.isConfigured = isConfigured
-        self.docsURL = docsURL?.nilIfBlank
+        self.docsURL = docsURL.nilIfBlank
         self.fields = fields
     }
 }
