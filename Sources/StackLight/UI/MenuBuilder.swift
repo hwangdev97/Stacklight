@@ -545,7 +545,23 @@ struct MenuBarContentView: View {
             MenuRow(action: onQuit) {
                 menuItemLabel("Quit StackLight", shortcut: "⌘Q")
             }
+
+            Text("StackLight \(appVersion)")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
         }
+    }
+
+    /// Marketing version + build number, e.g. "1.1.0 (42)". Falls back to
+    /// placeholder glyphs when the Info.plist keys are missing (previews,
+    /// unsigned `swift run`).
+    private var appVersion: String {
+        let v = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
+        let b = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?"
+        return "\(v) (\(b))"
     }
 
     private var updateMenuTitle: String {

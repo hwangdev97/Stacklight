@@ -25,15 +25,38 @@ public enum KeychainManager {
     private static var cachedValues: [String: String] = [:]
     private static var knownAbsentKeys: Set<String> = []
 
+    /// Whether to file items in the Data Protection Keychain.
+    ///
+    /// iOS/watchOS always do. On macOS the choice matters: the shipping app is
+    /// sandboxed and App Store-distributed, and a sandboxed app gets an
+    /// automatic, code-signature-independent access group in the Data
+    /// Protection Keychain — exactly what we want. The *legacy* file-based
+    /// keychain instead scopes each item with an ACL tied to the creating
+    /// binary's signature, so a re-signed build (e.g. a TestFlight/App Store
+    /// update vs. a previous local build) can no longer read items it didn't
+    /// write, and `read` silently returns nil — making Xcode Cloud/TestFlight
+    /// (and any keychain-backed provider) look unconfigured.
+    ///
+    /// We therefore use the Data Protection Keychain whenever we're sandboxed,
+    /// and fall back to the legacy keychain only for unsigned local `swift run`
+    /// dev builds, where Data Protection writes fail with errSecMissingEntitlement.
+    private static var useDataProtectionKeychain: Bool {
+        #if os(macOS)
+        return ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+        #else
+        return true
+        #endif
+    }
+
     private static func baseQuery(key: String) -> [String: Any] {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
-        #if !os(macOS)
-        query[kSecUseDataProtectionKeychain as String] = true
-        #endif
+        if useDataProtectionKeychain {
+            query[kSecUseDataProtectionKeychain as String] = true
+        }
         if let group = accessGroup {
             query[kSecAttrAccessGroup as String] = group
         }
@@ -88,7 +111,11 @@ public enum KeychainManager {
         cacheLock.lock()
         if let value {
             cachedValues[key] = value
-        } else {
+        } else if status == errSecItemNotFound {
+            // Only memoize a *confirmed* absence. Any other status (e.g. an
+            // ACL/permission failure, or a locked keychain) is transient or
+            // recoverable — caching it as absent would hide the credential for
+            // the rest of the process lifetime even after the condition clears.
             knownAbsentKeys.insert(key)
         }
         cacheLock.unlock()
