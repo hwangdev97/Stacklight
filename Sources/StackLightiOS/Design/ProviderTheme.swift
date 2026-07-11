@@ -1,33 +1,11 @@
 import SwiftUI
 import StackLightCore
 
-/// A provider's visual "signature" — the tint that drives its shader backdrop,
-/// the brighter accent used for the floating power/status chips, and the outer
-/// glow used in the Liquid Glass border. Each of the 9 deployment providers
-/// gets a distinct triad so the cards are recognisable at a glance.
+/// A provider's visual signature: base tint, brighter accent, and edge glow.
 struct ProviderTheme: Equatable {
-    /// Which parameterised shader kernel to use (see `Providers.metal`).
-    enum ShaderKind: Int32 {
-        case monoBeam      = 0  // Vercel
-        case softBlobs     = 1  // Cloudflare
-        case gearShimmer   = 2  // GitHub Actions
-        case diffStreaks   = 3  // GitHub PRs
-        case rippleField   = 4  // Netlify
-        case motionStreaks = 5  // Railway
-        case vaporTrail    = 6  // Fly.io
-        case depthClouds   = 7  // Xcode Cloud
-        case sweepWing     = 8  // TestFlight
-        case errorAura     = 9  // Error banner
-        case neutral       = 10 // Fallback / empty state cycle
-        case pixelBeams    = 11 // Cloudflare (pixel-beam variant)
-        case heatmapTriangle = 12 // Vercel
-        case grainGradientCorners = 13 // Cloudflare
-    }
-
     let tint:   Color
     let accent: Color
     let glow:   Color
-    let shader: ShaderKind
 
     /// Provider resolution from the shared `DeploymentProvider.id`.
     static func forProviderID(_ id: String) -> ProviderTheme {
@@ -36,68 +14,57 @@ struct ProviderTheme: Equatable {
             return .init(
                 tint:   Color(red: 0.08, green: 0.09, blue: 0.12),
                 accent: .white,
-                glow:   Color(red: 0.18, green: 0.60, blue: 1.00).opacity(0.75),
-                shader: .monoBeam)
+                glow:   Color(red: 0.18, green: 0.60, blue: 1.00).opacity(0.75))
         case "cloudflare":
             return .init(
                 tint:   Color(red: 0.98, green: 0.48, blue: 0.12),
                 accent: Color(red: 1.00, green: 0.78, blue: 0.32),
-                glow:   Color(red: 1.00, green: 0.55, blue: 0.18).opacity(0.80),
-                shader: .grainGradientCorners)
+                glow:   Color(red: 1.00, green: 0.55, blue: 0.18).opacity(0.80))
         case "githubActions":
             return .init(
                 tint:   Color(red: 0.36, green: 0.33, blue: 0.86),
                 accent: Color(red: 0.62, green: 0.58, blue: 1.00),
-                glow:   Color(red: 0.44, green: 0.40, blue: 0.96).opacity(0.75),
-                shader: .gearShimmer)
+                glow:   Color(red: 0.44, green: 0.40, blue: 0.96).opacity(0.75))
         case "githubPRs":
             return .init(
                 tint:   Color(red: 0.52, green: 0.28, blue: 0.85),
                 accent: Color(red: 0.82, green: 0.56, blue: 1.00),
-                glow:   Color(red: 0.64, green: 0.34, blue: 0.95).opacity(0.75),
-                shader: .diffStreaks)
+                glow:   Color(red: 0.64, green: 0.34, blue: 0.95).opacity(0.75))
         case "netlify":
             return .init(
                 tint:   Color(red: 0.09, green: 0.64, blue: 0.70),
                 accent: Color(red: 0.36, green: 0.92, blue: 0.95),
-                glow:   Color(red: 0.18, green: 0.80, blue: 0.83).opacity(0.75),
-                shader: .rippleField)
+                glow:   Color(red: 0.18, green: 0.80, blue: 0.83).opacity(0.75))
         case "railway":
             return .init(
                 tint:   Color(red: 0.11, green: 0.58, blue: 0.44),
                 accent: Color(red: 0.40, green: 0.96, blue: 0.72),
-                glow:   Color(red: 0.22, green: 0.84, blue: 0.58).opacity(0.75),
-                shader: .motionStreaks)
+                glow:   Color(red: 0.22, green: 0.84, blue: 0.58).opacity(0.75))
         case "supabase":
             return .init(
                 tint:   Color(red: 0.06, green: 0.46, blue: 0.30),
                 accent: Color(red: 0.36, green: 0.95, blue: 0.62),
-                glow:   Color(red: 0.22, green: 0.82, blue: 0.48).opacity(0.78),
-                shader: .neutral)
+                glow:   Color(red: 0.22, green: 0.82, blue: 0.48).opacity(0.78))
         case "zeabur":
             return .init(
                 tint:   Color(red: 0.39, green: 0.00, blue: 1.00),
                 accent: Color(red: 1.00, green: 0.35, blue: 0.16),
-                glow:   Color(red: 0.55, green: 0.24, blue: 1.00).opacity(0.78),
-                shader: .motionStreaks)
+                glow:   Color(red: 0.55, green: 0.24, blue: 1.00).opacity(0.78))
         case "flyio":
             return .init(
                 tint:   Color(red: 0.92, green: 0.28, blue: 0.60),
                 accent: Color(red: 1.00, green: 0.62, blue: 0.82),
-                glow:   Color(red: 0.98, green: 0.40, blue: 0.70).opacity(0.80),
-                shader: .vaporTrail)
+                glow:   Color(red: 0.98, green: 0.40, blue: 0.70).opacity(0.80))
         case "xcodeCloud":
             return .init(
                 tint:   Color(red: 0.14, green: 0.40, blue: 0.96),
                 accent: Color(red: 0.56, green: 0.76, blue: 1.00),
-                glow:   Color(red: 0.28, green: 0.55, blue: 1.00).opacity(0.80),
-                shader: .depthClouds)
+                glow:   Color(red: 0.28, green: 0.55, blue: 1.00).opacity(0.80))
         case "testFlight":
             return .init(
                 tint:   Color(red: 0.16, green: 0.70, blue: 0.92),
                 accent: Color(red: 0.54, green: 0.92, blue: 1.00),
-                glow:   Color(red: 0.28, green: 0.82, blue: 0.98).opacity(0.78),
-                shader: .sweepWing)
+                glow:   Color(red: 0.28, green: 0.82, blue: 0.98).opacity(0.78))
         default:
             return .neutral
         }
@@ -107,14 +74,12 @@ struct ProviderTheme: Equatable {
     static let neutral = ProviderTheme(
         tint:   Color(red: 0.25, green: 0.27, blue: 0.33),
         accent: Color(red: 0.68, green: 0.72, blue: 0.82),
-        glow:   Color.white.opacity(0.35),
-        shader: .neutral)
+        glow:   Color.white.opacity(0.35))
 
     static let error = ProviderTheme(
         tint:   Color(red: 0.82, green: 0.20, blue: 0.26),
         accent: Color(red: 1.00, green: 0.54, blue: 0.48),
-        glow:   Color(red: 1.00, green: 0.30, blue: 0.32).opacity(0.80),
-        shader: .errorAura)
+        glow:   Color(red: 1.00, green: 0.30, blue: 0.32).opacity(0.80))
 
     /// The tint used for a status chip inside the card (e.g. green for success).
     static func statusTint(for status: Deployment.Status) -> Color {

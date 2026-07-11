@@ -23,7 +23,7 @@ struct HomeView: View {
                         .progressViewStyle(.circular)
                         .tint(.white)
                         .padding(10)
-                        .background(.ultraThinMaterial, in: Circle())
+                        .background(DesignTokens.Palette.surface, in: Circle())
                         .padding(.top, 8)
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
@@ -106,14 +106,12 @@ struct HomeView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
-                LiquidGlassGroup(spacing: 16) {
-                    VStack(spacing: DesignTokens.Spacing.md) {
-                        ForEach(filteredDeployments) { deployment in
-                            DeploymentCard(deployment: deployment) { url in
-                                safariTarget = SafariTarget(url: url)
-                            }
-                            .padding(.vertical, 12)
+                VStack(spacing: DesignTokens.Spacing.md) {
+                    ForEach(filteredDeployments) { deployment in
+                        DeploymentCard(deployment: deployment) { url in
+                            safariTarget = SafariTarget(url: url)
                         }
+                        .padding(.vertical, 12)
                     }
                 }
                 .padding(.horizontal, DesignTokens.Spacing.lg)

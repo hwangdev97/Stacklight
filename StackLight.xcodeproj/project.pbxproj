@@ -49,7 +49,6 @@
 		4CAAA2540B96315169F8A609 /* StackLightWatchComplicationsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8208492F559D48ADF4E127E /* StackLightWatchComplicationsBundle.swift */; };
 		4E8A1613DCE59051D88A6CCE /* ComplicationRectangularView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EBCE5C15913B72549889E9 /* ComplicationRectangularView.swift */; };
 		4FBAB9D42FE9A98C22045423 /* AgendaSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8DCF9B4DE9C9E0991988CC /* AgendaSidebarView.swift */; };
-		52A81644174FEF70B9686977 /* Providers.metal in Sources */ = {isa = PBXBuildFile; fileRef = 87D5DE826990B402B2317CF5 /* Providers.metal */; };
 		57ED74C4317467278697B7AE /* vercel.svg in Resources */ = {isa = PBXBuildFile; fileRef = DA9B0D0DA9D19AF24FA77FAC /* vercel.svg */; };
 		58BD57D5BD5ECBBE676B2DF1 /* DeploymentEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685460B8542C94AE4D7B5EDC /* DeploymentEntry.swift */; };
 		5A025E89084FFF75B09A5DB7 /* RailwaySimplexNoiseBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948C47F8C02AADE032CB1385 /* RailwaySimplexNoiseBackground.swift */; };
@@ -72,7 +71,6 @@
 		8623CB7D2AB016CC9933FEC1 /* netlify.svg in Resources */ = {isa = PBXBuildFile; fileRef = AC2A1B8275DBC3C967A12E8A /* netlify.svg */; };
 		8AC74794891AF95B30024250 /* DeploymentListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79BD4631B6ACFD823EF35347 /* DeploymentListView.swift */; };
 		8B817F4D28F24B7B4FD67123 /* ProviderTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C8A7DA2F84182A9EE94305 /* ProviderTheme.swift */; };
-		8BDF7886B8245ADF4C369E0D /* ProviderShader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F54CB23CF0DCBF32C31E841 /* ProviderShader.swift */; };
 		9182FFE23CF4568244730C16 /* HomeErrorBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06D90FEE35B41CD6E6AB330 /* HomeErrorBanner.swift */; };
 		9446E0F2DC40A23A08D7F61C /* ComplicationInlineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0CC3D923E9FC24C44C729B /* ComplicationInlineView.swift */; };
 		99339A02525CB02F3002BAB1 /* FlyIOMeshGradientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 246CD13D0F4F2AEAF77B41A1 /* FlyIOMeshGradientBackground.swift */; };
@@ -256,11 +254,9 @@
 		81CF8F4844623A0DD6A9963F /* DeploymentWidgetIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeploymentWidgetIntent.swift; sourceTree = "<group>"; };
 		859E903DE0C41D33842CA493 /* TestFlightGemSmokeBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFlightGemSmokeBackground.swift; sourceTree = "<group>"; };
 		86E036D9E4EBCCAC8925D004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		87D5DE826990B402B2317CF5 /* Providers.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Providers.metal; sourceTree = "<group>"; };
 		88558892124D7B0CFAC9926C /* ProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTests.swift; sourceTree = "<group>"; };
 		8E73A433BE0E898861C3990D /* SafariView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariView.swift; sourceTree = "<group>"; };
 		8E8DCF9B4DE9C9E0991988CC /* AgendaSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgendaSidebarView.swift; sourceTree = "<group>"; };
-		8F54CB23CF0DCBF32C31E841 /* ProviderShader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderShader.swift; sourceTree = "<group>"; };
 		8FB997B309D389B147CECAD8 /* ProviderEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderEntity.swift; sourceTree = "<group>"; };
 		8FC9745C8490234B68108DA6 /* CalendarEventPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEventPopover.swift; sourceTree = "<group>"; };
 		90925A0C903F967C6A649FE1 /* DeploymentRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeploymentRow.swift; sourceTree = "<group>"; };
@@ -401,7 +397,6 @@
 				FB620841FB0A27B8DA36AEB9 /* NetlifyNeuroNoiseBackground.swift */,
 				A0C8A7DA2F84182A9EE94305 /* ProviderTheme.swift */,
 				948C47F8C02AADE032CB1385 /* RailwaySimplexNoiseBackground.swift */,
-				FD09C0A055ADD7F28A6436C5 /* Shaders */,
 				3B4E8EFF9199C7ABF4A2E27F /* StatusOrb.swift */,
 				859E903DE0C41D33842CA493 /* TestFlightGemSmokeBackground.swift */,
 				740A659A659B097D09DC6621 /* VercelHeatmapTileBackground.swift */,
@@ -742,15 +737,6 @@
 				510F808CA5275466A4E7B82A /* Views */,
 			);
 			path = StackLightWidgets;
-			sourceTree = "<group>";
-		};
-		FD09C0A055ADD7F28A6436C5 /* Shaders */ = {
-			isa = PBXGroup;
-			children = (
-				87D5DE826990B402B2317CF5 /* Providers.metal */,
-				8F54CB23CF0DCBF32C31E841 /* ProviderShader.swift */,
-			);
-			path = Shaders;
 			sourceTree = "<group>";
 		};
 		FDE3F57EF3BA39B4E215141D /* Home */ = {
@@ -1120,9 +1106,7 @@
 				15EE11E19CACC825169B63B1 /* PollingManager.swift in Sources */,
 				CD00BA518C91A837AB2779F3 /* ProjectPillRail.swift in Sources */,
 				235F440410BFA39D5EE1CA91 /* ProviderSettingsView.swift in Sources */,
-				8BDF7886B8245ADF4C369E0D /* ProviderShader.swift in Sources */,
 				8B817F4D28F24B7B4FD67123 /* ProviderTheme.swift in Sources */,
-				52A81644174FEF70B9686977 /* Providers.metal in Sources */,
 				5A025E89084FFF75B09A5DB7 /* RailwaySimplexNoiseBackground.swift in Sources */,
 				15C6DF4E699A388CB6EEC4AD /* RootView.swift in Sources */,
 				E380C8D4B697F51EFD1137F4 /* SafariView.swift in Sources */,

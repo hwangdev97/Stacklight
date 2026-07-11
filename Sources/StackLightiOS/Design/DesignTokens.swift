@@ -61,16 +61,4 @@ enum DesignTokens {
         static let caption      = Font.system(size: 11, weight: .medium,   design: .rounded)
     }
 
-    // MARK: Motion
-
-    enum Motion {
-        /// Should we respect Reduce Motion? Shader animations should pause when true.
-        static var reduceMotion: Bool {
-            UIAccessibility.isReduceMotionEnabled
-        }
-        /// Should we drop the shader backdrop entirely for contrast users?
-        static var reduceTransparency: Bool {
-            UIAccessibility.isReduceTransparencyEnabled
-        }
-    }
 }

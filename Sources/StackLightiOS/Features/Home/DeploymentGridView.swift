@@ -29,7 +29,7 @@ struct DeploymentGridView: View {
                     .progressViewStyle(.circular)
                     .tint(.white)
                     .padding(10)
-                    .background(.ultraThinMaterial, in: Circle())
+                    .background(DesignTokens.Palette.surface, in: Circle())
                     .padding(.top, 8)
                     .frame(maxHeight: .infinity, alignment: .top)
                     .transition(.move(edge: .top).combined(with: .opacity))
