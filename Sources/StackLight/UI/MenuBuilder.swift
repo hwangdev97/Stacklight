@@ -8,8 +8,13 @@ struct MenuBarContentView: View {
     var providers: [DeploymentProvider]
     var errors: [String: String]
     var lastRefresh: Date?
+    /// True while a poll is in flight. Footer swaps "Updated Xm ago" for a
+    /// spinner + "Refreshing…" label so users see that fresher data is on
+    /// the way after they open the menu.
+    var isRefreshing: Bool
     var onRefresh: () -> Void
     var onOpenSettings: () -> Void
+    var onOpenCalendar: () -> Void
     var onOpenFeedback: () -> Void
     var onCheckForUpdates: () -> Void = {
         Task {
@@ -32,6 +37,14 @@ struct MenuBarContentView: View {
     /// hasn't actually changed.
     private let grouped: [String: [Deployment]]
 
+    /// Pre-grouped deployments keyed by `projectGroupingKey`, used when
+    /// "Group by project" is enabled.
+    private let deploymentsByProject: [String: [Deployment]]
+
+    /// Provider lookup by ID so project-mode platform sub-headers can resolve a
+    /// row's provider without a linear scan of the registry.
+    private let providersByID: [String: DeploymentProvider]
+
     /// Convenience init for callers (and previews) that have a flat list and
     /// don't want to pre-group themselves.
     init(
@@ -39,8 +52,10 @@ struct MenuBarContentView: View {
         deployments: [Deployment],
         errors: [String: String],
         lastRefresh: Date?,
+        isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
+        onOpenCalendar: @escaping () -> Void = {},
         onOpenFeedback: @escaping () -> Void,
         onCheckForUpdates: @escaping () -> Void = {
             Task {
@@ -60,10 +75,14 @@ struct MenuBarContentView: View {
         self.init(
             providers: providers,
             deploymentsByProvider: Dictionary(grouping: deployments, by: \.providerID),
+            deploymentsByProject: Dictionary(grouping: deployments, by: \.projectGroupingKey),
+            providersByID: Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) }),
             errors: errors,
             lastRefresh: lastRefresh,
+            isRefreshing: isRefreshing,
             onRefresh: onRefresh,
             onOpenSettings: onOpenSettings,
+            onOpenCalendar: onOpenCalendar,
             onOpenFeedback: onOpenFeedback,
             onCheckForUpdates: onCheckForUpdates,
             onQuit: onQuit
@@ -76,10 +95,14 @@ struct MenuBarContentView: View {
     init(
         providers: [DeploymentProvider],
         deploymentsByProvider: [String: [Deployment]],
+        deploymentsByProject: [String: [Deployment]] = [:],
+        providersByID: [String: DeploymentProvider] = [:],
         errors: [String: String],
         lastRefresh: Date?,
+        isRefreshing: Bool = false,
         onRefresh: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void,
+        onOpenCalendar: @escaping () -> Void = {},
         onOpenFeedback: @escaping () -> Void,
         onCheckForUpdates: @escaping () -> Void = {
             Task {
@@ -98,17 +121,36 @@ struct MenuBarContentView: View {
     ) {
         self.providers = providers
         self.grouped = deploymentsByProvider
+        self.deploymentsByProject = deploymentsByProject
+        self.providersByID = providersByID.isEmpty
+            ? Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) })
+            : providersByID
         self.errors = errors
         self.lastRefresh = lastRefresh
+        self.isRefreshing = isRefreshing
         self.onRefresh = onRefresh
         self.onOpenSettings = onOpenSettings
+        self.onOpenCalendar = onOpenCalendar
         self.onOpenFeedback = onOpenFeedback
         self.onCheckForUpdates = onCheckForUpdates
         self.onQuit = onQuit
     }
 
     @Environment(\.openURL) private var openURL
-    @State private var settings: UserSettings = SettingsStore.shared.settings
+    /// Observing the store (rather than snapshotting once) makes the menu react
+    /// live to settings changes — the "Group by project" toggle and pin/hide
+    /// edits redraw the open panel immediately.
+    @ObservedObject private var settingsStore = SettingsStore.shared
+    private var settings: UserSettings { settingsStore.settings }
+
+    /// Measured height of the scrollable region's content. Drives the scroll
+    /// frame so a short list sizes the window to its content (no empty space)
+    /// while a long list is capped and scrolls instead of growing off-screen.
+    @State private var contentHeight: CGFloat = 0
+
+    /// Upper bound on the scrollable region. Roughly one screenful; the footer
+    /// lives outside the scroll so Refresh/Settings/Quit stay reachable.
+    private let maxScrollHeight: CGFloat = 420
 
     /// Returns deployments for a provider grouped by visibility:
     /// `(pinned, visible, hidden)`. `hidden` is exposed so the UI can fold it
@@ -131,28 +173,70 @@ struct MenuBarContentView: View {
         SettingsStore.shared.mutate { settings in
             settings.setVisibility(visibility, for: deployment.key)
         }
-        settings = SettingsStore.shared.settings
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if providers.isEmpty {
-                emptyState
-            } else {
-                ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
-                    if idx > 0 {
-                        Divider().padding(.horizontal, 10)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if providers.isEmpty {
+                        emptyState
+                    } else if settings.groupByProject {
+                        projectModeBody
+                    } else {
+                        ForEach(Array(providers.enumerated()), id: \.element.id) { idx, provider in
+                            if idx > 0 {
+                                Divider().padding(.horizontal, 10)
+                            }
+                            providerSection(provider)
+                        }
                     }
-                    providerSection(provider)
                 }
+                .padding(.top, 6)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(key: ContentHeightKey.self, value: proxy.size.height)
+                    }
+                )
             }
+            .frame(height: min(contentHeight, maxScrollHeight))
+            .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
 
             Divider().padding(.horizontal, 10)
 
             footer
+                .padding(.bottom, 6)
         }
-        .padding(.vertical, 6)
         .frame(width: 320)
+    }
+
+    /// Project keys ordered by most-recent deployment first. `deploymentsByProject`
+    /// values inherit the flat array's createdAt-desc order, so the first item
+    /// in each group is its most recent.
+    private var orderedProjectKeys: [String] {
+        deploymentsByProject.keys.sorted { lhs, rhs in
+            let l = deploymentsByProject[lhs]?.first?.createdAt ?? .distantPast
+            let r = deploymentsByProject[rhs]?.first?.createdAt ?? .distantPast
+            return l > r
+        }
+    }
+
+    @ViewBuilder
+    private var projectModeBody: some View {
+        if orderedProjectKeys.isEmpty {
+            Text("No recent deployments")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+        } else {
+            ForEach(Array(orderedProjectKeys.enumerated()), id: \.element) { idx, key in
+                if idx > 0 {
+                    Divider().padding(.horizontal, 10)
+                }
+                projectSection(key)
+            }
+        }
     }
 
     // MARK: - States
@@ -197,48 +281,125 @@ struct MenuBarContentView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
             } else {
-                let parts = partitioned(list)
-                // Pinned rows go first (already labeled with a pin glyph).
-                ForEach(parts.pinned, id: \.id) { deployment in
-                    deploymentRow(deployment, isPinned: true)
-                }
-                // Then the normal feed (capped at 5 to keep the menu compact).
-                ForEach(parts.visible.prefix(5), id: \.id) { deployment in
-                    deploymentRow(deployment, isPinned: false)
-                }
-                // Hidden items collapse into a folded count so the user can
-                // unhide without opening Settings.
-                if !parts.hidden.isEmpty {
-                    Menu {
-                        ForEach(parts.hidden, id: \.id) { deployment in
-                            Button("Show \(deployment.projectName)") {
-                                updateVisibility(.visible, for: deployment)
-                            }
-                        }
-                    } label: {
-                        Text("Hidden (\(parts.hidden.count))")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .menuStyle(.borderlessButton)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 2)
-                }
+                rowsBlock(for: list)
             }
         }
         .padding(.vertical, 2)
     }
 
-    // MARK: - Rows
+    /// Shared row block: pinned rows first, then the visible feed (capped at 5),
+    /// then a folded "Hidden (N)" submenu. Used by both the provider and project
+    /// layouts so they stay in sync.
+    @ViewBuilder
+    private func rowsBlock(for list: [Deployment]) -> some View {
+        let parts = partitioned(list)
+        // Pinned rows go first (already labeled with a pin glyph).
+        ForEach(parts.pinned, id: \.id) { deployment in
+            deploymentRow(deployment, isPinned: true)
+        }
+        // Then the normal feed (capped at 5 to keep the menu compact).
+        ForEach(parts.visible.prefix(5), id: \.id) { deployment in
+            deploymentRow(deployment, isPinned: false)
+        }
+        // Hidden items collapse into a folded count so the user can unhide
+        // without opening Settings.
+        if !parts.hidden.isEmpty {
+            Menu {
+                ForEach(parts.hidden, id: \.id) { deployment in
+                    Button("Show \(deployment.projectName)") {
+                        updateVisibility(.visible, for: deployment)
+                    }
+                }
+            } label: {
+                Text("Hidden (\(parts.hidden.count))")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .menuStyle(.borderlessButton)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 2)
+        }
+    }
+
+    // MARK: - Project mode
 
     @ViewBuilder
-    private func providerHeader(_ provider: DeploymentProvider) -> some View {
+    private func projectSection(_ key: String) -> some View {
+        let items = deploymentsByProject[key] ?? []
+        VStack(alignment: .leading, spacing: 0) {
+            projectHeader(for: items)
+
+            // Sub-group the project's deployments by platform, ordered by the
+            // most-recent deployment in each platform (items are already
+            // createdAt-desc, so first wins).
+            let byProvider = Dictionary(grouping: items, by: \.providerID)
+            let orderedProviderIDs = byProvider.keys.sorted { lhs, rhs in
+                let l = byProvider[lhs]?.first?.createdAt ?? .distantPast
+                let r = byProvider[rhs]?.first?.createdAt ?? .distantPast
+                return l > r
+            }
+            ForEach(orderedProviderIDs, id: \.self) { providerID in
+                if let provider = providersByID[providerID] {
+                    providerHeader(provider, compact: true)
+                }
+                rowsBlock(for: byProvider[providerID] ?? [])
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    /// Non-clickable project header. A project can span platforms, so unlike a
+    /// provider header there's no single dashboard to open. Display name is the
+    /// most-recent item's repository when known, else its project name. The
+    /// group is the top-level unit in this mode, so it carries the prominent
+    /// filled badge (brand-colored, from the most-recent deployment's provider)
+    /// while the per-platform sub-headers below it are rendered plain.
+    @ViewBuilder
+    private func projectHeader(for items: [Deployment]) -> some View {
+        let representative = items.first
+        let name: String = {
+            if let repo = representative?.repository, !repo.isEmpty { return repo }
+            if let project = representative?.projectName, !project.isEmpty { return project }
+            return "Other"
+        }()
+        HStack(spacing: 8) {
+            if let providerID = representative?.providerID,
+               let provider = providersByID[providerID] {
+                ProviderIconView(provider: provider, size: 18)
+            } else {
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 18, height: 18)
+                    .background(Color.secondary.gradient, in: Circle())
+            }
+            Text(name)
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+    }
+
+    // MARK: - Rows
+
+    /// `compact` is used for the per-platform sub-headers inside a project
+    /// group: the group already owns the prominent filled badge, so here we
+    /// drop the brand-colored circle and show just a small monochrome glyph.
+    @ViewBuilder
+    private func providerHeader(_ provider: DeploymentProvider, compact: Bool = false) -> some View {
         let hasDashboard = provider.dashboardURL != nil
         MenuRow(isEnabled: hasDashboard) {
             if let url = provider.dashboardURL { openURL(url) }
         } label: {
             HStack(spacing: 8) {
-                ProviderIconView(provider: provider, size: 18)
+                if compact {
+                    providerGlyph(provider)
+                } else {
+                    ProviderIconView(provider: provider, size: 18)
+                }
                 Text(provider.displayName)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -250,6 +411,26 @@ struct MenuBarContentView: View {
                 }
             }
         }
+    }
+
+    /// Plain (no filled circle) provider glyph used for compact sub-headers.
+    /// Tinted `.secondary` so it stays legible in both light and dark menus —
+    /// some brand colors (Vercel, GitHub) are near-black and would vanish.
+    @ViewBuilder
+    private func providerGlyph(_ provider: DeploymentProvider) -> some View {
+        Group {
+            if let asset = provider.iconAsset {
+                Image(asset)
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: provider.iconSymbol)
+                    .font(.system(size: 11, weight: .medium))
+            }
+        }
+        .frame(width: 14, height: 14)
+        .foregroundStyle(.secondary)
     }
 
     @ViewBuilder
@@ -319,7 +500,20 @@ struct MenuBarContentView: View {
     @ViewBuilder
     private var footer: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let lastRefresh {
+            if isRefreshing {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .scaleEffect(0.6)
+                        .frame(width: 10, height: 10)
+                    Text("Refreshing…")
+                }
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
+            } else if let lastRefresh {
                 let configuredCount = providers.count
                 let okCount = max(0, configuredCount - errors.count)
                 Text("Updated \(relativeTime(from: lastRefresh)) · \(okCount)/\(configuredCount) ok")
@@ -339,6 +533,9 @@ struct MenuBarContentView: View {
             MenuRow(action: onOpenSettings) {
                 menuItemLabel("Settings…", shortcut: "⌘,")
             }
+            MenuRow(action: onOpenCalendar) {
+                menuItemLabel("Calendar…")
+            }
             MenuRow(action: onOpenFeedback) {
                 menuItemLabel("Send Feedback…")
             }
@@ -348,7 +545,23 @@ struct MenuBarContentView: View {
             MenuRow(action: onQuit) {
                 menuItemLabel("Quit StackLight", shortcut: "⌘Q")
             }
+
+            Text("StackLight \(appVersion)")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
         }
+    }
+
+    /// Marketing version + build number, e.g. "1.1.0 (42)". Falls back to
+    /// placeholder glyphs when the Info.plist keys are missing (previews,
+    /// unsigned `swift run`).
+    private var appVersion: String {
+        let v = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
+        let b = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?"
+        return "\(v) (\(b))"
     }
 
     private var updateMenuTitle: String {
@@ -390,6 +603,17 @@ struct MenuBarContentView: View {
 
     private func relativeTime(from date: Date) -> String {
         SharedFormatters.relativeAbbreviated.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// MARK: - Layout measurement
+
+/// Reports the scrollable region's content height up to the body so the
+/// ScrollView can size itself to `min(content, cap)`.
+private struct ContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
@@ -589,6 +813,20 @@ private enum PreviewFixtures {
         deployments: [],
         errors: [:],
         lastRefresh: Date(),
+        onRefresh: {},
+        onOpenSettings: {},
+        onOpenFeedback: {},
+        onQuit: {}
+    )
+}
+
+#Preview("Menubar — Refreshing") {
+    MenuBarContentView(
+        providers: PreviewFixtures.allProviders,
+        deployments: PreviewFixtures.richDeployments,
+        errors: [:],
+        lastRefresh: Date().addingTimeInterval(-240),
+        isRefreshing: true,
         onRefresh: {},
         onOpenSettings: {},
         onOpenFeedback: {},

@@ -69,6 +69,29 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
         publishChange()
     }
 
+    // MARK: - Import / export
+
+    public func exportData() throws -> Data {
+        try Self.exportData(for: settings)
+    }
+
+    public func importData(_ data: Data) throws {
+        let imported = try Self.importSettings(from: data)
+        mutate { current in
+            current = imported
+        }
+    }
+
+    public static func exportData(for settings: UserSettings) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        return try encoder.encode(settings)
+    }
+
+    public static func importSettings(from data: Data) throws -> UserSettings {
+        try JSONDecoder().decode(UserSettings.self, from: data)
+    }
+
     // MARK: - Application-level typed accessors
 
     public var pollIntervalSeconds: Double {
@@ -94,6 +117,11 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
     public var loggingVerbosity: String {
         get { settings.loggingVerbosity }
         set { mutate { $0.loggingVerbosity = newValue } }
+    }
+
+    public var groupByProject: Bool {
+        get { settings.groupByProject }
+        set { mutate { $0.groupByProject = newValue } }
     }
 
     // MARK: - Provider config (free-form)
@@ -249,6 +277,8 @@ public final class SettingsStore: ObservableObject, @unchecked Sendable {
         "github.repos", "github.pr.repos",
         "netlify.siteIds",
         "railway.projectIds",
+        "zeabur.ownerId",
+        "zeabur.projectIds",
         "flyio.apps",
         "testflight.appIds",
         "xcodeCloud.productIds"

@@ -4,7 +4,13 @@ import Combine
 
 @MainActor
 final class WatchAppState: ObservableObject {
-    @Published private(set) var deployments: [Deployment] = []
+    @Published private(set) var deployments: [Deployment] = [] {
+        didSet { sortedDeployments = deployments.sorted { $0.createdAt > $1.createdAt } }
+    }
+    /// Cached sort of `deployments`. The list view reads this from `body`
+    /// multiple times per render, so we keep it in lockstep via `didSet`
+    /// instead of re-sorting on every access.
+    @Published private(set) var sortedDeployments: [Deployment] = []
     @Published private(set) var lastRefresh: Date?
     @Published private(set) var isRefreshing: Bool = false
 
@@ -17,10 +23,6 @@ final class WatchAppState: ObservableObject {
             .sink { [weak self] _ in
                 Task { @MainActor in self?.loadFromStore() }
             }
-    }
-
-    var sortedDeployments: [Deployment] {
-        deployments.sorted { $0.createdAt > $1.createdAt }
     }
 
     /// Pull the latest snapshot straight from the paired iPhone. Falls through

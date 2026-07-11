@@ -59,6 +59,19 @@ glassTemplate.innerHTML = `
         .fallback-blur .glass-inner {
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
         }
+
+        /* iOS / reduced-glass escape hatch. Consumers add class="no-blur"
+           on the host when they want to drop the backdrop-filter cost
+           entirely (e.g. iOS Safari, where backdrop-filter over a WebGL
+           canvas trips the compositor). All blur/filter passes are stripped;
+           the host element's own background-color carries the visual. */
+        :host(.no-blur) .glass-inner,
+        :host(.no-blur) .glass-element .glass-inner {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            filter: none !important;
+            background-color: transparent;
+        }
     </style>
     <div class="glass-element" id="glassElement">
         <!-- invisible svg, its filter is referenced by backdrop-filter url() on .glass-inner -->

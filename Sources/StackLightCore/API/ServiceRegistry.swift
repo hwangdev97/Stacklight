@@ -31,6 +31,8 @@ public final class ServiceRegistry {
         register(GitLabMRProvider())
         register(NetlifyProvider())
         register(RailwayProvider())
+        register(SupabaseProvider())
+        register(ZeaburProvider())
         register(FlyioProvider())
         register(XcodeCloudProvider())
         register(TestFlightProvider())

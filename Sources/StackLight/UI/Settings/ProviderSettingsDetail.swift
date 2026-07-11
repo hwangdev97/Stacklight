@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import StackLightCore
 
@@ -12,6 +13,7 @@ struct ProviderSettingsDetail: View {
     @State private var saved = false
     @State private var testing = false
     @State private var testResult: TestResult?
+    @State private var aiHandoffStatus: String?
     /// Last Test's per-entry error dict, keyed by the entry identifier the
     /// provider reports (e.g. "owner/repo" for GitHub, "12345" for a
     /// TestFlight App ID). Forwarded to `MultiValueFieldView` so individual
@@ -48,19 +50,22 @@ struct ProviderSettingsDetail: View {
 
             if let error = appState.errors[provider.id] {
                 Section {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.yellow)
-                        Text(error)
-                            .font(.caption)
-                            .lineLimit(4)
-                            .textSelection(.enabled)
-                        Spacer()
-                        if let onOpenLogs {
-                            Button("View Logs", action: onOpenLogs)
-                                .buttonStyle(.link)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                            Text(error)
                                 .font(.caption)
+                                .lineLimit(4)
+                                .textSelection(.enabled)
+                            Spacer()
+                            if let onOpenLogs {
+                                Button("View Logs", action: onOpenLogs)
+                                    .buttonStyle(.link)
+                                    .font(.caption)
+                            }
                         }
+                        aiHandoffControls
                     }
                 }
             }
@@ -125,6 +130,13 @@ struct ProviderSettingsDetail: View {
                     }
                     .keyboardShortcut(.defaultAction)
 
+                    Button {
+                        copyConfigurationPrompt()
+                    } label: {
+                        Label("Copy Prompt", systemImage: "sparkles")
+                    }
+                    .help("Copy a prompt you can paste into an AI assistant (Claude, Codex, …) to get step-by-step help configuring \(provider.displayName).")
+
                     if saved {
                         Label("Saved", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
@@ -142,21 +154,34 @@ struct ProviderSettingsDetail: View {
                                     Label("\(count) deployments", systemImage: "checkmark.circle.fill")
                                         .foregroundStyle(.green)
                                 } else {
-                                    Label("\(count) ok · \(failedItems) failed", systemImage: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.orange)
-                                        .help(itemErrors
-                                            .map { "\($0.key): \($0.value)" }
-                                            .sorted()
-                                            .joined(separator: "\n"))
+                                    HStack(spacing: 8) {
+                                        Label("\(count) ok · \(failedItems) failed", systemImage: "exclamationmark.triangle.fill")
+                                            .foregroundStyle(.orange)
+                                            .help(itemErrors
+                                                .map { "\($0.key): \($0.value)" }
+                                                .sorted()
+                                                .joined(separator: "\n"))
+                                        aiHandoffMenu
+                                    }
                                 }
                             case .failure(let msg):
-                                Label("Failed", systemImage: "xmark.circle.fill")
-                                    .foregroundStyle(.red)
-                                    .help(msg)
+                                HStack(spacing: 8) {
+                                    Label("Failed", systemImage: "xmark.circle.fill")
+                                        .foregroundStyle(.red)
+                                        .help(msg)
+                                    aiHandoffMenu
+                                }
                             }
                         }
                         .font(.caption)
                         .transition(.opacity)
+                    }
+
+                    if let aiHandoffStatus {
+                        Text(aiHandoffStatus)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .transition(.opacity)
                     }
 
                     Button {
@@ -174,7 +199,42 @@ struct ProviderSettingsDetail: View {
         }
         .formStyle(.grouped)
         .animation(.easeInOut(duration: 0.2), value: saved)
+        .animation(.easeInOut(duration: 0.2), value: aiHandoffStatus)
         .onAppear { loadFields() }
+    }
+
+    @ViewBuilder
+    private var aiHandoffControls: some View {
+        HStack(spacing: 8) {
+            Button {
+                copyAIHandoffPrompt()
+            } label: {
+                Label("Copy for AI", systemImage: "doc.on.doc")
+            }
+
+            aiHandoffMenu
+        }
+        .controlSize(.small)
+    }
+
+    @ViewBuilder
+    private var aiHandoffMenu: some View {
+        Menu {
+            Button {
+                openAIHandoff(.codex)
+            } label: {
+                Label("Open in Codex", systemImage: "terminal")
+            }
+            Button {
+                openAIHandoff(.claude)
+            } label: {
+                Label("Open in Claude", systemImage: "terminal")
+            }
+        } label: {
+            Label("Send to AI", systemImage: "sparkles")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
     }
 
     @ViewBuilder
@@ -233,6 +293,7 @@ struct ProviderSettingsDetail: View {
         saveFields()
         testing = true
         testResult = nil
+        aiHandoffStatus = nil
         itemErrors = [:]
         Task {
             do {
@@ -309,6 +370,147 @@ struct ProviderSettingsDetail: View {
             }
         }
         ASCCredentialStore.invalidate()
+    }
+
+    private func copyConfigurationPrompt() {
+        let prompt = ProviderSetupPrompt.prompt(for: ProviderSetupContext(
+            providerID: provider.id,
+            providerName: provider.displayName,
+            isConfigured: provider.isConfigured,
+            docsURL: provider.docsURL?.absoluteString,
+            fields: provider.settingsFields().map { field in
+                ProviderSetupField(
+                    key: field.key,
+                    label: field.label,
+                    isSecret: field.isSecret,
+                    isMultiValue: field.isMultiValue,
+                    isPresent: isFieldPresent(field),
+                    kind: handoffKindName(for: field),
+                    placeholder: field.placeholder,
+                    hint: field.hint
+                )
+            }
+        ))
+        copyToPasteboard(prompt)
+        setAIHandoffStatus("Copied setup prompt")
+    }
+
+    private func copyAIHandoffPrompt() {
+        guard let prompt = makeAIHandoffPrompt() else {
+            setAIHandoffStatus("No error details to copy")
+            return
+        }
+        copyToPasteboard(prompt)
+        setAIHandoffStatus("Copied AI prompt")
+    }
+
+    private func openAIHandoff(_ cli: AIErrorHandoffCLI) {
+        guard let prompt = makeAIHandoffPrompt() else {
+            setAIHandoffStatus("No error details to send")
+            return
+        }
+
+        copyToPasteboard(prompt)
+
+        do {
+            let scriptURL = try writeAICommandScript(for: cli, prompt: prompt)
+            if NSWorkspace.shared.open(scriptURL) {
+                setAIHandoffStatus("Copied prompt and opened \(cli.displayName)")
+            } else {
+                setAIHandoffStatus("Copied prompt; could not open \(cli.displayName)")
+            }
+        } catch {
+            setAIHandoffStatus("Copied prompt; \(error.localizedDescription)")
+        }
+    }
+
+    private func makeAIHandoffPrompt() -> String? {
+        let testFailure: String?
+        switch testResult {
+        case .failure(let message):
+            testFailure = message
+        case .success, .none:
+            testFailure = nil
+        }
+
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        return AIErrorHandoff.prompt(for: AIErrorHandoffContext(
+            providerID: provider.id,
+            providerName: provider.displayName,
+            isConfigured: provider.isConfigured,
+            providerError: appState.errors[provider.id],
+            testFailure: testFailure,
+            itemErrors: itemErrors,
+            fields: provider.settingsFields().map { field in
+                AIErrorHandoffField(
+                    key: field.key,
+                    label: field.label,
+                    isSecret: field.isSecret,
+                    isPresent: isFieldPresent(field),
+                    isMultiValue: field.isMultiValue,
+                    kind: handoffKindName(for: field)
+                )
+            },
+            appVersion: version
+        ))
+    }
+
+    private func isFieldPresent(_ field: SettingsField) -> Bool {
+        let value = fieldValues[field.key]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !value.isEmpty
+    }
+
+    private func handoffKindName(for field: SettingsField) -> String {
+        switch field.kind {
+        case .text: return "text"
+        case .toggle: return "toggle"
+        case .branchPicker: return "branch picker"
+        }
+    }
+
+    private func copyToPasteboard(_ prompt: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(prompt, forType: .string)
+    }
+
+    private func setAIHandoffStatus(_ message: String) {
+        aiHandoffStatus = message
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            if aiHandoffStatus == message {
+                aiHandoffStatus = nil
+            }
+        }
+    }
+
+    private func writeAICommandScript(for cli: AIErrorHandoffCLI, prompt: String) throws -> URL {
+        let filename = "StackLight-\(cli.executableName)-\(UUID().uuidString).command"
+        let scriptURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+        let quotedPrompt = AIErrorHandoff.shellQuoted(prompt)
+        let quotedExecutable = AIErrorHandoff.shellQuoted(cli.executableName)
+        let script = """
+        #!/bin/zsh
+        export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+        if ! command -v \(quotedExecutable) >/dev/null 2>&1; then
+          echo "\(cli.displayName) CLI not found."
+          echo "The StackLight error prompt has been copied to the clipboard."
+          echo "Install \(cli.displayName) CLI or paste the prompt into your AI assistant."
+          echo
+          read -r "?Press Return to close."
+          exit 127
+        fi
+
+        \(cli.executableName) \(quotedPrompt)
+        status=$?
+        echo
+        echo "\(cli.displayName) exited with status $status."
+        read -r "?Press Return to close."
+        exit $status
+        """
+
+        try script.write(to: scriptURL, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
+        return scriptURL
     }
 }
 

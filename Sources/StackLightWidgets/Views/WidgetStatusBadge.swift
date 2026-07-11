@@ -54,6 +54,7 @@ enum WidgetPalette {
         case "githubPRs":     return Color(red: 0.82, green: 0.56, blue: 1.00)
         case "netlify":       return Color(red: 0.36, green: 0.92, blue: 0.95)
         case "railway":       return Color(red: 0.40, green: 0.96, blue: 0.72)
+        case "zeabur":        return Color(red: 1.00, green: 0.35, blue: 0.16)
         case "flyio":         return Color(red: 1.00, green: 0.62, blue: 0.82)
         case "xcodeCloud":    return Color(red: 0.56, green: 0.76, blue: 1.00)
         case "testFlight":    return Color(red: 0.54, green: 0.92, blue: 1.00)
@@ -69,6 +70,7 @@ enum WidgetPalette {
         case "githubPRs":     return "arrow.triangle.pull"
         case "netlify":       return "network"
         case "railway":       return "tram.fill"
+        case "zeabur":        return "bolt.horizontal.fill"
         case "flyio":         return "airplane"
         case "xcodeCloud":    return "hammer.fill"
         case "testFlight":    return "paperplane.fill"

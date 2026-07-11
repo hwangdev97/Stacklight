@@ -58,7 +58,12 @@ public enum DeploymentFetcher {
                 }
                 switch result {
                 case .success(let fetchResult):
+                    // Sort newest-first so callers that cap the list (the menu
+                    // takes .prefix(5) per provider) interleave runs across
+                    // projects/apps by recency instead of showing whichever
+                    // project the API returned first.
                     successes[providerID] = fetchResult.deployments
+                        .sorted { $0.createdAt > $1.createdAt }
                     if !fetchResult.itemErrors.isEmpty {
                         // Collapse per-entry failures into one provider-level
                         // error so existing sidebar/menu logic (keyed by

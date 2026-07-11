@@ -100,31 +100,11 @@ struct ProviderSettingsView: View {
             .frame(maxWidth: .infinity)
         }
         .background {
-            if provider.id == "vercel" {
-                VercelHeatmapTileBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "cloudflare" {
-                CloudflareGrainGradientBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "netlify" {
-                NetlifyNeuroNoiseBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "railway" {
-                RailwaySimplexNoiseBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "flyio" {
-                FlyIOMeshGradientBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "xcodeCloud" {
-                XcodeCloudGodRaysBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "testFlight" {
-                TestFlightGemSmokeBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "githubActions" {
-                GitHubActionsDitheringBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else if provider.id == "githubPRs" {
-                GitHubPullRequestDitheringBackground(cornerRadius: DesignTokens.Radius.lg)
-            } else {
-                GlowBackground(
-                    theme: theme,
-                    shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.lg,
-                                            style: .continuous),
-                    intensity: 1.0)
-            }
+            GlowBackground(
+                theme: theme,
+                shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.lg,
+                                        style: .continuous),
+                intensity: 1.0)
         }
     }
 
@@ -353,7 +333,7 @@ struct ProviderSettingsView: View {
     }
 
     private var iconTint: Color {
-        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
+        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "zeabur", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
     }
 
     private func loadFields() {

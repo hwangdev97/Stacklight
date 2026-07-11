@@ -1,9 +1,7 @@
 import SwiftUI
 import StackLightCore
 
-/// Modal picker for adding a new integration. Redesigned as a 2-column grid
-/// of glass tiles, each showing a live shader preview of the provider's
-/// visual signature.
+/// Modal picker for adding a new integration.
 struct AddIntegrationView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
@@ -84,7 +82,7 @@ struct AddIntegrationView: View {
     }
 }
 
-/// A single provider tile — glass card with live shader preview.
+/// A single provider tile with a static provider-coloured background.
 private struct ProviderTile: View {
     let provider: DeploymentProvider
 
@@ -92,31 +90,11 @@ private struct ProviderTile: View {
 
     var body: some View {
         ZStack {
-            if provider.id == "vercel" {
-                VercelHeatmapTileBackground()
-            } else if provider.id == "cloudflare" {
-                CloudflareGrainGradientBackground()
-            } else if provider.id == "netlify" {
-                NetlifyNeuroNoiseBackground()
-            } else if provider.id == "railway" {
-                RailwaySimplexNoiseBackground()
-            } else if provider.id == "flyio" {
-                FlyIOMeshGradientBackground()
-            } else if provider.id == "xcodeCloud" {
-                XcodeCloudGodRaysBackground()
-            } else if provider.id == "testFlight" {
-                TestFlightGemSmokeBackground()
-            } else if provider.id == "githubActions" {
-                GitHubActionsDitheringBackground()
-            } else if provider.id == "githubPRs" {
-                GitHubPullRequestDitheringBackground()
-            } else {
-                GlowBackground(
-                    theme: theme,
-                    shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.md,
-                                            style: .continuous),
-                    intensity: 0.9)
-            }
+            GlowBackground(
+                theme: theme,
+                shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.md,
+                                        style: .continuous),
+                intensity: 0.9)
 
             VStack(alignment: .leading, spacing: 0) {
                 // Top area: floating icon chip
@@ -163,7 +141,7 @@ private struct ProviderTile: View {
     }
 
     private var iconTint: Color {
-        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
+        ["cloudflare", "githubActions", "githubPRs", "netlify", "railway", "zeabur", "flyio", "xcodeCloud", "testFlight"].contains(provider.id) ? .white : theme.accent
     }
 
     private var subtitle: String {
@@ -174,6 +152,8 @@ private struct ProviderTile: View {
         case "githubPRs":     return "Open pull requests"
         case "netlify":       return "Deployments"
         case "railway":       return "Deployments"
+        case "supabase":      return "Project health & branches"
+        case "zeabur":        return "Deployments"
         case "flyio":         return "Machine deployments"
         case "xcodeCloud":    return "Build results"
         case "testFlight":    return "Build processing & review"

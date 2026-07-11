@@ -130,4 +130,23 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(store.diagnosticsEnabled)
         XCTAssertEqual(store.string(for: "cloudflare.accountId"), "acct_42")
     }
+
+    func testImportExportDataRoundTripsSettings() throws {
+        let suite = "StackLight.tests.\(UUID().uuidString)"
+        let isolated = UserDefaults(suiteName: suite)!
+        defer { isolated.removePersistentDomain(forName: suite) }
+
+        let source = SettingsStore(defaults: isolated)
+        source.mutate { settings in
+            settings.pollIntervalSeconds = 180
+            settings.notificationsEnabled = false
+            settings.setString("owner/repo", for: "github.repos")
+            settings.setStringArray(["main"], for: "vercel.knownBranches")
+            settings.setVisibility(.pinned, for: DeploymentKey(providerID: "vercel", itemID: "app"))
+        }
+
+        let imported = try SettingsStore.importSettings(from: source.exportData())
+
+        XCTAssertEqual(imported, source.settings)
+    }
 }
