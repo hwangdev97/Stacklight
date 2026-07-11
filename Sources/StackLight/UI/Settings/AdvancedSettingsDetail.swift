@@ -49,7 +49,7 @@ struct AdvancedSettingsDetail: View {
                 Toggle(isOn: $diagnosticsEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Enable Diagnostics")
-                        Text("Logs every HTTP request to the unified log. Visible in Console.app under subsystem app.yellowplus.StackLight.")
+                        Text("Logs every HTTP request. Visible in the Logs pane here, and in Console.app under subsystem app.yellowplus.StackLight. Errors and warnings are recorded in the Logs pane even when this is off.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -80,6 +80,9 @@ struct AdvancedSettingsDetail: View {
                     }
                 }
                 .disabled(!diagnosticsEnabled)
+                .onChange(of: verbosityRaw) { value in
+                    Task { await DiagnosticsLogger.shared.setVerbosity(value) }
+                }
             }
 
             Section("Logs") {

@@ -50,6 +50,10 @@ public enum DeploymentFetcher {
             for await (providerID, result) in group {
                 if providerID == "__deadline__" {
                     group.cancelAll()
+                    await DiagnosticsLogger.shared.warning(
+                        "Fetch deadline (\(Int(deadline))s) reached — slower providers dropped this pass",
+                        category: "polling"
+                    )
                     break
                 }
                 switch result {
@@ -65,9 +69,17 @@ public enum DeploymentFetcher {
                             .map { "\($0.item): \($0.error.localizedDescription)" }
                             .joined(separator: "; ")
                         errs.append((providerID, ItemErrorSummary(message: summary)))
+                        await DiagnosticsLogger.shared.warning(
+                            "\(fetchResult.itemErrors.count) item(s) failed — \(summary)",
+                            category: providerID
+                        )
                     }
                 case .failure(let error):
                     errs.append((providerID, error))
+                    await DiagnosticsLogger.shared.error(
+                        "Fetch failed: \(error.localizedDescription)",
+                        category: providerID
+                    )
                 }
             }
             return BatchResult(successes: successes, errors: errs)

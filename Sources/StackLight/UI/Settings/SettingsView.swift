@@ -8,6 +8,7 @@ enum SettingsItem: Hashable {
     case general
     case projects
     case advanced
+    case logs
     case feedback
 }
 
@@ -15,7 +16,8 @@ enum SettingsItem: Hashable {
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selection: SettingsItem = .general  
+    @ObservedObject private var logStore = LogStore.shared
+    @State private var selection: SettingsItem = .general
 
     var body: some View {
         NavigationSplitView {
@@ -37,6 +39,8 @@ struct SettingsView: View {
                 Section {
                     sidebarRow(title: "Advanced", systemImage: "wrench.and.screwdriver", color: .gray, size: 22)
                         .tag(SettingsItem.advanced)
+                    sidebarRow(title: "Logs", systemImage: "terminal", color: .gray, size: 22, badgeCount: logStore.errorCount)
+                        .tag(SettingsItem.logs)
                     sidebarRow(title: "Send Feedback", systemImage: "bubble.left.and.bubble.right", color: .gray, size: 22, iconSize: 8)
                         .tag(SettingsItem.feedback)
                 }
@@ -48,7 +52,7 @@ struct SettingsView: View {
             switch selection {
             case .provider(let id):
                 if let provider = ServiceRegistry.shared.provider(withID: id) {
-                    ProviderSettingsDetail(provider: provider)
+                    ProviderSettingsDetail(provider: provider, onOpenLogs: { selection = .logs })
                         .id(id)
                 }
             case .general:
@@ -57,6 +61,8 @@ struct SettingsView: View {
                 ProjectsSettingsDetail()
             case .advanced:
                 AdvancedSettingsDetail()
+            case .logs:
+                LogsSettingsDetail()
             case .feedback:
                 FeedbackView(onOpenGitHubSettings: {
                     selection = .provider("githubPRs")
@@ -83,7 +89,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private func sidebarRow(title: String, systemImage: String, color: Color, size: CGFloat = 24, iconSize: CGFloat? = nil, cornerRadius: CGFloat? = nil) -> some View {
+    private func sidebarRow(title: String, systemImage: String, color: Color, size: CGFloat = 24, iconSize: CGFloat? = nil, cornerRadius: CGFloat? = nil, badgeCount: Int = 0) -> some View {
         let radius = cornerRadius ?? size * 0.5
         let innerSize = iconSize ?? size * 0.5
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
@@ -105,6 +111,15 @@ struct SettingsView: View {
                 .clipShape(shape)
             Text(title)
             Spacer()
+            if badgeCount > 0 {
+                Text("\(badgeCount)")
+                    .font(.caption2.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(.red))
+            }
         }
     }
 }

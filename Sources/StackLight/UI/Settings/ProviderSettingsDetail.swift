@@ -5,6 +5,9 @@ import StackLightCore
 
 struct ProviderSettingsDetail: View {
     let provider: DeploymentProvider
+    /// Navigates the Settings window to the Logs pane. Injected by
+    /// `SettingsView`; nil in previews.
+    var onOpenLogs: (() -> Void)? = nil
     @State private var fieldValues: [String: String] = [:]
     @State private var saved = false
     @State private var testing = false
@@ -45,13 +48,19 @@ struct ProviderSettingsDetail: View {
 
             if let error = appState.errors[provider.id] {
                 Section {
-                    HStack(spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.yellow)
                         Text(error)
                             .font(.caption)
-                            .lineLimit(3)
+                            .lineLimit(4)
+                            .textSelection(.enabled)
                         Spacer()
+                        if let onOpenLogs {
+                            Button("View Logs", action: onOpenLogs)
+                                .buttonStyle(.link)
+                                .font(.caption)
+                        }
                     }
                 }
             }
@@ -76,6 +85,33 @@ struct ProviderSettingsDetail: View {
             ForEach(provider.settingsFields().filter { $0.isMultiValue }, id: \.id) { field in
                 Section {
                     MultiValueFieldView(field: field, rawValue: binding(for: field), itemErrors: itemErrors)
+                }
+            }
+
+            // Full-width, selectable rendering of the last Test failure. The
+            // compact label next to the Test button gets squeezed to nothing
+            // when the window is narrow, so the actual message lives here.
+            if case .failure(let message)? = testResult {
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.red)
+                            Text("Test failed")
+                                .font(.caption.weight(.semibold))
+                            Spacer()
+                            if let onOpenLogs {
+                                Button("View Logs", action: onOpenLogs)
+                                    .buttonStyle(.link)
+                                    .font(.caption)
+                            }
+                        }
+                        Text(message)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
 
@@ -114,7 +150,7 @@ struct ProviderSettingsDetail: View {
                                             .joined(separator: "\n"))
                                 }
                             case .failure(let msg):
-                                Label(String(msg.prefix(40)), systemImage: "xmark.circle.fill")
+                                Label("Failed", systemImage: "xmark.circle.fill")
                                     .foregroundStyle(.red)
                                     .help(msg)
                             }
@@ -207,12 +243,29 @@ struct ProviderSettingsDetail: View {
                 }
                 itemErrors = errDict
                 testResult = .success(count: result.deployments.count, failedItems: result.itemErrors.count)
+                if !result.itemErrors.isEmpty {
+                    let summary = result.itemErrors
+                        .map { "\($0.item): \($0.error.localizedDescription)" }
+                        .joined(separator: "; ")
+                    await DiagnosticsLogger.shared.warning(
+                        "Test: \(result.itemErrors.count) item(s) failed — \(summary)",
+                        category: provider.id
+                    )
+                }
             } catch {
                 testResult = .failure(error.localizedDescription)
+                await DiagnosticsLogger.shared.error(
+                    "Test failed: \(error.localizedDescription)",
+                    category: provider.id
+                )
             }
             testing = false
             try? await Task.sleep(nanoseconds: 5_000_000_000)
-            testResult = nil
+            // Success auto-clears after 5s; failures stay up until the next
+            // Test so the message can't vanish before it's been read.
+            if case .success? = testResult {
+                testResult = nil
+            }
             // Keep itemErrors visible on the chip rows until the user edits
             // the list or re-runs Test. Clearing them here would make the
             // badges vanish after 5s which is worse UX.
