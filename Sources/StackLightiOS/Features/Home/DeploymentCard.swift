@@ -15,8 +15,7 @@ import StackLightCore
 ///   │  slabox-app-landing · 13m ago            │ ← repo · time (caption)
 ///   └──────────────────────────────────────────┘
 ///
-///  Behind everything: `GlowBackground(theme: providerTheme)` — the animated
-///  Metal shader frosted by Liquid Glass.
+///  Behind everything: a static provider-coloured `GlowBackground`.
 struct DeploymentCard: View {
     let deployment: Deployment
     var onOpenURL: (URL) -> Void
@@ -52,14 +51,13 @@ struct DeploymentCard: View {
 
     private var cardBody: some View {
         ZStack(alignment: .topLeading) {
-            // Backdrop: shader + glass.
+            // Static provider-coloured backdrop.
             GlowBackground(
                 theme: theme,
                 shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.lg,
                                         style: .continuous),
                 statusAccent: ProviderTheme.statusTint(for: deployment.status),
-                intensity: shaderIntensity,
-                animated: true
+                intensity: backgroundIntensity
             )
             // Content chrome.
             VStack(alignment: .leading, spacing: 0) {
@@ -168,7 +166,7 @@ struct DeploymentCard: View {
 
     // MARK: Misc
 
-    private var shaderIntensity: CGFloat {
+    private var backgroundIntensity: CGFloat {
         switch deployment.status {
         case .building: return 1.1
         case .failed:   return 1.0
