@@ -43,9 +43,11 @@ final class AppState: ObservableObject {
         let store = SettingsStore.shared
         let diag = store.diagnosticsEnabled
         let fileLog = store.fileLoggingEnabled
+        let verbosity = store.loggingVerbosity
         Task {
             await DiagnosticsLogger.shared.setEnabled(diag)
             await DiagnosticsLogger.shared.setFileLogging(fileLog)
+            await DiagnosticsLogger.shared.setVerbosity(verbosity)
         }
     }
 

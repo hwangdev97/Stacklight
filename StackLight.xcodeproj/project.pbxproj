@@ -126,6 +126,7 @@
 		F8E953AD4CC70063A876834A /* LastRefreshPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 765E8E7563A5ADBC9582FF95 /* LastRefreshPill.swift */; };
 		FB449F3C46489BEC2E757E1B /* VercelHeatmapTileBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740A659A659B097D09DC6621 /* VercelHeatmapTileBackground.swift */; };
 		FFF37F6F736B27D280F8711C /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E25C8CB44D5246E93BAB787 /* LiquidGlass.swift */; };
+		0C10D71355AA0000AA113355 /* LogsSettingsDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C10D71355AA0000AA113356 /* LogsSettingsDetail.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -304,6 +305,7 @@
 		FB620841FB0A27B8DA36AEB9 /* NetlifyNeuroNoiseBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetlifyNeuroNoiseBackground.swift; sourceTree = "<group>"; };
 		FBC40DFD08CE7B0C904B4CC3 /* XcodeCloudGodRaysBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XcodeCloudGodRaysBackground.swift; sourceTree = "<group>"; };
 		FC71BCBD17A44BF3C9D6E5B6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		0C10D71355AA0000AA113356 /* LogsSettingsDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogsSettingsDetail.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -589,6 +591,7 @@
 			children = (
 				74A204DE1FEE7A4423282F14 /* AdvancedSettingsDetail.swift */,
 				C6892DA71084B81A63449831 /* GeneralSettingsDetail.swift */,
+				0C10D71355AA0000AA113356 /* LogsSettingsDetail.swift */,
 				0D24AEB07ADD89153542EED1 /* MultiValueFieldView.swift */,
 				582C78F6C6BEA1C362B01658 /* ProjectsSettingsDetail.swift */,
 				6656F47316B2C4C6EFAB7B6E /* ProviderIconView.swift */,
@@ -1021,6 +1024,7 @@
 				433773B123D88F11C65560B6 /* FeedbackView.swift in Sources */,
 				1A75D982312C42D4C5F6C606 /* FeedbackWindow.swift in Sources */,
 				C11CCDD1E86DBE7C07C85283 /* GeneralSettingsDetail.swift in Sources */,
+				0C10D71355AA0000AA113355 /* LogsSettingsDetail.swift in Sources */,
 				409EA7DFB98120ACB260FEBB /* MenuBuilder.swift in Sources */,
 				F7E65794CDA4C1CF7863CB40 /* MonthCalendarView.swift in Sources */,
 				3F738BF956441130D9A42316 /* MultiValueFieldView.swift in Sources */,

@@ -73,13 +73,22 @@ public actor RequestRunner {
 
         if status == 304, useETag, let cached = await etagCache.cached(for: url) {
             cacheHitCount += 1
-            await DiagnosticsLogger.shared.message(
-                "ETAG-HIT \(url.host ?? "?")\(url.path) (saved \(data.count) bytes)"
+            await DiagnosticsLogger.shared.debug(
+                "ETAG-HIT \(url.host ?? "?")\(url.path) (saved \(data.count) bytes)",
+                category: "http"
             )
             return (cached.data, response)
         }
 
         if !allowedStatuses.contains(status) {
+            // Record the failure with a body snippet before mapping it into a
+            // ProviderError — the error the UI eventually shows is often just
+            // "HTTP 400", so this line is where the actual server complaint
+            // (e.g. Vercel's `{ error: { message } }`) stays inspectable.
+            await DiagnosticsLogger.shared.error(
+                "HTTP GET \(url.host ?? "?")\(url.path) status=\(status)\(Self.bodySnippet(data))",
+                category: "http"
+            )
             throw mapStatus(status, response: response, body: data)
         }
 
@@ -99,8 +108,9 @@ public actor RequestRunner {
         requestCount += 1
 
         if let cooldownUntil = await backoff.cooldown(for: url) {
-            await DiagnosticsLogger.shared.message(
-                "BACKOFF \(request.httpMethod ?? "GET") \(url.path) until=\(cooldownUntil)"
+            await DiagnosticsLogger.shared.debug(
+                "BACKOFF \(request.httpMethod ?? "GET") \(url.path) until=\(cooldownUntil)",
+                category: "http"
             )
             throw ProviderError.serviceUnavailable(
                 retryAfter: cooldownUntil,
@@ -112,8 +122,9 @@ public actor RequestRunner {
         do {
             (data, urlResponse) = try await Self.session.data(for: request)
         } catch {
-            await DiagnosticsLogger.shared.message(
-                "HTTP \(request.httpMethod ?? "GET") \(url.path) network-error=\(error.localizedDescription)"
+            await DiagnosticsLogger.shared.error(
+                "HTTP \(request.httpMethod ?? "GET") \(url.host ?? "?")\(url.path) network-error=\(error.localizedDescription)",
+                category: "http"
             )
             throw error
         }
@@ -124,7 +135,8 @@ public actor RequestRunner {
         let status = response.statusCode
         let durationMs = Int((Date().timeIntervalSince(startedAt) * 1000).rounded())
         await DiagnosticsLogger.shared.message(
-            "HTTP \(request.httpMethod ?? "GET") \(url.host ?? "?")\(url.path) status=\(status) dur=\(durationMs)ms bytes=\(data.count)"
+            "HTTP \(request.httpMethod ?? "GET") \(url.host ?? "?")\(url.path) status=\(status) dur=\(durationMs)ms bytes=\(data.count)",
+            category: "http"
         )
 
         // Rate-limit handling — set per-URL cooldown so other endpoints under
@@ -136,17 +148,42 @@ public actor RequestRunner {
             if let host = url.host {
                 rateLimitedHostsUntil[host] = retry
             }
+            await DiagnosticsLogger.shared.warning(
+                "RATE-LIMIT \(url.host ?? "?")\(url.path) status=429 cooldown-until=\(retry)",
+                category: "http"
+            )
         } else if status == 503 {
             let retry = retryAfterDate(from: response) ?? Date().addingTimeInterval(30)
             await backoff.setCooldown(url: url, until: retry)
+            await DiagnosticsLogger.shared.warning(
+                "UNAVAILABLE \(url.host ?? "?")\(url.path) status=503 cooldown-until=\(retry)",
+                category: "http"
+            )
         } else if status == 403, response.value(forHTTPHeaderField: "X-RateLimit-Remaining") == "0" {
             // GitHub-style: 403 with quota exhausted is functionally a 429.
             let retry = rateLimitResetDate(from: response) ?? Date().addingTimeInterval(60)
             await backoff.setCooldown(url: url, until: retry)
             self.lastRateLimitReset = retry
+            await DiagnosticsLogger.shared.warning(
+                "RATE-LIMIT \(url.host ?? "?")\(url.path) status=403 quota-exhausted cooldown-until=\(retry)",
+                category: "http"
+            )
         }
 
         return (data, response)
+    }
+
+    /// Compact single-line preview of an error response body for log lines.
+    /// Collapses whitespace and caps length so a huge HTML error page doesn't
+    /// flood the buffer.
+    private static func bodySnippet(_ body: Data, limit: Int = 300) -> String {
+        guard !body.isEmpty else { return "" }
+        let text = String(decoding: body.prefix(2048), as: UTF8.self)
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        guard !text.isEmpty else { return "" }
+        return " body=\(text.prefix(limit))\(text.count > limit ? "…" : "")"
     }
 
     // MARK: - Diagnostics
