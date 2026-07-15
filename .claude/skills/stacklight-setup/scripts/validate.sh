@@ -150,9 +150,20 @@ case "$provider" in
       echo "asc.privateKey looks too short — paste the full .p8 file contents" >&2; exit 1;
     }
     if [[ "$provider" == "testFlight" ]]; then
-      appId=$(get "testflight.appId")
-      [[ -z "$appId" ]] && { echo "missing testflight.appId" >&2; exit 1; }
-      [[ ! "$appId" =~ ^[0-9]+$ ]] && { echo "testflight.appId must be numeric" >&2; exit 1; }
+      # Plural key (array or comma-separated string) is authoritative; old
+      # configs may still carry the legacy singular key, used only as fallback.
+      appIds=$(jq -r '."testflight.appIds" // "" | if type=="array" then map(tostring) | join(",") else tostring end' "$config")
+      [[ -z "$appIds" ]] && appIds=$(get "testflight.appId")
+      [[ -z "$appIds" ]] && { echo "missing testflight.appIds" >&2; exit 1; }
+      count=0
+      IFS=',' read -ra list <<<"$appIds"
+      for id in "${list[@]}"; do
+        id="$(echo "$id" | xargs)"  # trim
+        [[ -z "$id" ]] && continue
+        [[ ! "$id" =~ ^[0-9]+$ ]] && { echo "TestFlight app ID must be numeric: $id" >&2; exit 1; }
+        count=$((count + 1))
+      done
+      [[ $count -eq 0 ]] && { echo "testflight.appIds contains no app IDs" >&2; exit 1; }
     fi
     echo "shape check passed (live JWT test requires the StackLight app itself)" >&2
     ;;
