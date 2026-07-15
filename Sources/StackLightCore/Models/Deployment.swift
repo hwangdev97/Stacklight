@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Deployment: Identifiable, Equatable, Hashable {
+public struct Deployment: Identifiable, Equatable, Hashable, Sendable {
     public let id: String
     public let providerID: String
     public let projectName: String
@@ -36,7 +36,7 @@ public struct Deployment: Identifiable, Equatable, Hashable {
         self.branch = branch
     }
 
-    public enum Status: String, Equatable, Hashable {
+    public enum Status: String, Equatable, Hashable, Sendable {
         case building
         case success
         case failed

@@ -410,18 +410,7 @@ struct ProviderSettingsDetail: View {
             return
         }
 
-        copyToPasteboard(prompt)
-
-        do {
-            let scriptURL = try writeAICommandScript(for: cli, prompt: prompt)
-            if NSWorkspace.shared.open(scriptURL) {
-                setAIHandoffStatus("Copied prompt and opened \(cli.displayName)")
-            } else {
-                setAIHandoffStatus("Copied prompt; could not open \(cli.displayName)")
-            }
-        } catch {
-            setAIHandoffStatus("Copied prompt; \(error.localizedDescription)")
-        }
+        setAIHandoffStatus(AgentHandoff.launchInTerminal(cli, prompt: prompt))
     }
 
     private func makeAIHandoffPrompt() -> String? {
@@ -469,8 +458,7 @@ struct ProviderSettingsDetail: View {
     }
 
     private func copyToPasteboard(_ prompt: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(prompt, forType: .string)
+        AgentHandoff.copyToPasteboard(prompt)
     }
 
     private func setAIHandoffStatus(_ message: String) {
@@ -482,36 +470,8 @@ struct ProviderSettingsDetail: View {
         }
     }
 
-    private func writeAICommandScript(for cli: AIErrorHandoffCLI, prompt: String) throws -> URL {
-        let filename = "StackLight-\(cli.executableName)-\(UUID().uuidString).command"
-        let scriptURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        let quotedPrompt = AIErrorHandoff.shellQuoted(prompt)
-        let quotedExecutable = AIErrorHandoff.shellQuoted(cli.executableName)
-        let script = """
-        #!/bin/zsh
-        export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-
-        if ! command -v \(quotedExecutable) >/dev/null 2>&1; then
-          echo "\(cli.displayName) CLI not found."
-          echo "The StackLight error prompt has been copied to the clipboard."
-          echo "Install \(cli.displayName) CLI or paste the prompt into your AI assistant."
-          echo
-          read -r "?Press Return to close."
-          exit 127
-        fi
-
-        \(cli.executableName) \(quotedPrompt)
-        status=$?
-        echo
-        echo "\(cli.displayName) exited with status $status."
-        read -r "?Press Return to close."
-        exit $status
-        """
-
-        try script.write(to: scriptURL, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
-        return scriptURL
-    }
+    // Script generation and Terminal launch live in `AgentHandoff`, shared
+    // with the menu bar error hover card.
 }
 
 // MARK: - Branch Picker

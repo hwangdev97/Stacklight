@@ -76,7 +76,116 @@ public struct AIErrorHandoffContext: Sendable, Equatable {
     }
 }
 
+/// Everything the deployment-failure prompt needs, bundled so the builder is
+/// a pure function (and therefore trivially testable). Distinct from
+/// `AIErrorHandoffContext`, which describes provider *configuration* errors —
+/// this one describes a single failed build/deploy.
+public struct DeploymentErrorHandoffContext: Sendable {
+    public let deployment: Deployment
+    public let providerName: String
+    public let details: DeploymentFailureDetails?
+    public let generatedAt: Date
+    public let appVersion: String?
+
+    public init(
+        deployment: Deployment,
+        providerName: String,
+        details: DeploymentFailureDetails? = nil,
+        generatedAt: Date = Date(),
+        appVersion: String? = nil
+    ) {
+        self.deployment = deployment
+        self.providerName = providerName
+        self.details = details
+        self.generatedAt = generatedAt
+        self.appVersion = appVersion
+    }
+}
+
 public enum AIErrorHandoff {
+    /// Prompt for handing a failed deployment to a coding agent (Claude Code,
+    /// Codex, …). Unlike `prompt(for:)` this never returns nil — even with no
+    /// fetched details the deployment metadata alone is a useful handoff.
+    public static func deploymentPrompt(for context: DeploymentErrorHandoffContext) -> String {
+        let deployment = context.deployment
+        var lines: [String] = []
+
+        lines.append("You are an AI coding agent. A deployment/CI build failed; help diagnose and fix it.")
+        lines.append("")
+        lines.append("Deployment:")
+        lines.append("- Provider: \(context.providerName) (\(deployment.providerID))")
+        lines.append("- Project: \(deployment.projectName)")
+        if let repository = deployment.repository, !repository.isEmpty {
+            lines.append("- Repository: \(repository)")
+        }
+        if let branch = deployment.branch, !branch.isEmpty {
+            lines.append("- Branch: \(branch)")
+        }
+        if let commit = deployment.commitMessage?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !commit.isEmpty {
+            // Keep the prompt single-line-per-fact; a multi-line commit body
+            // would visually bleed into the next bullet.
+            let firstLine = commit.split(separator: "\n", omittingEmptySubsequences: true)
+                .first.map(String.init) ?? commit
+            lines.append("- Commit: \(firstLine)")
+        }
+        lines.append("- Status: \(deployment.status.displayName)")
+        lines.append("- Started: \(SharedFormatters.iso8601Internet.string(from: deployment.createdAt))")
+        if let url = deployment.url {
+            lines.append("- Build page: \(url.absoluteString)")
+        }
+        if let logsURL = context.details?.logsURL {
+            lines.append("- Full logs: \(logsURL.absoluteString)")
+        }
+        if let appVersion = context.appVersion {
+            lines.append("- Reported by: StackLight \(appVersion) at \(SharedFormatters.iso8601Internet.string(from: context.generatedAt))")
+        }
+        lines.append("")
+
+        if let summary = context.details?.summary {
+            lines.append("Failure summary:")
+            lines.append(summary)
+            lines.append("")
+        }
+
+        if let issues = context.details?.issues, !issues.isEmpty {
+            lines.append("Reported issues:")
+            for issue in issues {
+                var line = "- [\(issue.severity.rawValue)] \(issue.message)"
+                if let source = issue.source, !source.isEmpty {
+                    line += " (\(source))"
+                }
+                lines.append(line)
+            }
+            lines.append("")
+        }
+
+        if let excerpt = context.details?.logExcerpt {
+            let marker = context.details?.logExcerptTruncated == true
+                ? " (tail — earlier lines truncated)"
+                : ""
+            lines.append("Build log excerpt\(marker):")
+            lines.append("```")
+            lines.append(excerpt)
+            lines.append("```")
+            lines.append("")
+        }
+
+        if context.details == nil || context.details?.isEmpty == true {
+            lines.append("No detailed error output was available from the provider's API — reason it out from the metadata above, and open the build page for the full log if needed.")
+            lines.append("")
+        }
+
+        lines.append("Please:")
+        lines.append("1. Identify the most likely root cause from the output above.")
+        lines.append("2. If it's a code problem, point to the file/config to change and propose the minimal fix.")
+        lines.append("3. If it's infrastructure-side (quota, credentials, provider outage, flaky step), say so and give the exact remediation or retry steps instead.")
+        lines.append("")
+        lines.append("Notes: the log excerpt may be truncated to the final lines; do not ask for API tokens or other secrets.")
+
+        return lines.joined(separator: "\n")
+    }
+
     public static func prompt(for context: AIErrorHandoffContext) -> String? {
         guard context.providerError != nil || context.testFailure != nil || !context.itemErrors.isEmpty else {
             return nil

@@ -80,6 +80,125 @@ public final class GitLabCIProvider: DeploymentProvider {
     }
 }
 
+// MARK: - Failure details
+
+extension GitLabCIProvider: FailureDetailsProviding {
+    /// Failed jobs for the pipeline (name, stage, `failure_reason`), plus the
+    /// trace tail of the first failed job:
+    ///   1. `GET /projects/{path}/pipelines/{id}/jobs`
+    ///   2. `GET /projects/{path}/jobs/{jobID}/trace` (plain text)
+    public func fetchFailureDetails(for deployment: Deployment) async throws -> DeploymentFailureDetails {
+        guard let token = KeychainManager.read(key: "gitlab.token") else {
+            throw ProviderError.unauthorized(message: "GitLab token missing")
+        }
+        guard let (project, pipelineID) = Self.pipelineCoordinates(for: deployment) else {
+            return DeploymentFailureDetails()
+        }
+
+        let host = GitLabHost.resolved()
+        let encoded = GitLabHost.encodeProject(project)
+        guard let jobsURL = URL(string: "https://\(host)/api/v4/projects/\(encoded)/pipelines/\(pipelineID)/jobs?per_page=100") else {
+            return DeploymentFailureDetails()
+        }
+
+        let (data, _) = try await RequestRunner.shared.get(
+            url: jobsURL,
+            token: token,
+            headers: ["Accept": "application/json"]
+        )
+        let jobs = try SharedJSON.decoder.decode([GLJob].self, from: data)
+
+        // Trace is best-effort — it can be erased/expired (404) without that
+        // invalidating the structured job info.
+        var trace: String?
+        if let firstFailed = jobs.first(where: { $0.isHardFailure }),
+           let traceURL = URL(string: "https://\(host)/api/v4/projects/\(encoded)/jobs/\(firstFailed.id)/trace"),
+           let (traceData, _) = try? await RequestRunner.shared.get(url: traceURL, token: token) {
+            trace = String(decoding: traceData, as: UTF8.self)
+        }
+
+        return Self.failureDetails(jobs: jobs, trace: trace)
+    }
+
+    /// Rows are minted as `gl-pipeline-{projectPath}-{pipelineID}`; the
+    /// project path itself may contain dashes and slashes, so split at the
+    /// *last* dash.
+    static func pipelineCoordinates(for deployment: Deployment) -> (project: String, pipelineID: String)? {
+        let prefix = "gl-pipeline-"
+        guard deployment.id.hasPrefix(prefix) else { return nil }
+        let rest = deployment.id.dropFirst(prefix.count)
+        guard let lastDash = rest.lastIndex(of: "-"), lastDash != rest.startIndex else { return nil }
+        let project = String(rest[..<lastDash])
+        let pipelineID = String(rest[rest.index(after: lastDash)...])
+        guard !project.isEmpty, !pipelineID.isEmpty, pipelineID.allSatisfy(\.isNumber) else { return nil }
+        return (project, pipelineID)
+    }
+
+    static func failureDetails(jobs: [GLJob], trace: String?) -> DeploymentFailureDetails {
+        let failed = jobs.filter { $0.isHardFailure }
+        guard !failed.isEmpty else { return DeploymentFailureDetails() }
+
+        let summary: String
+        if failed.count == 1, let job = failed.first {
+            summary = "Job “\(job.name ?? "unknown")” failed"
+                + (job.humanFailureReason.map { " (\($0))" } ?? "")
+        } else {
+            summary = "\(failed.count) jobs failed"
+        }
+
+        let issues = failed.prefix(6).map { job in
+            DeploymentFailureDetails.Issue(
+                severity: .error,
+                message: "Job “\(job.name ?? "unknown")” failed"
+                    + (job.humanFailureReason.map { ": \($0)" } ?? ""),
+                source: job.stage.map { "stage: \($0)" }
+            )
+        }
+
+        var excerpt: String?
+        var truncated = false
+        if let trace, !trace.isEmpty {
+            // Drop GitLab's collapsible-section markers; they survive ANSI
+            // stripping as bare "section_start:<ts>:<name>" tokens.
+            let filtered = trace
+                .split(separator: "\n", omittingEmptySubsequences: false)
+                .filter { !$0.contains("section_start:") && !$0.contains("section_end:") }
+                .joined(separator: "\n")
+            let result = DeploymentFailureDetails.tailExcerpt(filtered)
+            excerpt = result.text
+            truncated = result.truncated
+        }
+
+        return DeploymentFailureDetails(
+            summary: summary,
+            issues: Array(issues),
+            logExcerpt: excerpt,
+            logExcerptTruncated: truncated,
+            logsURL: failed.first?.web_url.flatMap { URL(string: $0) }
+        )
+    }
+}
+
+struct GLJob: Decodable {
+    let id: Int
+    let name: String?
+    let stage: String?
+    let status: String?
+    let failure_reason: String?
+    let allow_failure: Bool?
+    let web_url: String?
+
+    /// Failed and not marked `allow_failure` — soft-failing lint jobs never
+    /// took the pipeline down, so they don't belong in the headline.
+    var isHardFailure: Bool {
+        status == "failed" && allow_failure != true
+    }
+
+    var humanFailureReason: String? {
+        failure_reason?.replacingOccurrences(of: "_", with: " ")
+    }
+}
+
 // MARK: - Shared helpers
 
 enum GitLabHost {

@@ -142,6 +142,99 @@ public final class VercelProvider: DeploymentProvider {
     }
 }
 
+// MARK: - Failure details
+
+extension VercelProvider: FailureDetailsProviding {
+    /// Pulls the build log via `GET /v3/deployments/{id}/events`. We fetch
+    /// backward (newest first) so a huge log costs one bounded request, then
+    /// restore chronological order for display.
+    public func fetchFailureDetails(for deployment: Deployment) async throws -> DeploymentFailureDetails {
+        guard let token = KeychainManager.read(key: "vercel.token") else {
+            throw ProviderError.unauthorized(message: "Vercel token missing")
+        }
+
+        var components = URLComponents(string: "https://api.vercel.com/v3/deployments/\(deployment.id)/events")!
+        components.queryItems = [
+            URLQueryItem(name: "direction", value: "backward"),
+            URLQueryItem(name: "limit", value: "200")
+        ]
+        if let teamId = AppConfig.string(forKey: "vercel.teamId"), !teamId.isEmpty {
+            components.queryItems?.append(URLQueryItem(name: "teamId", value: teamId))
+        }
+
+        var request = URLRequest(url: components.url!)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, http) = try await RequestRunner.shared.execute(request: request)
+
+        if http.statusCode != 200 {
+            if let err = try? SharedJSON.decoder.decode(VercelErrorResponse.self, from: data) {
+                throw ProviderError.http(code: http.statusCode, message: err.error.message, body: data)
+            }
+            throw ProviderError.http(
+                code: http.statusCode,
+                message: HTTPURLResponse.localizedString(forStatusCode: http.statusCode),
+                body: data
+            )
+        }
+
+        let events = (try? SharedJSON.decoder.decode([VercelBuildEvent].self, from: data)) ?? []
+        return Self.failureDetails(fromBackwardEvents: events)
+    }
+
+    /// Pure mapping from decoded (newest-first) events to details; separated
+    /// out for unit testing.
+    static func failureDetails(fromBackwardEvents events: [VercelBuildEvent]) -> DeploymentFailureDetails {
+        let logTypes: Set<String> = ["command", "stdout", "stderr", "exit", "fatal"]
+        let chronological = events
+            .filter { logTypes.contains($0.type ?? "") }
+            .reversed()
+
+        var lines: [String] = []
+        for event in chronological {
+            guard let text = event.logText, !text.isEmpty else { continue }
+            let prefix = (event.type == "command") ? "$ " : ""
+            for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
+                lines.append(prefix + String(line))
+            }
+        }
+
+        guard !lines.isEmpty else {
+            return DeploymentFailureDetails(summary: nil)
+        }
+
+        let (excerpt, truncated) = DeploymentFailureDetails.tailExcerpt(lines.joined(separator: "\n"))
+        // Best-effort headline: the last line that self-identifies as an error.
+        let summary = lines.reversed().first { line in
+            let lowered = line.lowercased()
+            return lowered.contains("error") || lowered.contains("failed") || lowered.contains("fatal")
+        }.map { String($0.prefix(200)) }
+
+        return DeploymentFailureDetails(
+            summary: summary,
+            logExcerpt: excerpt,
+            logExcerptTruncated: truncated
+        )
+    }
+}
+
+/// Single build-log event from `/v3/deployments/{id}/events`. Vercel has
+/// shipped the text both at the top level and inside `payload` over time, so
+/// both are modeled and `logText` picks whichever is present.
+struct VercelBuildEvent: Decodable {
+    let type: String?
+    let created: Double?
+    let text: String?
+    let payload: Payload?
+
+    struct Payload: Decodable {
+        let text: String?
+    }
+
+    var logText: String? {
+        payload?.text ?? text
+    }
+}
+
 // MARK: - API Response Models
 
 private struct VercelErrorResponse: Decodable {
