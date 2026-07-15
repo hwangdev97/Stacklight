@@ -103,6 +103,111 @@ public final class XcodeCloudProvider: DeploymentProvider {
         return APIProvider(configuration: config)
     }
 
+    // MARK: - Failure details
+
+    /// Walks the run's actions and collects the `ciIssues` App Store Connect
+    /// recorded for each failed one — compile errors, test failures, and the
+    /// analyzer/warning noise around them:
+    ///   1. `GET /v1/ciBuildRuns/{id}/actions`
+    ///   2. per failed action, `GET /v1/ciBuildActions/{id}/issues`
+    /// The row's `id` is the native `ciBuildRuns` resource ID, so no
+    /// reverse-mapping is needed.
+    public func fetchFailureDetails(for deployment: Deployment) async throws -> DeploymentFailureDetails {
+        let provider = try makeProvider()
+
+        let actionsRequest = APIEndpoint.v1.ciBuildRuns.id(deployment.id).actions.get()
+        let actionsResponse = try await provider.request(actionsRequest)
+
+        let failedActions = actionsResponse.data.filter { action in
+            switch action.attributes?.completionStatus {
+            case .failed, .errored: return true
+            default: return false
+            }
+        }
+
+        var issues: [DeploymentFailureDetails.Issue] = []
+        var errorCount = 0
+        var testFailureCount = 0
+        for action in failedActions.prefix(3) {
+            let actionName = action.attributes?.name
+            // Issues are best-effort per action; one 4xx shouldn't hide the rest.
+            let issuesRequest = APIEndpoint.v1.ciBuildActions.id(action.id).issues.get(limit: 25)
+            guard let issuesResponse = try? await provider.request(issuesRequest) else { continue }
+
+            for ciIssue in issuesResponse.data {
+                guard let attributes = ciIssue.attributes else { continue }
+                let severity = Self.issueSeverity(for: attributes.issueType?.rawValue)
+                // Warnings drown out the signal on big projects; keep errors
+                // and test failures, plus warnings only while nothing harder
+                // has been collected.
+                switch attributes.issueType {
+                case .error: errorCount += 1
+                case .testFailure: testFailureCount += 1
+                default:
+                    if !issues.isEmpty { continue }
+                }
+                let location: String? = {
+                    if let path = attributes.fileSource?.path {
+                        if let line = attributes.fileSource?.lineNumber {
+                            return "\(path):\(line)"
+                        }
+                        return path
+                    }
+                    return actionName
+                }()
+                issues.append(.init(
+                    severity: severity,
+                    message: String((attributes.message ?? "Unknown issue").prefix(500)),
+                    source: location
+                ))
+            }
+        }
+
+        let summary = Self.failureSummary(
+            failedActionNames: failedActions.compactMap { $0.attributes?.name },
+            errorCount: errorCount,
+            testFailureCount: testFailureCount
+        )
+        return DeploymentFailureDetails(
+            summary: summary,
+            issues: Array(issues.prefix(8)),
+            logsURL: deployment.url
+        )
+    }
+
+    static func issueSeverity(for issueType: String?) -> DeploymentFailureDetails.Issue.Severity {
+        switch issueType {
+        case "ERROR", "TEST_FAILURE": return .error
+        case "WARNING", "ANALYZER_WARNING": return .warning
+        default: return .note
+        }
+    }
+
+    static func failureSummary(
+        failedActionNames: [String],
+        errorCount: Int,
+        testFailureCount: Int
+    ) -> String? {
+        var counts: [String] = []
+        if errorCount > 0 {
+            counts.append(errorCount == 1 ? "1 error" : "\(errorCount) errors")
+        }
+        if testFailureCount > 0 {
+            counts.append(testFailureCount == 1 ? "1 test failure" : "\(testFailureCount) test failures")
+        }
+
+        switch (failedActionNames.isEmpty, counts.isEmpty) {
+        case (true, true):
+            return nil
+        case (false, true):
+            return "Action “\(failedActionNames[0])” failed"
+        case (true, false):
+            return "Build failed — " + counts.joined(separator: ", ")
+        case (false, false):
+            return "“\(failedActionNames[0])” failed — " + counts.joined(separator: ", ")
+        }
+    }
+
     private func mapStatus(
         progress: CiExecutionProgress?,
         completion: CiCompletionStatus?
@@ -125,3 +230,5 @@ public final class XcodeCloudProvider: DeploymentProvider {
         return .unknown
     }
 }
+
+extension XcodeCloudProvider: FailureDetailsProviding {}

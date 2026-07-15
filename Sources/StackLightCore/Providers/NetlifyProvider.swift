@@ -52,6 +52,46 @@ public final class NetlifyProvider: DeploymentProvider {
     }
 }
 
+// MARK: - Failure details
+
+extension NetlifyProvider: FailureDetailsProviding {
+    /// Netlify surfaces the failure reason directly on the deploy object
+    /// (`error_message`), so a single `GET /api/v1/deploys/{id}` suffices.
+    /// Full raw logs aren't exposed via the public REST API — the details
+    /// link points at the deploy page, which shows them.
+    public func fetchFailureDetails(for deployment: Deployment) async throws -> DeploymentFailureDetails {
+        guard let token = KeychainManager.read(key: "netlify.token") else {
+            throw ProviderError.unauthorized(message: "Netlify token missing")
+        }
+        // Rows are minted as "netlify-<deployID>".
+        let deployID = deployment.id.hasPrefix("netlify-")
+            ? String(deployment.id.dropFirst("netlify-".count))
+            : deployment.id
+        guard let url = URL(string: "https://api.netlify.com/api/v1/deploys/\(deployID)") else {
+            return DeploymentFailureDetails()
+        }
+
+        let (data, _) = try await RequestRunner.shared.get(url: url, token: token)
+        let detail = try SharedJSON.decoder.decode(NetlifyDeployDetail.self, from: data)
+        return Self.failureDetails(from: detail, deployID: deployID)
+    }
+
+    static func failureDetails(from detail: NetlifyDeployDetail, deployID: String) -> DeploymentFailureDetails {
+        let logsURL = detail.admin_url.flatMap { URL(string: "\($0)/deploys/\(deployID)") }
+        return DeploymentFailureDetails(
+            summary: detail.error_message,
+            logsURL: logsURL
+        )
+    }
+}
+
+struct NetlifyDeployDetail: Decodable {
+    let id: String?
+    let state: String?
+    let error_message: String?
+    let admin_url: String?
+}
+
 // MARK: - API Response Models
 
 private struct NetlifyDeploy: Decodable {

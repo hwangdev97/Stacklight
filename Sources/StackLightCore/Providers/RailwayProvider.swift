@@ -142,6 +142,110 @@ public final class RailwayProvider: DeploymentProvider {
     }
 }
 
+// MARK: - Failure details
+
+extension RailwayProvider: FailureDetailsProviding {
+    /// Railway's public GraphQL API exposes `buildLogs` and `deploymentLogs`
+    /// per deployment. Build failures live in `buildLogs`; a deploy that
+    /// built fine but CRASHED at runtime only has `deploymentLogs`, so we
+    /// fall back to those when the build log comes back empty.
+    public func fetchFailureDetails(for deployment: Deployment) async throws -> DeploymentFailureDetails {
+        guard let token = KeychainManager.read(key: "railway.token") else {
+            throw ProviderError.unauthorized(message: "Railway token missing")
+        }
+        let deploymentID = deployment.id.hasPrefix("railway-")
+            ? String(deployment.id.dropFirst("railway-".count))
+            : deployment.id
+
+        let buildLogs = try await Self.fetchLogs(field: "buildLogs", token: token, deploymentID: deploymentID)
+        var logs = buildLogs
+        if logs.isEmpty {
+            logs = (try? await Self.fetchLogs(field: "deploymentLogs", token: token, deploymentID: deploymentID)) ?? []
+        }
+        return Self.failureDetails(from: logs)
+    }
+
+    static func failureDetails(from logs: [RailwayLogEntry]) -> DeploymentFailureDetails {
+        guard !logs.isEmpty else { return DeploymentFailureDetails() }
+
+        let lines = logs.compactMap { $0.message }
+        let (excerpt, truncated) = DeploymentFailureDetails.tailExcerpt(lines.joined(separator: "\n"))
+
+        let errorEntry = logs.reversed().first { entry in
+            let severity = entry.severity?.lowercased() ?? ""
+            return severity.hasPrefix("err") || severity == "fatal"
+        }
+        let summary = (errorEntry?.message).map { String($0.prefix(200)) }
+
+        return DeploymentFailureDetails(
+            summary: summary,
+            logExcerpt: excerpt.isEmpty ? nil : excerpt,
+            logExcerptTruncated: truncated
+        )
+    }
+
+    private static func fetchLogs(
+        field: String,
+        token: String,
+        deploymentID: String
+    ) async throws -> [RailwayLogEntry] {
+        let query = """
+        query {
+          \(field)(deploymentId: "\(deploymentID)", limit: 200) {
+            timestamp
+            message
+            severity
+          }
+        }
+        """
+        let body: [String: Any] = ["query": query]
+        let jsonData = try JSONSerialization.data(withJSONObject: body)
+
+        var request = URLRequest(url: URL(string: "https://backboard.railway.com/graphql/v2")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        let (data, http) = try await RequestRunner.shared.execute(request: request)
+        guard http.statusCode == 200 else {
+            throw ProviderError.http(
+                code: http.statusCode,
+                message: HTTPURLResponse.localizedString(forStatusCode: http.statusCode),
+                body: data
+            )
+        }
+        let response = try SharedJSON.decoder.decode(RailwayLogsResponse.self, from: data)
+        if let logs = response.data?.buildLogs ?? response.data?.deploymentLogs {
+            return logs
+        }
+        if let message = response.errors?.first?.message {
+            throw ProviderError.http(code: 200, message: message, body: data)
+        }
+        return []
+    }
+}
+
+struct RailwayLogEntry: Decodable {
+    let timestamp: String?
+    let message: String?
+    let severity: String?
+}
+
+struct RailwayLogsResponse: Decodable {
+    let data: LogsData?
+    let errors: [GraphQLError]?
+
+    struct LogsData: Decodable {
+        let buildLogs: [RailwayLogEntry]?
+        let deploymentLogs: [RailwayLogEntry]?
+    }
+
+    struct GraphQLError: Decodable {
+        let message: String?
+    }
+}
+
 // MARK: - GraphQL Response Models
 
 private struct RailwayGraphQLResponse: Decodable {

@@ -79,6 +79,83 @@ public final class CloudflareProvider: DeploymentProvider {
     }
 }
 
+// MARK: - Failure details
+
+extension CloudflareProvider: FailureDetailsProviding {
+    /// Two cheap calls: the deployment detail (for the failing stage name)
+    /// and `…/history/logs` (for the build log tail). The Pages row carries
+    /// the CF project name in `projectName` and the native deployment ID in
+    /// `id`, so no reverse-mapping is needed.
+    public func fetchFailureDetails(for deployment: Deployment) async throws -> DeploymentFailureDetails {
+        guard let token = KeychainManager.read(key: "cloudflare.token"),
+              let accountId = AppConfig.string(forKey: "cloudflare.accountId") else {
+            throw ProviderError.unauthorized(message: "Cloudflare credentials missing")
+        }
+
+        let base = "https://api.cloudflare.com/client/v4/accounts/\(accountId)/pages/projects/\(deployment.projectName)/deployments/\(deployment.id)"
+
+        // Stage info is nice-to-have; the log tail is the substance. Fetch the
+        // detail best-effort and let a failure there degrade to log-only.
+        var failedStage: String?
+        if let detailURL = URL(string: base),
+           let (detailData, _) = try? await RequestRunner.shared.get(url: detailURL, token: token),
+           let detail = try? SharedJSON.decoder.decode(CFDeploymentDetailResponse.self, from: detailData) {
+            let stage = detail.result.latest_stage
+            if stage?.status?.lowercased() == "failure" {
+                failedStage = stage?.name
+            }
+        }
+
+        guard let logsURL = URL(string: "\(base)/history/logs") else {
+            return DeploymentFailureDetails()
+        }
+        let (data, _) = try await RequestRunner.shared.get(url: logsURL, token: token)
+        let logs = try SharedJSON.decoder.decode(CFDeploymentLogsResponse.self, from: data)
+
+        return Self.failureDetails(logLines: logs.result.data.map(\.line), failedStage: failedStage)
+    }
+
+    static func failureDetails(logLines: [String], failedStage: String?) -> DeploymentFailureDetails {
+        let joined = logLines.joined(separator: "\n")
+        let (excerpt, truncated) = DeploymentFailureDetails.tailExcerpt(joined)
+
+        // Pages emits explicit "Failed: …" lines on build errors — prefer the
+        // last one as the headline, else fall back to the stage name.
+        let failureLine = logLines.reversed().first {
+            $0.hasPrefix("Failed") || $0.lowercased().contains("error")
+        }
+        let summary = failureLine.map { String($0.prefix(200)) }
+            ?? failedStage.map { "Deployment failed during the “\($0)” stage" }
+
+        return DeploymentFailureDetails(
+            summary: summary,
+            logExcerpt: excerpt.isEmpty ? nil : excerpt,
+            logExcerptTruncated: truncated
+        )
+    }
+}
+
+struct CFDeploymentLogsResponse: Decodable {
+    let result: CFDeploymentLog
+
+    struct CFDeploymentLog: Decodable {
+        let data: [CFLogLine]
+    }
+
+    struct CFLogLine: Decodable {
+        let ts: String?
+        let line: String
+    }
+}
+
+private struct CFDeploymentDetailResponse: Decodable {
+    let result: CFDeploymentDetail
+
+    struct CFDeploymentDetail: Decodable {
+        let latest_stage: CFDeployment.CFStage?
+    }
+}
+
 // MARK: - API Response Models
 
 private struct CFProjectsResponse: Decodable {

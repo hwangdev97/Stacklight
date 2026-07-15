@@ -208,6 +208,9 @@ struct MenuBarContentView: View {
                 .padding(.bottom, 6)
         }
         .frame(width: 320)
+        // Belt-and-braces alongside the panel controller's willClose
+        // observer: whenever the menu content goes away, so does the card.
+        .onDisappear { ErrorHoverPanelController.shared.hideNow() }
     }
 
     /// Project keys ordered by most-recent deployment first. `deploymentsByProject`
@@ -471,6 +474,16 @@ struct MenuBarContentView: View {
             }
         }
         .help(deployment.commitMessage ?? "")
+        .background {
+            // Hover on a failed row summons the error-detail card. The anchor
+            // is hit-test transparent, so row clicks are unaffected.
+            if deployment.status == .failed {
+                ErrorHoverAnchor(
+                    deployment: deployment,
+                    providerName: providerDisplayName(for: deployment)
+                )
+            }
+        }
         .contextMenu {
             let current = settings.visibility(for: deployment.key)
             Button {
@@ -490,10 +503,56 @@ struct MenuBarContentView: View {
                     Label("Reset", systemImage: "arrow.uturn.backward")
                 }
             }
+            if deployment.status == .failed {
+                Divider()
+                // Same actions as the hover card, for users who reach for
+                // right-click first (and as the fallback affordance if the
+                // hover card is dismissed).
+                Button {
+                    copyDeploymentError(deployment, asAgentPrompt: true)
+                } label: {
+                    Label("Copy Error for AI Agent", systemImage: "sparkles")
+                }
+                Button {
+                    copyDeploymentError(deployment, asAgentPrompt: false)
+                } label: {
+                    Label("Copy Error Details", systemImage: "doc.on.doc")
+                }
+                ForEach(AIErrorHandoffCLI.allCases, id: \.rawValue) { cli in
+                    Button {
+                        debugDeploymentError(deployment, in: cli)
+                    } label: {
+                        Label("Debug in \(cli.displayName)…", systemImage: "terminal")
+                    }
+                }
+            }
             if let url = deployment.url {
                 Divider()
                 Button("Open in Browser") { openURL(url) }
             }
+        }
+    }
+
+    private func providerDisplayName(for deployment: Deployment) -> String {
+        providersByID[deployment.providerID]?.displayName ?? deployment.providerID
+    }
+
+    /// Copies the failure payload — fetching details on demand if the hover
+    /// card hasn't already. Fire-and-forget: the pasteboard write lands even
+    /// if the menu closes before the fetch finishes.
+    private func copyDeploymentError(_ deployment: Deployment, asAgentPrompt: Bool) {
+        Task { @MainActor in
+            let text = asAgentPrompt
+                ? await FailureDetailsStore.shared.agentPrompt(for: deployment)
+                : await FailureDetailsStore.shared.plainErrorText(for: deployment)
+            AgentHandoff.copyToPasteboard(text)
+        }
+    }
+
+    private func debugDeploymentError(_ deployment: Deployment, in cli: AIErrorHandoffCLI) {
+        Task { @MainActor in
+            let prompt = await FailureDetailsStore.shared.agentPrompt(for: deployment)
+            _ = AgentHandoff.launchInTerminal(cli, prompt: prompt)
         }
     }
 
