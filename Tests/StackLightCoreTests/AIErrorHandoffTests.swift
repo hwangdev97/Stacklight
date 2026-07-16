@@ -25,7 +25,8 @@ final class AIErrorHandoffTests: XCTestCase {
         XCTAssertTrue(prompt.contains("GitHub Actions"))
         XCTAssertTrue(prompt.contains("githubActions"))
         XCTAssertTrue(prompt.contains("Authorization failed - check token"))
-        XCTAssertTrue(prompt.contains("stacklight test 'githubActions' --json"))
+        XCTAssertTrue(prompt.contains("stacklightcli test 'githubActions' --json"))
+        XCTAssertTrue(prompt.contains("a passing CLI test does not prove the app's stored credentials are valid"))
     }
 
     func testIncludesTestFailureAndPartialItemErrors() throws {
@@ -88,7 +89,7 @@ final class AIErrorHandoffTests: XCTestCase {
             osVersion: "macOS test"
         )))
 
-        XCTAssertTrue(prompt.contains("stacklight test 'weird'\\''id' --json"))
+        XCTAssertTrue(prompt.contains("stacklightcli test 'weird'\\''id' --json"))
     }
 }
 
