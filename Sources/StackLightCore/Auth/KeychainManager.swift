@@ -66,16 +66,26 @@ public enum KeychainManager {
     public static func save(key: String, value: String) throws {
         let data = Data(value.utf8)
 
-        // Delete existing item first (query without value data)
+        // Delete existing item first (query without value data). Best-effort:
+        // in the legacy login keychain, an item created by a differently-signed
+        // binary can survive this delete (the ACL-scoped delete fails silently),
+        // so the add below can still collide with a leftover duplicate.
         SecItemDelete(baseQuery(key: key) as CFDictionary)
 
-        // Add new item. iOS/watchOS use the Data Protection Keychain; macOS
-        // uses the login keychain so unsigned/local builds don't require
-        // Keychain Sharing entitlements.
         var addQuery = baseQuery(key: key)
         addQuery[kSecValueData as String] = data
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        let status = SecItemAdd(addQuery as CFDictionary, nil)
+        var status = SecItemAdd(addQuery as CFDictionary, nil)
+
+        if status == errSecDuplicateItem {
+            // A leftover item survived the delete. Update it in place instead of
+            // failing — otherwise the stale value shadows every future save.
+            status = SecItemUpdate(
+                baseQuery(key: key) as CFDictionary,
+                [kSecValueData as String: data] as CFDictionary
+            )
+        }
+
         guard status == errSecSuccess else {
             throw KeychainError.saveFailed(status)
         }

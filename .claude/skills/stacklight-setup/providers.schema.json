@@ -109,7 +109,8 @@
       "fields": [
         { "key": "asc.issuerID",     "label": "Issuer ID",       "secret": true, "required": true, "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "hint": "Users and Access → Integrations → App Store Connect API → Issuer ID" },
         { "key": "asc.privateKeyID", "label": "Key ID",          "secret": true, "required": true, "placeholder": "e.g. ABC1234DEF",                         "hint": "Same page → Keys table → Key ID column" },
-        { "key": "asc.privateKey",   "label": "Private Key (.p8)","secret": true, "required": true, "placeholder": "-----BEGIN PRIVATE KEY-----...",          "hint": "Download the .p8 file when creating the key (one-time only), then paste its contents here" }
+        { "key": "asc.privateKey",   "label": "Private Key (.p8)","secret": true, "required": true, "placeholder": "-----BEGIN PRIVATE KEY-----...",          "hint": "Download the .p8 file when creating the key (one-time only), then paste its contents here" },
+        { "key": "asc.teamID",       "label": "Team ID",         "secret": false, "required": false, "placeholder": "Optional — e.g. 8d8c1bdc-...",            "hint": "Optional. Copy from any App Store Connect URL: appstoreconnect.apple.com/teams/<this part>/apps/...  Used to build deeplinks to specific build runs." }
       ],
       "credentialSharedWith": ["testFlight"]
     },

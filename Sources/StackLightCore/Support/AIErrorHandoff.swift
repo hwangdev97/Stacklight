@@ -242,8 +242,9 @@ public enum AIErrorHandoff {
 
         lines.append("Useful local diagnostic command:")
         lines.append("```sh")
-        lines.append("stacklight test \(shellQuoted(context.providerID)) --json")
+        lines.append("stacklightcli test \(shellQuoted(context.providerID)) --json")
         lines.append("```")
+        lines.append("Caveat: the CLI reads the legacy login keychain, while the sandboxed app reads the Data Protection Keychain. The two stores are separate, so a passing CLI test does not prove the app's stored credentials are valid.")
         lines.append("")
         lines.append("Privacy constraints:")
         lines.append("- Do not ask for API tokens, secrets, or raw credential values.")
