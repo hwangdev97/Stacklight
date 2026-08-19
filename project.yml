@@ -64,6 +64,8 @@ targets:
     platform: iOS
     sources:
       - path: Sources/StackLight/Core
+        excludes:
+          - AgentHandoff.swift
       - path: Sources/StackLight/Assets.xcassets
       - path: Sources/StackLightiOS/Resources/Assets.xcassets
       - path: Sources/StackLightiOS
